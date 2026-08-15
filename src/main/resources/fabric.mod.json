@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "profileviewer",
+	"version": "${version}",
+	"name": "ProfileViewer",
+	"description": "Modern Hypixel SkyBlock Profile Viewer powered by Lucent NanoVG",
+	"authors": ["Silence"],
+	"contact": {},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"silence.simsool.profileviewer.ProfileViewer"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~26.2",
+		"java": ">=21"
+	}
+}

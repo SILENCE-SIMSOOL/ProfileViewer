@@ -1,0 +1,42 @@
+# default
+*.md
+*.py
+\! Compile.bat
+\! Refresh.bat
+*.launch
+189forgesource/
+kotlinsource/
+
+# gradle
+.gradle/
+build/
+out/
+
+# idea
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# eclipse
+.settings/
+.classpath
+.project
+bin/
+
+# vscode
+.vscode/
+
+# logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# java
+*.class
+
+# minecraft run folder
+run/
