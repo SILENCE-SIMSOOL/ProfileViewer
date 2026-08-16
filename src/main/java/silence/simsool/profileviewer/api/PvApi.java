@@ -29,6 +29,40 @@ public class PvApi {
 			.build();
 
 	private static final Map<UUID, List<SkyBlockProfileData>> profilesCache = new ConcurrentHashMap<>();
+	private static final Map<UUID, silence.simsool.profileviewer.api.data.PlayerStatus> statusCache = new ConcurrentHashMap<>();
+
+	public static CompletableFuture<silence.simsool.profileviewer.api.data.PlayerStatus> fetchPlayerStatusAsync(UUID uuid) {
+		if (uuid == null) return CompletableFuture.completedFuture(new silence.simsool.profileviewer.api.data.PlayerStatus());
+		if (statusCache.containsKey(uuid)) {
+			return CompletableFuture.completedFuture(statusCache.get(uuid));
+		}
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				String token = PvAuth.getToken();
+				if (token == null) token = PvAuth.authenticateAsync().join();
+				if (token != null) {
+					String url = PV_API_BASE + "/status/" + uuid.toString();
+					HttpRequest req = HttpRequest.newBuilder()
+							.uri(URI.create(url))
+							.timeout(Duration.ofSeconds(6))
+							.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
+							.header("Authorization", token)
+							.header("X-Intent", "profile-viewer")
+							.GET()
+							.build();
+					HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+					if (res.statusCode() == 200 && res.body() != null) {
+						JsonObject obj = JsonParser.parseString(res.body()).getAsJsonObject();
+						silence.simsool.profileviewer.api.data.PlayerStatus status = silence.simsool.profileviewer.api.data.PlayerStatus.fromJson(obj);
+						statusCache.put(uuid, status);
+						return status;
+					}
+				}
+			} catch (Exception ignored) {}
+			return new silence.simsool.profileviewer.api.data.PlayerStatus();
+		});
+	}
 
 	public static CompletableFuture<List<SkyBlockProfileData>> fetchProfilesAsync(UUID uuid, boolean forceRefresh) {
 		if (!forceRefresh && profilesCache.containsKey(uuid)) {

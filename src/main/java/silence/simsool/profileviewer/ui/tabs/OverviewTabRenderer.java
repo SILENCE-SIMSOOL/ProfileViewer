@@ -1,103 +1,180 @@
 package silence.simsool.profileviewer.ui.tabs;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.data.MemberData;
+import silence.simsool.profileviewer.api.data.PlayerStatus;
 import silence.simsool.profileviewer.api.data.SkillsData;
+import silence.simsool.profileviewer.api.data.SlayerData;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class OverviewTabRenderer {
 
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+	public static class PlayerBounds {
+		public float x, y, w, h;
+		public boolean visible = false;
+	}
 
-	public static float render(MemberData data, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
+	public static final PlayerBounds playerBounds = new PlayerBounds();
+
+	public static float render(String username, MemberData data, PlayerStatus status, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
 		float curY = startY;
 
-		float colW = (width - 24) / 3f;
-		float cardH = 96f;
+		float leftW = 230f;
+		float rightX = startX + leftW + 16f;
+		float rightW = width - leftW - 16f;
 
-		// Card 1: Networth
-		RenderHelper.drawModernCard(startX, curY, colW, cardH, 12f, isHovered(startX, curY, colW, cardH, mouseX, mouseY));
-		NVGRenderer.text(L10n.translate("pv.overview.networth"), startX + 16, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		String nwStr = data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "N/A";
-		NVGRenderer.text(nwStr, startX + 16, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFD700, RenderHelper.FS_H2);
-		String purseStr = data.purse > 0 ? RenderHelper.formatCoins(data.purse) : "0";
-		String bankStr = data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "N/A";
-		NVGRenderer.text(L10n.translate("pv.overview.purse") + ": " + purseStr + "  |  " + L10n.translate("pv.overview.bank") + ": " + bankStr, startX + 16, curY + 68, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+		// ==========================================
+		// LEFT COLUMN: Nameplate, 3D Player, Online Status
+		// ==========================================
+		float leftY = curY;
 
-		// Card 2: Skill Average
-		float c2X = startX + colW + 12;
-		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 12f, isHovered(c2X, curY, colW, cardH, mouseX, mouseY));
-		NVGRenderer.text(L10n.translate("pv.overview.skill_average"), c2X + 16, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		String saStr = data.skills.skillAverage > 0 ? String.format("%.2f", data.skills.skillAverage) : "N/A";
-		NVGRenderer.text(saStr, c2X + 16, curY + 34, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_H2);
-		NVGRenderer.text(L10n.translate("pv.overview.fairy_souls") + ": " + data.fairySouls + "  |  " + L10n.translate("pv.overview.slayer_xp") + ": " + RenderHelper.formatNumber((long) data.slayer.totalSlayerXp), c2X + 16, curY + 68, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+		// 1. Nameplate: [Level] Username
+		float nameH = 32f;
+		RenderHelper.drawNameplate(username, data.skyBlockLevel, startX, leftY, leftW, nameH);
+		leftY += nameH + 8f;
 
-		// Card 3: Skyblock Level
-		float c3X = c2X + colW + 12;
-		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 12f, isHovered(c3X, curY, colW, cardH, mouseX, mouseY));
-		NVGRenderer.text(L10n.translate("pv.overview.skyblock_level"), c3X + 16, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		String lvlStr = data.skyBlockLevel > 0 ? "Lv. " + data.skyBlockLevel : "N/A";
-		NVGRenderer.text(lvlStr, c3X + 16, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FFFF, RenderHelper.FS_H2);
-		RenderHelper.drawProgressBar(c3X + 16, curY + 70, colW - 32, 6f, data.skyBlockLevelProgress / 100f, 0xFF55FFFF, 0xFF00AAFF);
+		// 2. 3D Player Container Card
+		float playerH = 260f;
+		boolean hovPlayer = isHovered(startX, leftY, leftW, playerH, mouseX, mouseY);
+		RenderHelper.drawModernCard(startX, leftY, leftW, playerH, 10f, hovPlayer);
 
-		curY += cardH + 24;
+		// Record bounds for 3D entity rendering pass
+		playerBounds.x = startX;
+		playerBounds.y = leftY;
+		playerBounds.w = leftW;
+		playerBounds.h = playerH;
+		playerBounds.visible = true;
 
-		// Section: Networth Breakdown
-		if (data.networth.total > 0 && !data.networth.categories.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.overview.networth_breakdown"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-			curY += 22;
+		leftY += playerH + 8f;
 
-			float nwColW = (width - 3 * 10) / 4f;
-			float nwH = 56f;
-			int nIdx = 0;
+		// 3. Online Status Card
+		float statusH = 34f;
+		boolean hovStatus = isHovered(startX, leftY, leftW, statusH, mouseX, mouseY);
+		RenderHelper.drawModernCard(startX, leftY, leftW, statusH, 8f, hovStatus);
 
-			for (var entry : data.networth.categories.entrySet()) {
-				if (entry.getValue() <= 0) continue;
-				float nx = startX + (nIdx % 4) * (nwColW + 10);
-				float ny = curY + (nIdx / 4) * (nwH + 8);
+		boolean isOnline = (status != null && status.status == PlayerStatus.Status.ONLINE);
+		int statusDotCol = isOnline ? 0xFF10B981 : 0xFF6B7280; // Green / Gray
+		NVGRenderer.circle(startX + 16f, leftY + statusH / 2f, 4f, statusDotCol);
 
-				RenderHelper.drawModernCard(nx, ny, nwColW, nwH, 8f, false);
-				NVGRenderer.text(entry.getKey(), nx + 12, ny + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-				NVGRenderer.text(RenderHelper.formatCoins(entry.getValue()), nx + 12, ny + 28, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFD700, RenderHelper.FS_BODY);
+		String statusTxt = status != null ? status.getDisplayText() : "Offline";
+		int statusTxtCol = isOnline ? 0xFF34D399 : RenderHelper.FONT_MUTED;
+		NVGRenderer.text(statusTxt, startX + 28f, leftY + (statusH - RenderHelper.FS_BUTTON) / 2f + 1f, Fonts.PRETENDARD_MEDIUM, statusTxtCol, RenderHelper.FS_BUTTON);
 
-				nIdx++;
-			}
-			curY += ((nIdx + 3) / 4) * (nwH + 8) + 20;
-		}
+		leftY += statusH + 12f;
 
-		// Section: Skills Progress
-		NVGRenderer.text(L10n.translate("pv.overview.skills_progress"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		// ==========================================
+		// RIGHT COLUMN: Key Stats Grid, Skills, Slayer
+		// ==========================================
+		float rightY = curY;
 
-		float sColW = (width - 16) / 2f;
-		float sCardH = 54f;
-		int idx = 0;
+		// 1. Key Stats Grid (3 Columns x 2 Rows)
+		float statColW = (rightW - 2 * 10f) / 3f;
+		float statCardH = 58f;
+
+		// Row 1: Purse, Bank, Networth
+		drawStatCard(rightX, rightY, statColW, statCardH, L10n.translate("pv.overview.purse"), RenderHelper.formatCoins(data.purse), 0xFFFFD700, mouseX, mouseY);
+		drawStatCard(rightX + statColW + 10f, rightY, statColW, statCardH, L10n.translate("pv.overview.bank"), data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "0", 0xFFFFD700, mouseX, mouseY);
+		drawStatCard(rightX + (statColW + 10f) * 2, rightY, statColW, statCardH, L10n.translate("pv.overview.networth"), data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "N/A", 0xFFF59E0B, mouseX, mouseY);
+		rightY += statCardH + 8f;
+
+		// Row 2: SkyBlock Level, Skill Avg, Fairy Souls
+		drawLevelStatCard(rightX, rightY, statColW, statCardH, L10n.translate("pv.overview.skyblock_level"), data.skyBlockLevel, data.skyBlockLevelProgress, mouseX, mouseY);
+		drawStatCard(rightX + statColW + 10f, rightY, statColW, statCardH, L10n.translate("pv.overview.skill_average"), data.skills.skillAverage > 0 ? String.format("%.2f", data.skills.skillAverage) : "0.00", 0xFF38BDF8, mouseX, mouseY);
+		drawStatCard(rightX + (statColW + 10f) * 2, rightY, statColW, statCardH, L10n.translate("pv.overview.fairy_souls"), String.valueOf(data.fairySouls), 0xFFF472B6, mouseX, mouseY);
+		rightY += statCardH + 16f;
+
+		// 2. Skills Grid Section
+		NVGRenderer.text(L10n.translate("pv.overview.skills_progress"), rightX + 2f, rightY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+		rightY += 20f;
+
+		float skillColW = (rightW - 2 * 8f) / 3f;
+		float skillCardH = 46f;
+		int skillIdx = 0;
 
 		for (Map.Entry<String, SkillsData.SkillInfo> entry : data.skills.skills.entrySet()) {
 			SkillsData.SkillInfo s = entry.getValue();
-			float sx = startX + (idx % 2) * (sColW + 16);
-			float sy = curY + (idx / 2) * (sCardH + 10);
+			float sx = rightX + (skillIdx % 3) * (skillColW + 8f);
+			float sy = rightY + (skillIdx / 3) * (skillCardH + 6f);
 
-			boolean hov = isHovered(sx, sy, sColW, sCardH, mouseX, mouseY);
-			RenderHelper.drawModernCard(sx, sy, sColW, sCardH, 8f, hov);
+			boolean hov = isHovered(sx, sy, skillColW, skillCardH, mouseX, mouseY);
+			RenderHelper.drawModernCard(sx, sy, skillColW, skillCardH, 6f, hov);
 
-			NVGRenderer.text(s.name, sx + 14, sy + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BODY);
-			String sLvlStr = "Lv. " + s.level + (s.level >= s.maxLevel ? " (" + L10n.translate("pv.ui.max") + ")" : "");
-			NVGRenderer.text(sLvlStr, sx + sColW - 14 - NVGRenderer.textWidth(sLvlStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_BUTTON), sy + 10, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(s.name, sx + 10f, sy + 7f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			String lvlStr = "Lv. " + s.level;
+			int lvlColor = s.level >= s.maxLevel ? 0xFFFBBF24 : 0xFF38BDF8;
+			NVGRenderer.text(lvlStr, sx + skillColW - 10f - NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION), sy + 7f, Fonts.PRETENDARD_SEMIBOLD, lvlColor, RenderHelper.FS_CAPTION);
 
-			RenderHelper.drawProgressBar(sx + 14, sy + 34, sColW - 28, 5f, s.progress, UIColors.ACCENT_BLUE, 0xFF38BDF8);
+			RenderHelper.drawProgressBar(sx + 10f, sy + 28f, skillColW - 20f, 4f, s.progress, UIColors.ACCENT_BLUE, 0xFF38BDF8);
 
-			idx++;
+			skillIdx++;
 		}
+		rightY += ((skillIdx + 2) / 3) * (skillCardH + 6f) + 14f;
 
-		curY += ((idx + 1) / 2) * (sCardH + 10) + 20;
-		return curY - startY;
+		// 3. Slayer Grid Section
+		NVGRenderer.text(L10n.translate("pv.overview.slayer"), rightX + 2f, rightY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+		rightY += 20f;
+
+		float slayerColW = (rightW - 2 * 8f) / 3f;
+		float slayerCardH = 48f;
+		int slayerIdx = 0;
+
+		String[] slayerKeys = {"zombie", "spider", "wolf", "enderman", "blaze", "vampire"};
+		String[] slayerNames = {"Revenant", "Tarantula", "Sven", "Voidgloom", "Inferno", "Riftstalker"};
+
+		for (int i = 0; i < slayerKeys.length; i++) {
+			String key = slayerKeys[i];
+			String sName = slayerNames[i];
+			SlayerData.SlayerBoss boss = data.slayer.bosses.get(key);
+
+			int lvl = boss != null ? boss.level : 0;
+			double xp = boss != null ? boss.totalXp : 0;
+
+			float bx = rightX + (slayerIdx % 3) * (slayerColW + 8f);
+			float by = rightY + (slayerIdx / 3) * (slayerCardH + 6f);
+
+			boolean hov = isHovered(bx, by, slayerColW, slayerCardH, mouseX, mouseY);
+			RenderHelper.drawModernCard(bx, by, slayerColW, slayerCardH, 6f, hov);
+
+			NVGRenderer.text(sName, bx + 10f, by + 8f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			String bLvlStr = "Lv. " + lvl;
+			int bLvlCol = (lvl >= 9) ? 0xFFF59E0B : 0xFFA78BFA;
+			NVGRenderer.text(bLvlStr, bx + slayerColW - 10f - NVGRenderer.textWidth(bLvlStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION), by + 8f, Fonts.PRETENDARD_SEMIBOLD, bLvlCol, RenderHelper.FS_CAPTION);
+
+			String xpStr = RenderHelper.formatCoins(xp) + " XP";
+			NVGRenderer.text(xpStr, bx + 10f, by + 28f, Fonts.PRETENDARD, RenderHelper.FONT_MUTED, 11f);
+
+			slayerIdx++;
+		}
+		rightY += ((slayerIdx + 2) / 3) * (slayerCardH + 6f) + 10f;
+
+		return Math.max(leftY, rightY) - startY;
+	}
+
+	private static void drawStatCard(float x, float y, float w, float h, String label, String val, int valColor, float mx, float my) {
+		boolean hov = isHovered(x, y, w, h, mx, my);
+		RenderHelper.drawModernCard(x, y, w, h, 8f, hov);
+		NVGRenderer.text(label, x + 12f, y + 8f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
+		NVGRenderer.text(val, x + 12f, y + 26f, Fonts.PRETENDARD_SEMIBOLD, valColor, RenderHelper.FS_H3);
+	}
+
+	private static void drawLevelStatCard(float x, float y, float w, float h, String label, int level, int progress, float mx, float my) {
+		boolean hov = isHovered(x, y, w, h, mx, my);
+		RenderHelper.drawModernCard(x, y, w, h, 8f, hov);
+		NVGRenderer.text(label, x + 12f, y + 8f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
+
+		int lvlCol = RenderHelper.getSkyBlockLevelColor(level);
+		String lvlStr = "Lv. " + level;
+		NVGRenderer.text(lvlStr, x + 12f, y + 26f, Fonts.PRETENDARD_SEMIBOLD, lvlCol, RenderHelper.FS_H3);
+
+		// Mini progress bar in card bottom right
+		float pbW = w - 12f - (NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_H3) + 24f);
+		if (pbW > 30f) {
+			RenderHelper.drawProgressBar(x + w - pbW - 12f, y + 36f, pbW, 4f, progress / 100f, lvlCol);
+		}
 	}
 
 	private static boolean isHovered(float x, float y, float w, float h, float mx, float my) {

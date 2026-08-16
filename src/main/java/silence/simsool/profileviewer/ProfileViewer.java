@@ -37,6 +37,8 @@ public class ProfileViewer implements ClientModInitializer {
 		));
 
 		PvAuth.authenticateAsync();
+		silence.simsool.profileviewer.api.repo.PetRepo.init();
+		silence.simsool.profileviewer.api.repo.ItemRepo.init();
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			registerCommands(dispatcher, "pv");

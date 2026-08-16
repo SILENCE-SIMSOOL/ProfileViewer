@@ -96,41 +96,51 @@ public class GearTabRenderer {
 
 	private static float renderInventoryView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
-		NVGRenderer.text(L10n.translate("pv.gear.active_armor"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		float slotSize = 38f;
+		float slotGap = 5f;
 
-		float slotSize = 40f;
-		float gap = 8f;
+		// 1. Armor & Equipment Column (2 x 4)
+		float armorColX = startX;
+		float armorCardW = 2 * slotSize + slotGap + 20f;
+		float armorCardH = 4 * slotSize + 3 * slotGap + 40f;
+
+		RenderHelper.drawModernCard(armorColX, curY, armorCardW, armorCardH, 10f, false);
+		NVGRenderer.text(L10n.translate("pv.gear.active_armor"), armorColX + 10f, curY + 10f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_CAPTION);
 
 		for (int i = 0; i < 4; i++) {
-			float sx = startX + i * (slotSize + gap);
-			ParsedItem item = (data.inventory.armor.size() > (3 - i)) ? data.inventory.armor.get(3 - i) : ParsedItem.EMPTY;
-			drawSlot(sx, curY, slotSize, item, mx, my);
+			float sy = curY + 28f + i * (slotSize + slotGap);
+
+			// Armor slot (col 0: Helmet, Chestplate, Leggings, Boots)
+			float sxArmor = armorColX + 10f;
+			ParsedItem armorItem = (data.inventory.armor.size() > (3 - i)) ? data.inventory.armor.get(3 - i) : ParsedItem.EMPTY;
+			drawSlot(sxArmor, sy, slotSize, armorItem, mx, my);
+
+			// Equipment slot (col 1: Necklace, Cloak, Belt, Gloves)
+			float sxEq = armorColX + 10f + slotSize + slotGap;
+			ParsedItem eqItem = (data.inventory.equipment.size() > i) ? data.inventory.equipment.get(i) : ParsedItem.EMPTY;
+			drawSlot(sxEq, sy, slotSize, eqItem, mx, my);
 		}
 
-		float eqStartX = startX + 4 * (slotSize + gap) + 24;
-		for (int i = 0; i < 4; i++) {
-			float sx = eqStartX + i * (slotSize + gap);
-			ParsedItem item = (data.inventory.equipment.size() > (3 - i)) ? data.inventory.equipment.get(3 - i) : ParsedItem.EMPTY;
-			drawSlot(sx, curY, slotSize, item, mx, my);
-		}
+		// 2. Main Inventory Grid (9 x 4) - Top 3 rows (9..35) + Bottom Hotbar (0..8)
+		float invX = startX + armorCardW + 14f;
+		float invCardW = 9 * slotSize + 8 * slotGap + 20f;
+		float invCardH = armorCardH;
 
-		curY += slotSize + 26;
-
-		NVGRenderer.text(L10n.translate("pv.gear.inventory"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		RenderHelper.drawModernCard(invX, curY, invCardW, invCardH, 10f, false);
+		NVGRenderer.text(L10n.translate("pv.gear.inventory"), invX + 10f, curY + 10f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_CAPTION);
 
 		for (int r = 0; r < 4; r++) {
 			for (int c = 0; c < 9; c++) {
-				int slotIdx = r * 9 + c;
-				float sx = startX + c * (slotSize + 6);
-				float sy = curY + r * (slotSize + 6);
+				// Reorder: r=0..2 -> 9..35 (main inventory), r=3 -> 0..8 (hotbar)
+				int slotIdx = (r == 3) ? c : ((r + 1) * 9 + c);
+				float sx = invX + 10f + c * (slotSize + slotGap);
+				float sy = curY + 28f + r * (slotSize + slotGap);
 				ParsedItem item = (data.inventory.inventory.size() > slotIdx) ? data.inventory.inventory.get(slotIdx) : ParsedItem.EMPTY;
 				drawSlot(sx, sy, slotSize, item, mx, my);
 			}
 		}
 
-		curY += 4 * (slotSize + 6) + 10;
+		curY += armorCardH + 16f;
 		return curY - y0;
 	}
 

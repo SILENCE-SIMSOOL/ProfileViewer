@@ -51,6 +51,12 @@ public class ProfileViewerScreen extends Screen {
 	private boolean profileDropdownOpen = false;
 	private boolean isDraggingScrollbar = false;
 
+	private net.minecraft.client.entity.ClientMannequin mannequin = null;
+	private silence.simsool.profileviewer.api.data.PlayerStatus playerStatus = null;
+	private int lastArmorHash = 0;
+	private UUID lastMannequinUuid = null;
+	private static final java.util.concurrent.atomic.AtomicInteger NEXT_ENTITY_ID = new java.util.concurrent.atomic.AtomicInteger(100000);
+
 	public ProfileViewerScreen(String username, UUID uuid) {
 		super(Component.literal("Profile Viewer"));
 		this.username = username;
@@ -81,6 +87,7 @@ public class ProfileViewerScreen extends Screen {
 	private void loadData(boolean forceRefresh) {
 		loading = true;
 		errorMessage = "";
+		PvApi.fetchPlayerStatusAsync(uuid).thenAccept(st -> this.playerStatus = st);
 		PvApi.fetchProfilesAsync(uuid, forceRefresh).thenAccept(list -> {
 			loading = false;
 			if (list == null || list.isEmpty()) {
@@ -96,6 +103,34 @@ public class ProfileViewerScreen extends Screen {
 			errorMessage = String.format(L10n.translate("pv.ui.request_failed"), e.getMessage());
 			return null;
 		});
+	}
+
+	private void updateMannequin() {
+		if (mc.level == null) return;
+		if (currentProfile == null || currentProfile.member == null) return;
+
+		List<ParsedItem> armor = currentProfile.member.inventory.armor;
+		int armorHash = (armor != null ? armor.hashCode() : 0) ^ (uuid != null ? uuid.hashCode() : 0);
+
+		if (mannequin == null || !uuid.equals(lastMannequinUuid)) {
+			mannequin = new net.minecraft.client.entity.ClientMannequin(mc.level, mc.playerSkinRenderCache());
+			mannequin.setId(NEXT_ENTITY_ID.getAndIncrement());
+			com.mojang.authlib.GameProfile gp = new com.mojang.authlib.GameProfile(uuid, username);
+			net.minecraft.world.item.component.ResolvableProfile resolvableProfile = net.minecraft.world.item.component.ResolvableProfile.createResolved(gp);
+			resolvableProfile.resolveProfile(mc.services().profileResolver());
+			lastMannequinUuid = uuid;
+			lastArmorHash = 0;
+		}
+
+		if (armorHash != lastArmorHash) {
+			lastArmorHash = armorHash;
+			if (armor != null && !armor.isEmpty()) {
+				if (armor.size() > 0 && armor.get(0).itemStack != null) mannequin.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, armor.get(0).itemStack);
+				if (armor.size() > 1 && armor.get(1).itemStack != null) mannequin.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, armor.get(1).itemStack);
+				if (armor.size() > 2 && armor.get(2).itemStack != null) mannequin.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, armor.get(2).itemStack);
+				if (armor.size() > 3 && armor.get(3).itemStack != null) mannequin.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, armor.get(3).itemStack);
+			}
+		}
 	}
 
 	@Override
@@ -244,6 +279,23 @@ public class ProfileViewerScreen extends Screen {
 
 		graphics.pose().popMatrix();
 
+		// Draw 3D Player Mannequin in Overview Tab
+		if (currentTab == PVTab.OVERVIEW && OverviewTabRenderer.playerBounds.visible) {
+			updateMannequin();
+			if (mannequin != null) {
+				int x1 = (int) (OverviewTabRenderer.playerBounds.x * totalScale);
+				int y1 = (int) (OverviewTabRenderer.playerBounds.y * totalScale);
+				int x2 = (int) ((OverviewTabRenderer.playerBounds.x + OverviewTabRenderer.playerBounds.w) * totalScale);
+				int y2 = (int) ((OverviewTabRenderer.playerBounds.y + OverviewTabRenderer.playerBounds.h) * totalScale);
+				int scale = (int) (105f * totalScale);
+				float yOffset = 0.06f;
+
+				net.minecraft.client.gui.screens.inventory.InventoryScreen.extractEntityInInventoryFollowsMouse(
+					graphics, x1, y1, x2, y2, scale, yOffset, mouseX, mouseY, mannequin
+				);
+			}
+		}
+
 		// Fixed GUI Scale 2 Tooltip
 		if (hoveredStack != null && !hoveredStack.isEmpty()) {
 			float adaptiveScale = computeAdaptiveScale();
@@ -352,8 +404,10 @@ public class ProfileViewerScreen extends Screen {
 		float renderedH = 0;
 		float startY = (float) (contentY - scrollOffset);
 
+		OverviewTabRenderer.playerBounds.visible = false;
+
 		switch (currentTab) {
-			case OVERVIEW -> renderedH = OverviewTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
+			case OVERVIEW -> renderedH = OverviewTabRenderer.render(username, currentProfile.member, playerStatus, contentX, startY, contentW, mx, my, delta);
 			case GEAR -> renderedH = GearTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case PETS -> renderedH = PetsTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case DUNGEONS -> renderedH = DungeonsTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);

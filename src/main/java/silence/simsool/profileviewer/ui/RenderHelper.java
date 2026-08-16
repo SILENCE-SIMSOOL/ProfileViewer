@@ -28,6 +28,48 @@ public class RenderHelper {
 		return String.format("%,.0f", coins);
 	}
 
+	public static int getSkyBlockLevelColor(int level) {
+		if (level < 40) return 0xFFAAAAAA;
+		if (level < 80) return 0xFFFFFFFF;
+		if (level < 120) return 0xFFFFFF55;
+		if (level < 160) return 0xFF55FF55;
+		if (level < 200) return 0xFF00AA00;
+		if (level < 240) return 0xFF55FFFF;
+		if (level < 280) return 0xFF00AAAA;
+		if (level < 320) return 0xFF5555FF;
+		if (level < 360) return 0xFFFF55FF;
+		if (level < 400) return 0xFFAA00AA;
+		if (level < 440) return 0xFFFFAA00;
+		if (level < 480) return 0xFFFF5555;
+		return 0xFFAA0000;
+	}
+
+	public static void drawNameplate(String username, int level, float x, float y, float w, float h) {
+		NVGRenderer.rect(x, y, w, h, 0xCC181A22, 6f);
+		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x33FFFFFF, 6f);
+
+		String prefix = "[";
+		String lvlStr = String.valueOf(level);
+		String suffix = "] ";
+		String name = (username != null && !username.isEmpty()) ? username : "Player";
+
+		float fs = FS_BODY;
+		float pW = NVGRenderer.textWidth(prefix, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float lW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float sW = NVGRenderer.textWidth(suffix, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float nW = NVGRenderer.textWidth(name, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float totalW = pW + lW + sW + nW;
+
+		float startX = x + (w - totalW) / 2f;
+		float textY = y + (h - fs) / 2f + 1f;
+
+		int lvlCol = getSkyBlockLevelColor(level);
+		NVGRenderer.text(prefix, startX, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
+		NVGRenderer.text(lvlStr, startX + pW, textY, Fonts.PRETENDARD_SEMIBOLD, lvlCol, fs);
+		NVGRenderer.text(suffix, startX + pW + lW, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
+		NVGRenderer.text(name, startX + pW + lW + sW, textY, Fonts.PRETENDARD_SEMIBOLD, FONT_PRIMARY, fs);
+	}
+
 	public static String formatNumber(long num) {
 		if (num >= 1_000_000_000) return String.format("%.2fB", num / 1_000_000_000.0);
 		if (num >= 1_000_000) return String.format("%.1fM", num / 1_000_000.0);

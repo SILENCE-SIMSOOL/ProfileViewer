@@ -104,7 +104,19 @@ public class NbtItemParser {
 			if (subTag.contains("ExtraAttributes")) {
 				CompoundTag ea = subTag.getCompound("ExtraAttributes").orElse(new CompoundTag());
 				if (ea.contains("id")) item.skyblockId = ea.getString("id").orElse("");
-				if (ea.contains("skin")) skullTexture = ea.getString("skin").orElse("");
+				if (ea.contains("skin")) {
+					String skinVal = ea.getString("skin").orElse("");
+					if (!skinVal.isEmpty()) {
+						ItemStack skinStack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack("PET_SKIN_" + skinVal);
+						if (skinStack.isEmpty()) {
+							skinStack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(skinVal);
+						}
+						if (!skinStack.isEmpty() && skinStack.has(DataComponents.PROFILE)) {
+							item.itemStack = skinStack.copy();
+							item.itemStack.setCount(Math.max(1, item.count));
+						}
+					}
+				}
 				if (dyedColor == null && ea.contains("color")) {
 					String colorStr = ea.getString("color").orElse("");
 					if (colorStr.contains(":")) {
@@ -155,10 +167,17 @@ public class NbtItemParser {
 		}
 
 		// Resolve ItemStack
-		if (!skullTexture.isEmpty()) {
-			item.itemStack = createSkull(skullTexture, item.count);
-		} else if (item.itemStack.isEmpty()) {
-			item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
+		if (item.itemStack.isEmpty()) {
+			if (item.skyblockId != null && !item.skyblockId.isEmpty()) {
+				item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
+			}
+			if (item.itemStack.isEmpty()) {
+				if (!skullTexture.isEmpty()) {
+					item.itemStack = createSkull(skullTexture, item.count);
+				} else {
+					item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
+				}
+			}
 		}
 
 		if (item.displayName.isEmpty()) {
@@ -246,37 +265,36 @@ public class NbtItemParser {
 	}
 
 	public static ItemStack createPetItemStack(String type, String rarity, String skin) {
-		ItemStack stack = new ItemStack(Items.PLAYER_HEAD, 1);
-		try {
-			CompoundTag extra = new CompoundTag();
-			extra.putString("id", "PET");
-			if (type != null && !type.isEmpty()) extra.putString("type", type.toUpperCase());
-			if (rarity != null && !rarity.isEmpty()) extra.putString("tier", rarity.toUpperCase());
-			if (skin != null && !skin.isEmpty()) extra.putString("skin", skin.toUpperCase());
+		return silence.simsool.profileviewer.api.repo.PetRepo.getPetItemStack(type, rarity, 100, skin, null);
+	}
 
-			CompoundTag root = new CompoundTag();
-			root.put("ExtraAttributes", extra);
-
-			stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
-		} catch (Exception ignored) {}
-		return stack;
+	public static ItemStack createPetItemStack(String type, String rarity, String skin, int level, String heldItem) {
+		return silence.simsool.profileviewer.api.repo.PetRepo.getPetItemStack(type, rarity, level, skin, heldItem);
 	}
 
 	public static ItemStack resolveItemStack(int numId, String mcId, String sbId, int damage, int count) {
 		int safeCount = Math.max(1, count);
 
-		// 1. Resolve by Numerical ID using LegacyIdMap
-		if (numId > 0) {
-			if (numId == 397) {
-				return new ItemStack(Items.PLAYER_HEAD, safeCount);
+		// 1. Resolve by ItemRepo & SkyBlock ID (First Priority for Custom SkyBlock Items)
+		if (sbId != null && !sbId.isEmpty()) {
+			ItemStack repoStack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(sbId);
+			if (!repoStack.isEmpty()) {
+				repoStack.setCount(safeCount);
+				return repoStack;
 			}
-			Item mcItem = LegacyIdMap.getItem(numId);
+			ItemStack sbStack = resolveBySkyBlockId(sbId, safeCount);
+			if (!sbStack.isEmpty()) return sbStack;
+		}
+
+		// 2. Resolve by Numerical ID and Damage using LegacyIdMap (Vanilla Fallback)
+		if (numId > 0) {
+			Item mcItem = LegacyIdMap.getItem(numId, damage);
 			if (mcItem != null && mcItem != Items.AIR) {
 				return new ItemStack(mcItem, safeCount);
 			}
 		}
 
-		// 2. Resolve by String MC ID
+		// 3. Resolve by String MC ID
 		if (mcId != null && !mcId.isEmpty() && !mcId.equals("minecraft:air")) {
 			String cleanId = mcId.contains(":") ? mcId : "minecraft:" + mcId;
 			Identifier res = Identifier.tryParse(cleanId);
@@ -288,13 +306,7 @@ public class NbtItemParser {
 			}
 		}
 
-		// 3. Resolve by SkyBlock ID fallback
-		if (sbId != null && !sbId.isEmpty()) {
-			ItemStack sbStack = resolveBySkyBlockId(sbId, safeCount);
-			if (!sbStack.isEmpty()) return sbStack;
-		}
-
-		return new ItemStack(Items.PLAYER_HEAD, safeCount);
+		return ItemStack.EMPTY;
 	}
 
 	private static ItemStack resolveBySkyBlockId(String sbId, int count) {

@@ -85,7 +85,7 @@ public class PetData {
 
 						calculatePetProgress(p);
 
-						p.itemStack = NbtItemParser.createPetItemStack(p.type, p.rarity, p.skin);
+						p.itemStack = NbtItemParser.createPetItemStack(p.type, p.rarity, p.skin, p.level, p.heldItem);
 
 						String cleanName = p.type.replace("_", " ");
 						char rCode = getRarityCode(p.rarity);
