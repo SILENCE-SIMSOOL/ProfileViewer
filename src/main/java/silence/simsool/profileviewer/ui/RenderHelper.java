@@ -13,13 +13,21 @@ public class RenderHelper {
 	public static final int FONT_HINT      = 0xFF999999; // Subtle hints / Special hierarchy
 	public static final int FONT_DISABLED  = 0xFF6B7280; // Disabled state
 
-	// Font Size Guide
-	public static final float FS_H1      = 32f; // H1: 32-36px
-	public static final float FS_H2      = 24f; // H2: 24-30px
-	public static final float FS_H3      = 20f; // H3: 20-24px
-	public static final float FS_BODY    = 16f; // Body Text: 16px base size
-	public static final float FS_BUTTON  = 14f; // Buttons: 14-16px
-	public static final float FS_CAPTION = 12f; // Captions / Hints: 12-14px
+	// Font Size Guide (User Requested)
+	// Headlines (Titles): 36–44
+	// Subheadings (Headers): 28–36
+	// Body Text: 24–30
+	// Quotes & Callouts: 28+
+	// Data Labels (on charts): 18–24
+	// Footnotes & Captions: 18–20
+	public static final float FS_TITLE   = 36f; // Headlines (Titles)
+	public static final float FS_H1      = 36f;
+	public static final float FS_H2      = 28f; // Subheadings (Headers)
+	public static final float FS_H3      = 24f;
+	public static final float FS_BODY    = 24f; // Body Text: 24-30px
+	public static final float FS_LABEL   = 20f; // Data Labels (18-24px)
+	public static final float FS_BUTTON  = 20f;
+	public static final float FS_CAPTION = 18f; // Footnotes & Captions: 18-20px
 
 	public static String formatCoins(double coins) {
 		if (coins >= 1_000_000_000) return String.format("%.2fB", coins / 1_000_000_000.0);
@@ -78,10 +86,49 @@ public class RenderHelper {
 	}
 
 	public static void drawModernCard(float x, float y, float w, float h, float radius, boolean hovered) {
-		int bg = hovered ? 0xCC252632 : 0xBB1E1F28;
-		int border = hovered ? UIColors.ACCENT_BLUE : UIColors.withAlpha(UIColors.ITEM_BORDER, 160);
-		NVGRenderer.rect(x, y, w, h, bg, radius);
-		NVGRenderer.outlineRect(x, y, w, h, 1.2f, border, radius);
+		NVGRenderer.rect(x, y, w, h, 0xC80D0F18, radius);
+		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x18FFFFFF, radius);
+	}
+
+	public static void drawSubCard(float x, float y, float w, float h, float radius, boolean hovered) {
+		NVGRenderer.rect(x, y, w, h, 0xD0121422, radius);
+		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x12FFFFFF, radius);
+	}
+
+	public static void drawAmbientGlow(float cx, float cy, float radius, int innerColor, int outerColor) {
+		long vg = NVGRenderer.getVG();
+		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((innerColor >> 16) & 0xFF), (byte) ((innerColor >> 8) & 0xFF), (byte) (innerColor & 0xFF), (byte) ((innerColor >> 24) & 0xFF), c1);
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((outerColor >> 16) & 0xFF), (byte) ((outerColor >> 8) & 0xFF), (byte) (outerColor & 0xFF), (byte) ((outerColor >> 24) & 0xFF), c2);
+
+			org.lwjgl.nanovg.NanoVG.nvgRadialGradient(vg, cx, cy, 0f, radius, c1, c2, paint);
+			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+			org.lwjgl.nanovg.NanoVG.nvgCircle(vg, cx, cy, radius);
+			org.lwjgl.nanovg.NanoVG.nvgFillPaint(vg, paint);
+			org.lwjgl.nanovg.NanoVG.nvgFill(vg);
+		}
+	}
+
+	public static void drawPlayerShadow(float cx, float cy, float rx, float ry) {
+		long vg = NVGRenderer.getVG();
+		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 160, c1);
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 0, c2);
+
+			org.lwjgl.nanovg.NanoVG.nvgRadialGradient(vg, cx, cy, 0f, rx, c1, c2, paint);
+			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+			org.lwjgl.nanovg.NanoVG.nvgEllipse(vg, cx, cy, rx, ry);
+			org.lwjgl.nanovg.NanoVG.nvgFillPaint(vg, paint);
+			org.lwjgl.nanovg.NanoVG.nvgFill(vg);
+		}
 	}
 
 	public static void drawProgressBar(float x, float y, float w, float h, float progress, int fillColor) {

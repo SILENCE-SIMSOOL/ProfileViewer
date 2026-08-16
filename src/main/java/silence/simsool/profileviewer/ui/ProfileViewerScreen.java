@@ -37,10 +37,10 @@ public class ProfileViewerScreen extends Screen {
 	private boolean loading = true;
 	private String errorMessage = "";
 
-	private static final int WIN_W = 1000;
-	private static final int WIN_H = 630;
-	private static final int SIDEBAR_W = 200;
-	private static final int TOPBAR_H = 68;
+	private static final int WIN_W = 1200;
+	private static final int WIN_H = 750;
+	private static final int SIDEBAR_W = 220;
+	private static final int TOPBAR_H = 66;
 
 	private float winX, winY;
 	private float contentX, contentY, contentW, contentH;
@@ -72,16 +72,26 @@ public class ProfileViewerScreen extends Screen {
 
 	private void updateLayout() {
 		float gs = NVGRenderer.getStandardGuiScale();
-		int sw = (int) (UDisplay.getWidth() / gs);
-		int sh = (int) (UDisplay.getHeight() / gs);
+		float sw = (float) UDisplay.getWidth() / gs;
+		float sh = (float) UDisplay.getHeight() / gs;
 
-		winX = (sw - WIN_W) / 2f;
-		winY = (sh - WIN_H) / 2f;
+		float margin = 12f;
+		float availW = sw - margin * 2f;
+		float availH = sh - margin * 2f;
 
-		contentX = winX + SIDEBAR_W + 16f;
-		contentY = winY + TOPBAR_H + 12f;
-		contentW = WIN_W - SIDEBAR_W - 32f;
-		contentH = WIN_H - TOPBAR_H - 24f;
+		float targetScale = 1.0f;
+		if (availW < WIN_W || availH < WIN_H) {
+			targetScale = Math.min(availW / WIN_W, availH / WIN_H);
+		}
+		this.uiScale = Math.max(0.2f, targetScale);
+
+		winX = (sw - WIN_W * uiScale) / 2f / uiScale;
+		winY = (sh - WIN_H * uiScale) / 2f / uiScale;
+
+		contentX = winX + SIDEBAR_W + 18f;
+		contentY = winY + TOPBAR_H + 10f;
+		contentW = WIN_W - SIDEBAR_W - 36f;
+		contentH = WIN_H - TOPBAR_H - 20f;
 	}
 
 	private void loadData(boolean forceRefresh) {
@@ -135,7 +145,7 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-		graphics.fill(0, 0, width, height, 0x88000000);
+		graphics.fill(0, 0, width, height, 0x99000000);
 	}
 
 	@Override
@@ -152,16 +162,25 @@ public class ProfileViewerScreen extends Screen {
 			NVGRenderer.push();
 			NVGRenderer.scale(gs * uiScale, gs * uiScale);
 
-			// Main Window Frame (Dark Glassmorphism)
-			NVGRenderer.rect(winX, winY, WIN_W, WIN_H, 0xF0181920, 14f);
-			NVGRenderer.outlineRect(winX, winY, WIN_W, WIN_H, 1.5f, UIColors.withAlpha(UIColors.ITEM_BORDER, 180), 14f);
+			// Main Window Frame with Subtle Nebula Fog Background (Photo 3 Effect across entire window, 90% opacity = 0xE6)
+			NVGRenderer.pushScissor(winX, winY, WIN_W, WIN_H);
+			NVGRenderer.rect(winX, winY, WIN_W, WIN_H, 0xE60A0C13, 14f);
 
-			// Sidebar Background
-			NVGRenderer.rect(winX, winY, SIDEBAR_W, WIN_H, 0xF513141A, 14f, 0, 0, 14f);
-			NVGRenderer.rect(winX + SIDEBAR_W, winY, 1f, WIN_H, UIColors.withAlpha(UIColors.ITEM_BORDER, 100));
+			// Gentle, subtle atmospheric fog clouds across sidebar and content
+			RenderHelper.drawAmbientGlow(winX + 160f, winY + 120f, 420f, 0x105850EC, 0x00000000); // Top-left indigo fog
+			RenderHelper.drawAmbientGlow(winX + 820f, winY + 140f, 480f, 0x0C2563EB, 0x00000000); // Top-right deep blue fog
+			RenderHelper.drawAmbientGlow(winX + 980f, winY + 580f, 520f, 0x0E7C3AED, 0x00000000); // Bottom-right purple fog
+			RenderHelper.drawAmbientGlow(winX + 220f, winY + 620f, 400f, 0x0A0284C7, 0x00000000); // Bottom-left cyan fog
+			RenderHelper.drawAmbientGlow(winX + 600f, winY + 380f, 360f, 0x086366F1, 0x00000000); // Subtle center glow
+			NVGRenderer.popScissor();
+
+			NVGRenderer.outlineRect(winX, winY, WIN_W, WIN_H, 1.2f, 0x22FFFFFF, 14f);
+
+			NVGRenderer.rect(winX, winY, SIDEBAR_W, WIN_H, 0x55080910, 14f, 0, 0, 14f);
+			NVGRenderer.rect(winX + SIDEBAR_W, winY, 1f, WIN_H, 0x14FFFFFF);
 
 			// Topbar Separator
-			NVGRenderer.rect(winX + SIDEBAR_W, winY + TOPBAR_H, WIN_W - SIDEBAR_W, 1f, UIColors.withAlpha(UIColors.ITEM_BORDER, 100));
+			NVGRenderer.rect(winX + SIDEBAR_W, winY + TOPBAR_H, WIN_W - SIDEBAR_W, 1f, 0x14FFFFFF);
 
 			// Topbar
 			renderTopBar(smx, smy);
@@ -190,7 +209,17 @@ public class ProfileViewerScreen extends Screen {
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(totalScale * itemScale, totalScale * itemScale);
 
-		if (currentTab == PVTab.GEAR) {
+		if (currentTab == PVTab.OVERVIEW) {
+			for (OverviewTabRenderer.OverviewSlotInfo slot : OverviewTabRenderer.visibleItemSlots) {
+				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
+				if (slot.stack != null && !slot.stack.isEmpty()) {
+					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
+					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
+					// Lucent ItemRenderer icon rendering without numbers/durability bars
+				}
+			}
+		} else if (currentTab == PVTab.GEAR) {
 			for (GearTabRenderer.SlotRenderInfo slot : GearTabRenderer.visibleSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.item != null && !slot.item.isEmpty() && slot.item.itemStack != null && !slot.item.itemStack.isEmpty()) {
@@ -287,8 +316,8 @@ public class ProfileViewerScreen extends Screen {
 				int y1 = (int) (OverviewTabRenderer.playerBounds.y * totalScale);
 				int x2 = (int) ((OverviewTabRenderer.playerBounds.x + OverviewTabRenderer.playerBounds.w) * totalScale);
 				int y2 = (int) ((OverviewTabRenderer.playerBounds.y + OverviewTabRenderer.playerBounds.h) * totalScale);
-				int scale = (int) (105f * totalScale);
-				float yOffset = 0.06f;
+				int scale = (int) (112f * totalScale);
+				float yOffset = 0.05f;
 
 				net.minecraft.client.gui.screens.inventory.InventoryScreen.extractEntityInInventoryFollowsMouse(
 					graphics, x1, y1, x2, y2, scale, yOffset, mouseX, mouseY, mannequin
@@ -319,25 +348,27 @@ public class ProfileViewerScreen extends Screen {
 
 	private void renderTopBar(float mx, float my) {
 		float hx = winX + SIDEBAR_W + 24f;
-		float hy = winY + 22f;
+		float hy = winY + 27f;
 
-		// H2 (24px) for Username
-		NVGRenderer.text(username, hx, hy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_H2);
+		// Username (20.5px - slightly smaller and placed lower with more breathing room)
+		NVGRenderer.text(username, hx, hy - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 20.5f);
 
 		if (currentProfile != null) {
-			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_H2);
+			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 			float pX = hx + userW + 16f;
 			float pW = 120f;
 			float pH = 28f;
-			boolean hovP = mx >= pX && mx <= pX + pW && my >= hy - 2f && my <= hy - 2f + pH;
-			NVGRenderer.rect(pX, hy - 2f, pW, pH, hovP ? 0xFF333748 : 0xFF232532, 6f);
-			NVGRenderer.outlineRect(pX, hy - 2f, pW, pH, 1f, hovP ? UIColors.ACCENT_BLUE : 0x44FFFFFF, 6f);
+			boolean hovP = mx >= pX && mx <= pX + pW && my >= hy - 4f && my <= hy - 4f + pH;
+			NVGRenderer.rect(pX, hy - 4f, pW, pH, hovP ? 0xE0222636 : 0xD0141624, 7f);
+			NVGRenderer.outlineRect(pX, hy - 4f, pW, pH, 1f, hovP ? 0x666366F1 : 0x1AFFFFFF, 7f);
 
-			NVGRenderer.text(currentProfile.cuteName, pX + 12f, hy + 5f, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_BUTTON);
-			NVGRenderer.text("\uE5C5", pX + pW - 22f, hy + 5f, Fonts.MATERIAL_ICONS_ROUND, UIColors.ACCENT_BLUE, 16f);
+			// Raspberry / Fruit Icon
+			NVGRenderer.text("\uE541", pX + 9f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF43F5E, 16f);
+			NVGRenderer.text(currentProfile.cuteName, pX + 30f, hy + 2.5f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 14f);
+			NVGRenderer.text("\uE5C5", pX + pW - 18f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 15f);
 
 			if (!"normal".equalsIgnoreCase(currentProfile.gameMode)) {
-				RenderHelper.drawBadge(currentProfile.gameMode.toUpperCase(), pX + pW + 10f, hy - 1f, 0xFF4A3B18, 0xFFFFAA00);
+				RenderHelper.drawBadge(currentProfile.gameMode.toUpperCase(), pX + pW + 10f, hy - 2f, 0xFF4A3B18, 0xFFFFAA00);
 			}
 		}
 
@@ -345,41 +376,43 @@ public class ProfileViewerScreen extends Screen {
 		float closeX = winX + WIN_W - 42f;
 		float refX = closeX - 36f;
 
-		boolean hovRef = mx >= refX && mx <= refX + btnSize && my >= hy - 2f && my <= hy - 2f + btnSize;
-		NVGRenderer.rect(refX, hy - 2f, btnSize, btnSize, hovRef ? 0x44FFFFFF : 0x22FFFFFF, 6f);
-		NVGRenderer.text("\uE5D5", refX + 6f, hy + 4f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 16f);
+		boolean hovRef = mx >= refX && mx <= refX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
+		NVGRenderer.rect(refX, hy - 4f, btnSize, btnSize, hovRef ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		NVGRenderer.text("\uE5D5", refX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 
-		boolean hovClose = mx >= closeX && mx <= closeX + btnSize && my >= hy - 2f && my <= hy - 2f + btnSize;
-		NVGRenderer.rect(closeX, hy - 2f, btnSize, btnSize, hovClose ? 0x44FF4444 : 0x22FFFFFF, 6f);
-		NVGRenderer.text("\uE5CD", closeX + 6f, hy + 4f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 16f);
+		boolean hovClose = mx >= closeX && mx <= closeX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
+		NVGRenderer.rect(closeX, hy - 4f, btnSize, btnSize, hovClose ? 0x44FF4444 : 0x1AFFFFFF, 6f);
+		NVGRenderer.text("\uE5CD", closeX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 	}
 
 	private void renderSidebar(float mx, float my) {
 		float sx = winX + 14f;
-		float sy = winY + 24f;
+		float sy = winY + 28f;
 
-		// H3 (20px) Sidebar Title
-		NVGRenderer.text(L10n.translate("pv.ui.title"), sx + 6, sy, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_H3);
-		sy += 36f;
+		// Sidebar Title (18px) with more top margin
+		NVGRenderer.text("PROFILE ", sx + 4, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 18f);
+		float pW = NVGRenderer.textWidth("PROFILE ", Fonts.PRETENDARD_SEMIBOLD, 18f);
+		NVGRenderer.text("VIEWER", sx + 4 + pW, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF6366F1, 18f);
+		sy += 42f;
 
 		float tabW = SIDEBAR_W - 28f;
-		float tabH = 34f;
+		float tabH = 36f;
 
 		for (PVTab tab : PVTab.values()) {
 			boolean active = (tab == currentTab);
 			boolean hov = mx >= sx && mx <= sx + tabW && my >= sy && my <= sy + tabH;
 
 			if (active) {
-				NVGRenderer.rect(sx, sy, tabW, tabH, UIColors.ACCENT_BLUE, 8f);
+				NVGRenderer.rect(sx, sy, tabW, tabH, 0xBF4F46E5, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(sx, sy, tabW, tabH, 0x22FFFFFF, 8f);
+				NVGRenderer.rect(sx, sy, tabW, tabH, 0x1AFFFFFF, 8f);
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			NVGRenderer.text(tab.icon, sx + 10f, sy + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
-			NVGRenderer.text(tab.getTitle(), sx + 34f, sy + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(tab.icon, sx + 12f, sy + 9f, Fonts.MATERIAL_ICONS_ROUND, textColor, 18f);
+			NVGRenderer.text(tab.getTitle(), sx + 36f, sy + 11f, Fonts.PRETENDARD_MEDIUM, textColor, 14.5f);
 
-			sy += tabH + 4f;
+			sy += tabH + 6f;
 		}
 	}
 

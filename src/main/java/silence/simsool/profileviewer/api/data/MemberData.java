@@ -24,6 +24,14 @@ public class MemberData {
 	public CfData cf = new CfData();
 	public NetworthData networth = new NetworthData();
 
+	// Overview Specific Stats
+	public boolean cookieBuffActive = false;
+	public long lastLogin = 0;
+	public double playtimeHours = 0;
+	public long totalKills = 0;
+	public long totalDeaths = 0;
+	public java.util.Map<String, Long> essence = new java.util.LinkedHashMap<>();
+
 	public static MemberData fromJson(JsonObject member, double bankBalance) {
 		MemberData m = new MemberData();
 		if (member == null) return m;
@@ -31,6 +39,18 @@ public class MemberData {
 		if (member.has("currencies") && member.get("currencies").isJsonObject()) {
 			JsonObject curr = member.getAsJsonObject("currencies");
 			if (curr.has("coin_purse")) m.purse = curr.get("coin_purse").getAsDouble();
+			if (curr.has("essence") && curr.get("essence").isJsonObject()) {
+				JsonObject ess = curr.getAsJsonObject("essence");
+				for (var entry : ess.entrySet()) {
+					long amount = 0;
+					if (entry.getValue().isJsonObject() && entry.getValue().getAsJsonObject().has("current")) {
+						amount = entry.getValue().getAsJsonObject().get("current").getAsLong();
+					} else if (entry.getValue().isJsonPrimitive()) {
+						amount = entry.getValue().getAsLong();
+					}
+					m.essence.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), amount);
+				}
+			}
 		}
 		if (member.has("leveling") && member.get("leveling").isJsonObject()) {
 			JsonObject lvl = member.getAsJsonObject("leveling");
@@ -45,6 +65,27 @@ public class MemberData {
 		if (member.has("profile") && member.get("profile").isJsonObject()) {
 			JsonObject prof = member.getAsJsonObject("profile");
 			if (prof.has("first_join")) m.firstJoin = prof.get("first_join").getAsLong();
+			if (prof.has("last_save")) m.lastLogin = prof.get("last_save").getAsLong();
+			if (prof.has("cookie_buff_active")) m.cookieBuffActive = prof.get("cookie_buff_active").getAsBoolean();
+		}
+
+		if (member.has("player_stats") && member.get("player_stats").isJsonObject()) {
+			JsonObject ps = member.getAsJsonObject("player_stats");
+			if (ps.has("kills") && ps.get("kills").isJsonObject()) {
+				for (var entry : ps.getAsJsonObject("kills").entrySet()) {
+					if (entry.getValue().isJsonPrimitive()) m.totalKills += entry.getValue().getAsLong();
+				}
+			}
+			if (ps.has("deaths") && ps.get("deaths").isJsonObject()) {
+				for (var entry : ps.getAsJsonObject("deaths").entrySet()) {
+					if (entry.getValue().isJsonPrimitive()) m.totalDeaths += entry.getValue().getAsLong();
+				}
+			}
+			if (ps.has("playtime")) {
+				m.playtimeHours = ps.get("playtime").getAsDouble() / 3600.0;
+			} else if (ps.has("time_spent")) {
+				m.playtimeHours = ps.get("time_spent").getAsDouble() / 3600.0;
+			}
 		}
 
 		try { m.skills = SkillsData.fromJson(member); } catch (Exception ignored) {}
