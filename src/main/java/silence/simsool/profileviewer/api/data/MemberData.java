@@ -40,15 +40,16 @@ public class MemberData {
 			JsonObject curr = member.getAsJsonObject("currencies");
 			if (curr.has("coin_purse")) m.purse = curr.get("coin_purse").getAsDouble();
 			if (curr.has("essence") && curr.get("essence").isJsonObject()) {
-				JsonObject ess = curr.getAsJsonObject("essence");
-				for (var entry : ess.entrySet()) {
-					long amount = 0;
-					if (entry.getValue().isJsonObject() && entry.getValue().getAsJsonObject().has("current")) {
-						amount = entry.getValue().getAsJsonObject().get("current").getAsLong();
-					} else if (entry.getValue().isJsonPrimitive()) {
-						amount = entry.getValue().getAsLong();
-					}
-					m.essence.put(entry.getKey().toLowerCase(java.util.Locale.ROOT), amount);
+				parseEssenceObject(curr.getAsJsonObject("essence"), m);
+			}
+		}
+		if (m.essence.isEmpty()) {
+			if (member.has("essence") && member.get("essence").isJsonObject()) {
+				parseEssenceObject(member.getAsJsonObject("essence"), m);
+			} else if (member.has("player_data") && member.get("player_data").isJsonObject()) {
+				JsonObject pd = member.getAsJsonObject("player_data");
+				if (pd.has("essence") && pd.get("essence").isJsonObject()) {
+					parseEssenceObject(pd.getAsJsonObject("essence"), m);
 				}
 			}
 		}
@@ -100,7 +101,14 @@ public class MemberData {
 		try { m.rift = RiftData.fromJson(member); } catch (Exception ignored) {}
 		try { m.collections = CollectionData.fromJson(member); } catch (Exception ignored) {}
 		try { m.cf = CfData.fromJson(member); } catch (Exception ignored) {}
-		try { m.networth = NetworthData.calculate(m, bankBalance); } catch (Exception ignored) {}
+
+		if (member.has("networth") && member.get("networth").isJsonObject()) {
+			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("networth"), bankBalance); } catch (Exception ignored) {}
+		} else if (member.has("net_worth") && member.get("net_worth").isJsonObject()) {
+			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("net_worth"), bankBalance); } catch (Exception ignored) {}
+		} else {
+			try { m.networth = NetworthData.calculate(m, bankBalance); } catch (Exception ignored) {}
+		}
 
 		return m;
 	}
@@ -142,6 +150,39 @@ public class MemberData {
 		try { m.inventory = InventoryData.fromJson(dataObj); } catch (Exception ignored) {}
 		try { m.pets = PetData.fromJson(dataObj); } catch (Exception ignored) {}
 
+		if (dataObj.has("essence") && dataObj.get("essence").isJsonObject()) {
+			parseEssenceObject(dataObj.getAsJsonObject("essence"), m);
+		}
+
 		return m;
+	}
+
+	private static void parseEssenceObject(JsonObject ess, MemberData m) {
+		if (ess == null || m == null) return;
+		for (var entry : ess.entrySet()) {
+			long amount = 0;
+			if (entry.getValue().isJsonObject()) {
+				JsonObject obj = entry.getValue().getAsJsonObject();
+				if (obj.has("current")) amount = obj.get("current").getAsLong();
+				else if (obj.has("amount")) amount = obj.get("amount").getAsLong();
+				else if (obj.has("total")) amount = obj.get("total").getAsLong();
+				else if (obj.has("value")) amount = obj.get("value").getAsLong();
+				else if (obj.has("count")) amount = obj.get("count").getAsLong();
+			} else if (entry.getValue().isJsonPrimitive()) {
+				amount = entry.getValue().getAsLong();
+			}
+
+			String rawKey = entry.getKey().toLowerCase(java.util.Locale.ROOT).trim();
+			String cleanKey = rawKey.replace("essence_", "").replace("_essence", "").trim();
+
+			m.essence.put(rawKey, amount);
+			m.essence.put(cleanKey, amount);
+
+			if (cleanKey.equals("wood") || cleanKey.equals("foraging") || cleanKey.equals("forest")) {
+				m.essence.put("wood", amount);
+				m.essence.put("foraging", amount);
+				m.essence.put("forest", amount);
+			}
+		}
 	}
 }

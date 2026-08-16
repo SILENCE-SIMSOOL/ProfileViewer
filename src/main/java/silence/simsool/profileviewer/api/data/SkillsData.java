@@ -88,27 +88,47 @@ public class SkillsData {
 		522425, 822425, 1222425, 1722425, 2322425, 3022425, 3822425, 4722425, 5722425, 6822425,
 		8022425, 9322425, 10722425, 12222425, 13822425, 15522425, 17322425, 19222425, 21222425, 23322425,
 		25522425, 27822425, 30222425, 32722425, 35322425, 38072425, 40972425, 44072425, 47472425, 51172425,
-		55172425, 59472425, 64072425, 68972425, 74172425, 79672425, 85472425, 91572425, 97972425, 104672425
+		55172425, 59472425, 64072425, 68972425, 74172425, 79672425, 85472425, 91572425, 97972425, 104672425,
+		111672425
+	};
+
+	private static final double[] RUNECRAFTING_XP_TABLE = {
+		0, 50, 150, 300, 500, 750, 1050, 1400, 1800, 2250,
+		2750, 3350, 4050, 4850, 5750, 6750, 7950, 9350, 10950, 12750,
+		14750, 17250, 20250, 23750, 27750, 32750
+	};
+
+	private static final double[] SOCIAL_XP_TABLE = {
+		0, 50, 150, 300, 500, 750, 1050, 1400, 1800, 2250,
+		2750, 3350, 4050, 4850, 5750, 6750, 7950, 9350, 10950, 12750,
+		14750, 17250, 20250, 23750, 27750, 32750
 	};
 
 	private static void calculateSkill(SkillInfo info, double xp) {
 		info.totalXp = xp;
+		double[] table = XP_TABLE;
+		if ("Runecrafting".equalsIgnoreCase(info.name)) {
+			table = RUNECRAFTING_XP_TABLE;
+		} else if ("Social".equalsIgnoreCase(info.name)) {
+			table = SOCIAL_XP_TABLE;
+		}
+
 		int lvl = 0;
-		for (int i = 1; i < XP_TABLE.length && i <= info.maxLevel; i++) {
-			if (xp >= XP_TABLE[i]) {
+		for (int i = 1; i < table.length && i <= info.maxLevel; i++) {
+			if (xp >= table[i]) {
 				lvl = i;
 			} else {
 				break;
 			}
 		}
 		info.level = lvl;
-		if (lvl >= info.maxLevel || lvl >= XP_TABLE.length - 1) {
+		if (lvl >= info.maxLevel || lvl >= table.length - 1) {
 			info.progress = 1.0f;
 			info.currentXp = 0;
 			info.nextLevelXp = 0;
 		} else {
-			double base = XP_TABLE[lvl];
-			double next = XP_TABLE[lvl + 1];
+			double base = table[lvl];
+			double next = table[lvl + 1];
 			double needed = next - base;
 			double current = xp - base;
 			info.currentXp = current;

@@ -28,8 +28,8 @@ import silence.simsool.profileviewer.ui.tabs.*;
 
 public class ProfileViewerScreen extends Screen {
 
-	private final String username;
-	private final UUID uuid;
+	private String username;
+	private UUID uuid;
 
 	private List<SkyBlockProfileData> profiles = new ArrayList<>();
 	private SkyBlockProfileData currentProfile = null;
@@ -52,11 +52,16 @@ public class ProfileViewerScreen extends Screen {
 	private boolean profileDropdownOpen = false;
 	private boolean isDraggingScrollbar = false;
 
+	private String searchInput = "";
+	private boolean searchFocused = false;
+
 	private net.minecraft.client.entity.ClientMannequin mannequin = null;
 	private silence.simsool.profileviewer.api.data.PlayerStatus playerStatus = null;
 	private int lastArmorHash = 0;
 	private UUID lastMannequinUuid = null;
 	private static final java.util.concurrent.atomic.AtomicInteger NEXT_ENTITY_ID = new java.util.concurrent.atomic.AtomicInteger(100000);
+
+	private net.minecraft.client.gui.components.EditBox searchField;
 
 	public ProfileViewerScreen(String username, UUID uuid) {
 		super(Component.literal("Profile Viewer"));
@@ -68,6 +73,13 @@ public class ProfileViewerScreen extends Screen {
 	protected void init() {
 		super.init();
 		updateLayout();
+
+		searchField = new net.minecraft.client.gui.components.EditBox(font, 0, 0, 160, 28, Component.literal("Search"));
+		searchField.setMaxLength(16);
+		searchField.setBordered(false);
+		searchField.visible = false;
+		addWidget(searchField);
+
 		loadData(false);
 	}
 
@@ -98,6 +110,8 @@ public class ProfileViewerScreen extends Screen {
 	private void loadData(boolean forceRefresh) {
 		loading = true;
 		errorMessage = "";
+		OverviewTabRenderer.visibleItemSlots.clear();
+		OverviewTabRenderer.playerBounds.visible = false;
 		PvApi.fetchPlayerStatusAsync(uuid).thenAccept(st -> this.playerStatus = st);
 		PvApi.fetchProfilesAsync(uuid, forceRefresh).thenAccept(list -> {
 			loading = false;
@@ -109,6 +123,30 @@ public class ProfileViewerScreen extends Screen {
 			if (this.currentProfile == null || forceRefresh) {
 				this.currentProfile = list.get(0);
 			}
+		}).exceptionally(e -> {
+			loading = false;
+			errorMessage = String.format(L10n.translate("pv.ui.request_failed"), e.getMessage());
+			return null;
+		});
+	}
+
+	private void performSearch(String target) {
+		loading = true;
+		errorMessage = "";
+		OverviewTabRenderer.visibleItemSlots.clear();
+		OverviewTabRenderer.playerBounds.visible = false;
+		silence.simsool.profileviewer.api.PlayerDbApi.resolveGameProfile(target).thenAccept(profile -> {
+			if (profile == null) {
+				loading = false;
+				errorMessage = L10n.translate("pv.ui.not_found");
+				return;
+			}
+			this.username = profile.name();
+			this.uuid = profile.id();
+			this.currentProfile = null;
+			this.profiles = java.util.Collections.emptyList();
+			this.mannequin = null;
+			loadData(true);
 		}).exceptionally(e -> {
 			loading = false;
 			errorMessage = String.format(L10n.translate("pv.ui.request_failed"), e.getMessage());
@@ -210,30 +248,43 @@ public class ProfileViewerScreen extends Screen {
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(totalScale * itemScale, totalScale * itemScale);
 
-		if (currentTab == PVTab.OVERVIEW) {
+		if (!loading && currentTab == PVTab.OVERVIEW) {
 			for (OverviewTabRenderer.OverviewSlotInfo slot : OverviewTabRenderer.visibleItemSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
+				float customScale = slot.size / 32f;
 				if (slot.texture != null) {
-					int texX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int texY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					int texSize = 16;
-					
-					URender.drawImage(graphics, slot.texture, texX, texY, texSize, texSize);
+					graphics.pose().pushMatrix();
+					graphics.pose().translate(slot.x / itemScale, slot.y / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					URender.drawImage(graphics, slot.texture, 0, 0, 16, 16);
+					graphics.pose().popMatrix();
 				} else if (slot.stack != null && !slot.stack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
-					// ItemRenderer icon rendering without numbers/durability bars
+					graphics.pose().pushMatrix();
+					graphics.pose().translate(slot.x / itemScale, slot.y / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
+					graphics.pose().popMatrix();
 				}
+				// Overview tab uses items only as icons - no tooltip
 			}
 		} else if (currentTab == PVTab.GEAR) {
 			for (GearTabRenderer.SlotRenderInfo slot : GearTabRenderer.visibleSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.item != null && !slot.item.isEmpty() && slot.item.itemStack != null && !slot.item.itemStack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.item.itemStack, itemX, itemY);
-					graphics.itemDecorations(this.font, slot.item.itemStack, itemX, itemY);
+					float slotSize = slot.size;
+					float itemVisualSize = 32f;
+					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float offX = (slotSize - itemVisualSize * customScale) / 2f;
+					float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+					graphics.pose().pushMatrix();
+					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.item.itemStack, 0, 0);
+					if (slot.item.count > 1) {
+						graphics.itemDecorations(this.font, slot.item.itemStack, 0, 0);
+					}
+					graphics.pose().popMatrix();
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -247,10 +298,18 @@ public class ProfileViewerScreen extends Screen {
 			for (PetsTabRenderer.PetSlotInfo slot : PetsTabRenderer.visiblePetSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.pet != null && slot.pet.itemStack != null && !slot.pet.itemStack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.pet.itemStack, itemX, itemY);
-					graphics.itemDecorations(this.font, slot.pet.itemStack, itemX, itemY);
+					float slotSize = slot.size;
+					float itemVisualSize = 32f;
+					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float offX = (slotSize - itemVisualSize * customScale) / 2f;
+					float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+					graphics.pose().pushMatrix();
+					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.pet.itemStack, 0, 0);
+					graphics.itemDecorations(this.font, slot.pet.itemStack, 0, 0);
+					graphics.pose().popMatrix();
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -264,10 +323,18 @@ public class ProfileViewerScreen extends Screen {
 			for (MiningTabRenderer.TreeSlotInfo slot : MiningTabRenderer.visibleTreeSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.stack != null && !slot.stack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
-					graphics.itemDecorations(this.font, slot.stack, itemX, itemY);
+					float slotSize = slot.size;
+					float itemVisualSize = 32f;
+					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float offX = (slotSize - itemVisualSize * customScale) / 2f;
+					float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+					graphics.pose().pushMatrix();
+					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
+					graphics.itemDecorations(this.font, slot.stack, 0, 0);
+					graphics.pose().popMatrix();
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -281,10 +348,18 @@ public class ProfileViewerScreen extends Screen {
 			for (FishingTabRenderer.TrophySlotInfo slot : FishingTabRenderer.visibleTrophySlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.stack != null && !slot.stack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
-					graphics.itemDecorations(this.font, slot.stack, itemX, itemY);
+					float slotSize = slot.size;
+					float itemVisualSize = 32f;
+					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float offX = (slotSize - itemVisualSize * customScale) / 2f;
+					float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+					graphics.pose().pushMatrix();
+					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
+					graphics.itemDecorations(this.font, slot.stack, 0, 0);
+					graphics.pose().popMatrix();
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -298,10 +373,18 @@ public class ProfileViewerScreen extends Screen {
 			for (MuseumTabRenderer.MuseumSlotInfo slot : MuseumTabRenderer.visibleMuseumSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.stack != null && !slot.stack.isEmpty()) {
-					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
-					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
-					graphics.itemDecorations(this.font, slot.stack, itemX, itemY);
+					float slotSize = slot.size;
+					float itemVisualSize = 32f;
+					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float offX = (slotSize - itemVisualSize * customScale) / 2f;
+					float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+					graphics.pose().pushMatrix();
+					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+					graphics.pose().scale(customScale, customScale);
+					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
+					graphics.itemDecorations(this.font, slot.stack, 0, 0);
+					graphics.pose().popMatrix();
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -360,19 +443,30 @@ public class ProfileViewerScreen extends Screen {
 		// Username (20.5px - slightly smaller and placed lower with more breathing room)
 		NVGRenderer.text(username, hx, hy - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 20.5f);
 
+		// Profile Selector Button (Wider, seamless dropdown connection)
 		if (currentProfile != null) {
 			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 			float pX = hx + userW + 16f;
-			float pW = 120f;
+			float pW = 145f;
 			float pH = 28f;
-			boolean hovP = mx >= pX && mx <= pX + pW && my >= hy - 4f && my <= hy - 4f + pH;
-			NVGRenderer.rect(pX, hy - 4f, pW, pH, hovP ? 0xE0222636 : 0xD0141624, 7f);
-			NVGRenderer.outlineRect(pX, hy - 4f, pW, pH, 1f, hovP ? 0x666366F1 : 0x1AFFFFFF, 7f);
+			float pY = hy - 4f;
+			boolean hovP = mx >= pX && mx <= pX + pW && my >= pY && my <= pY + pH;
+
+			if (profileDropdownOpen) {
+				NVGRenderer.rect(pX, pY, pW, pH, 0xF8141624, 7f, 7f, 0f, 0f);
+				NVGRenderer.outlineRect(pX, pY, pW, pH, 1f, 0x33FFFFFF, 7f, 7f, 0f, 0f);
+			} else {
+				NVGRenderer.rect(pX, pY, pW, pH, hovP ? 0xE0222636 : 0xD0141624, 7f);
+				NVGRenderer.outlineRect(pX, pY, pW, pH, 1f, hovP ? 0x33FFFFFF : 0x1AFFFFFF, 7f);
+			}
 
 			// Raspberry / Fruit Icon
 			NVGRenderer.text("\uE541", pX + 9f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF43F5E, 16f);
 			NVGRenderer.text(currentProfile.cuteName, pX + 30f, hy + 2.5f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 14f);
-			NVGRenderer.text("\uE5C5", pX + pW - 18f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 15f);
+
+			// Arrow Icon: keyboard_arrow_up \uE316 or keyboard_arrow_down \uE313
+			String arrowIcon = profileDropdownOpen ? "\uE316" : "\uE313";
+			NVGRenderer.text(arrowIcon, pX + pW - 20f, hy + 3f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 16f);
 
 			if (!"normal".equalsIgnoreCase(currentProfile.gameMode)) {
 				RenderHelper.drawBadge(currentProfile.gameMode.toUpperCase(), pX + pW + 10f, hy - 2f, 0xFF4A3B18, 0xFFFFAA00);
@@ -382,11 +476,46 @@ public class ProfileViewerScreen extends Screen {
 		float btnSize = 28f;
 		float closeX = winX + WIN_W - 42f;
 		float refX = closeX - 36f;
+		float setX = refX - 36f;
+		float discX = setX - 36f;
 
+		// Search Bar (with \uE8B6 icon) - Clean look, no blue outline / hover color, text slightly lower
+		float searchW = 160f;
+		float searchX = discX - searchW - 12f;
+		float searchY = hy - 4f;
+
+		NVGRenderer.rect(searchX, searchY, searchW, btnSize, 0xD0141624, 7f);
+		NVGRenderer.outlineRect(searchX, searchY, searchW, btnSize, 1f, 0x1AFFFFFF, 7f);
+		NVGRenderer.text("\uE8B6", searchX + 8.5f, hy + 3.5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 15f);
+
+		if (searchInput.isEmpty() && !searchFocused) {
+			NVGRenderer.text("Search player...", searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_DISABLED, 13f);
+		} else {
+			String displayTxt = searchInput + (searchFocused && (System.currentTimeMillis() % 1000 < 500) ? "|" : "");
+			NVGRenderer.text(displayTxt, searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
+		}
+
+		// Discord Button
+		if (silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord == null) {
+			silence.simsool.lucent.ui.manager.LucentResourceManager.loadLucentIcons();
+		}
+		boolean hovDisc = mx >= discX && mx <= discX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
+		NVGRenderer.rect(discX, hy - 4f, btnSize, btnSize, hovDisc ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		if (silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord != null) {
+			NVGRenderer.image(silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord, discX + 5.5f, hy - 4f + 5.5f, 17f, 17f);
+		}
+
+		// Settings Button
+		boolean hovSet = mx >= setX && mx <= setX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
+		NVGRenderer.rect(setX, hy - 4f, btnSize, btnSize, hovSet ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		NVGRenderer.text("\uE8B8", setX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
+
+		// Refresh Button
 		boolean hovRef = mx >= refX && mx <= refX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
 		NVGRenderer.rect(refX, hy - 4f, btnSize, btnSize, hovRef ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
 		NVGRenderer.text("\uE5D5", refX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 
+		// Close Button
 		boolean hovClose = mx >= closeX && mx <= closeX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
 		NVGRenderer.rect(closeX, hy - 4f, btnSize, btnSize, hovClose ? 0x44FF4444 : 0x1AFFFFFF, 6f);
 		NVGRenderer.text("\uE5CD", closeX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
@@ -426,9 +555,12 @@ public class ProfileViewerScreen extends Screen {
 
 	private void renderContent(float mx, float my, float delta) {
 		if (loading) {
-			String loadTxt = L10n.translate("pv.ui.loading");
-			float loadW = NVGRenderer.textWidth(loadTxt, Fonts.PRETENDARD_MEDIUM, RenderHelper.FS_BODY);
-			NVGRenderer.text(loadTxt, contentX + (contentW - loadW) / 2f, contentY + contentH / 2f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, RenderHelper.FS_BODY);
+			String loadTxt = "Loading Profile Data...";
+			float fs = 24f;
+			float loadW = NVGRenderer.textWidth(loadTxt, Fonts.PRETENDARD_SEMIBOLD, fs);
+			float loadX = contentX + (contentW - loadW) / 2f;
+			float loadY = contentY + (contentH / 2f) - fs;
+			NVGRenderer.text(loadTxt, loadX, loadY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, fs);
 			return;
 		}
 
@@ -444,7 +576,13 @@ public class ProfileViewerScreen extends Screen {
 		float renderedH = 0;
 		float startY = (float) (contentY - scrollOffset);
 
+		OverviewTabRenderer.visibleItemSlots.clear();
 		OverviewTabRenderer.playerBounds.visible = false;
+		GearTabRenderer.visibleSlots.clear();
+		PetsTabRenderer.visiblePetSlots.clear();
+		MiningTabRenderer.visibleTreeSlots.clear();
+		FishingTabRenderer.visibleTrophySlots.clear();
+		MuseumTabRenderer.visibleMuseumSlots.clear();
 
 		switch (currentTab) {
 			case OVERVIEW -> renderedH = OverviewTabRenderer.render(username, currentProfile.member, playerStatus, contentX, startY, contentW, mx, my, delta);
@@ -476,22 +614,28 @@ public class ProfileViewerScreen extends Screen {
 	}
 
 	private void renderProfileDropdown(float mx, float my) {
-		float hx = winX + SIDEBAR_W + 20f;
-		float pX = hx + NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20f) + 16f;
-		float pY = winY + 22f + 24f;
-		float pW = 140f;
-		float itemH = 28f;
-		float totalH = profiles.size() * itemH + 8f;
+		float hx = winX + SIDEBAR_W + 24f;
+		float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
+		float pX = hx + userW + 16f;
+		float pW = 145f;
+		float pH = 28f;
+		float pY = winY + 27f - 4f;
 
-		NVGRenderer.rect(pX, pY, pW, totalH, 0xFA20222D, 8f);
-		NVGRenderer.outlineRect(pX, pY, pW, totalH, 1f, UIColors.withAlpha(UIColors.ITEM_BORDER, 200), 8f);
+		float itemH = 28f;
+		float totalH = profiles.size() * itemH + 6f;
+
+		// Seamless dropdown body attached underneath
+		NVGRenderer.rect(pX, pY + pH, pW, totalH, 0xF8141624, 0f, 0f, 7f, 7f);
+		NVGRenderer.outlineRect(pX, pY + pH, pW, totalH, 1f, 0x33FFFFFF, 0f, 0f, 7f, 7f);
 
 		for (int i = 0; i < profiles.size(); i++) {
 			SkyBlockProfileData p = profiles.get(i);
-			float iy = pY + 4f + i * itemH;
+			float iy = pY + pH + 3f + i * itemH;
 			boolean hov = mx >= pX && mx <= pX + pW && my >= iy && my <= iy + itemH;
-			if (hov) NVGRenderer.rect(pX + 4f, iy, pW - 8f, itemH, 0x33FFFFFF, 6f);
-			NVGRenderer.text(p.cuteName, pX + 12f, iy + 7f, Fonts.PRETENDARD_MEDIUM, (p == currentProfile) ? UIColors.ACCENT_BLUE : UIColors.TEXT_PRIMARY, 13f);
+			if (hov) NVGRenderer.rect(pX + 4f, iy, pW - 8f, itemH, 0x22FFFFFF, 5f);
+
+			int col = (p == currentProfile) ? 0xFFFFFFFF : RenderHelper.FONT_MUTED;
+			NVGRenderer.text(p.cuteName, pX + 12f, iy + 7.5f, Fonts.PRETENDARD_MEDIUM, col, 13.5f);
 		}
 	}
 
@@ -569,15 +713,16 @@ public class ProfileViewerScreen extends Screen {
 				}
 			}
 
-			if (profileDropdownOpen) {
-				float hx = winX + SIDEBAR_W + 20f;
-				float pX = hx + NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20f) + 16f;
-				float pY = winY + 22f + 24f;
-				float pW = 140f;
-				float itemH = 28f;
+			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
+			float pX = winX + SIDEBAR_W + 24f + userW + 16f;
+			float pW = 145f;
+			float pH = 28f;
+			float pY = winY + 27f - 4f;
 
+			if (profileDropdownOpen) {
+				float itemH = 28f;
 				for (int i = 0; i < profiles.size(); i++) {
-					float iy = pY + 4f + i * itemH;
+					float iy = pY + pH + 3f + i * itemH;
 					if (mx >= pX && mx <= pX + pW && my >= iy && my <= iy + itemH) {
 						currentProfile = profiles.get(i);
 						profileDropdownOpen = false;
@@ -589,37 +734,67 @@ public class ProfileViewerScreen extends Screen {
 				return true;
 			}
 
-			float hx = winX + SIDEBAR_W + 20f;
-			float pX = hx + NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20f) + 16f;
-			float pY = winY + 22f - 4f;
-			if (mx >= pX && mx <= pX + 120f && my >= pY && my <= pY + 26f) {
+			if (mx >= pX && mx <= pX + pW && my >= pY && my <= pY + pH) {
 				profileDropdownOpen = !profileDropdownOpen;
 				return true;
 			}
 
-			float closeX = winX + WIN_W - 40f;
-			if (mx >= closeX && mx <= closeX + 28f && my >= winY + 16f && my <= winY + 44f) {
+			float btnSize = 28f;
+			float closeX = winX + WIN_W - 42f;
+			float refX = closeX - 36f;
+			float setX = refX - 36f;
+			float discX = setX - 36f;
+
+			// Search Bar Click
+			float searchW = 160f;
+			float searchX = discX - searchW - 12f;
+			float searchY = winY + 27f - 4f;
+			boolean inSearch = mx >= searchX && mx <= searchX + searchW && my >= searchY && my <= searchY + btnSize;
+			searchFocused = inSearch;
+			if (inSearch) {
+				return true;
+			}
+
+			if (mx >= closeX && mx <= closeX + btnSize && my >= winY + 23f && my <= winY + 23f + btnSize) {
 				UScreen.setScreen(null);
 				return true;
 			}
 
-			float refX = closeX - 36f;
-			if (mx >= refX && mx <= refX + 28f && my >= winY + 16f && my <= winY + 44f) {
+			if (mx >= refX && mx <= refX + btnSize && my >= winY + 23f && my <= winY + 23f + btnSize) {
 				loadData(true);
 				return true;
 			}
 
+			if (mx >= setX && mx <= setX + btnSize && my >= winY + 23f && my <= winY + 23f + btnSize) {
+				silence.simsool.lucent.ui.screens.ConfigScreen cs = new silence.simsool.lucent.ui.screens.ConfigScreen(silence.simsool.lucent.Lucent.config);
+				try {
+					java.lang.reflect.Field f = silence.simsool.lucent.ui.screens.ConfigScreen.class.getDeclaredField("currentSidebarPage");
+					f.setAccessible(true);
+					f.set(cs, "Preferences");
+				} catch (Exception ignored) {}
+				UScreen.setScreen(cs);
+				return true;
+			}
+
+			if (mx >= discX && mx <= discX + btnSize && my >= winY + 23f && my <= winY + 23f + btnSize) {
+				silence.simsool.lucent.general.utils.useful.UDesktop.openBrowse(silence.simsool.lucent.config.LucentConfig.DISCORD_LINK);
+				return true;
+			}
+
 			float sx = winX + 14f;
-			float sy = winY + 60f;
+			float sy = winY + 70f;
 			float tabW = SIDEBAR_W - 28f;
-			float tabH = 34f;
+			float tabH = 36f;
 			for (PVTab tab : PVTab.values()) {
 				if (mx >= sx && mx <= sx + tabW && my >= sy && my <= sy + tabH) {
 					currentTab = tab;
 					scrollOffset = 0;
+					OverviewTabRenderer.visibleItemSlots.clear();
+					OverviewTabRenderer.playerBounds.visible = false;
+					GearTabRenderer.visibleSlots.clear();
 					return true;
 				}
-				sy += tabH + 4f;
+				sy += tabH + 6f;
 			}
 
 			// Scrollbar Track / Thumb Click
@@ -671,6 +846,15 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+		if (searchFocused) {
+			char c = (char) event.codepoint();
+			if (Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == ' ') {
+				if (searchInput.length() < 16) {
+					searchInput += c;
+				}
+				return true;
+			}
+		}
 		if (currentTab == PVTab.PETS) {
 			if (PetsTabRenderer.charTyped((char) event.codepoint(), 0)) {
 				return true;
@@ -682,6 +866,53 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+		if (searchFocused) {
+			if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+				String target = searchInput.trim();
+				if (!target.isEmpty()) {
+					performSearch(target);
+					searchInput = "";
+					searchFocused = false;
+				}
+				return true;
+			}
+			if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+				if (!searchInput.isEmpty()) {
+					searchInput = searchInput.substring(0, searchInput.length() - 1);
+				}
+				return true;
+			}
+			if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+				searchFocused = false;
+				return true;
+			}
+			// Ctrl+V (Paste)
+			if (event.key() == GLFW.GLFW_KEY_V && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+				String clip = mc.keyboardHandler.getClipboard();
+				if (clip != null && !clip.isEmpty()) {
+					for (char ch : clip.toCharArray()) {
+						if ((Character.isLetterOrDigit(ch) || ch == '_') && searchInput.length() < 16) {
+							searchInput += ch;
+						}
+					}
+				}
+				return true;
+			}
+			// Ctrl+C (Copy)
+			if (event.key() == GLFW.GLFW_KEY_C && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+				if (!searchInput.isEmpty()) {
+					mc.keyboardHandler.setClipboard(searchInput);
+				}
+				return true;
+			}
+			// Ctrl+A (Clear)
+			if (event.key() == GLFW.GLFW_KEY_A && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+				searchInput = "";
+				return true;
+			}
+			return true;
+		}
+
 		if (currentTab == PVTab.PETS) {
 			if (PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
 				return true;

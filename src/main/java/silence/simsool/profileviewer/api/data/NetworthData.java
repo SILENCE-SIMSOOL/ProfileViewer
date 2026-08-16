@@ -17,6 +17,54 @@ public class NetworthData {
 	public double sacks = 0;
 	public java.util.Map<String, Double> categories = new java.util.LinkedHashMap<>();
 
+	public static NetworthData fromJson(com.google.gson.JsonObject json, double bankBalance) {
+		NetworthData nw = new NetworthData();
+		if (json == null) return nw;
+
+		if (json.has("networth")) nw.total = json.get("networth").getAsDouble();
+		else if (json.has("total")) nw.total = json.get("total").getAsDouble();
+
+		if (json.has("purse")) nw.purse = json.get("purse").getAsDouble();
+		if (json.has("bank")) nw.bank = json.get("bank").getAsDouble();
+		else nw.bank = bankBalance;
+
+		if (json.has("armor")) nw.armor = json.get("armor").getAsDouble();
+		if (json.has("equipment")) nw.equipment = json.get("equipment").getAsDouble();
+		if (json.has("wardrobe")) nw.wardrobe = json.get("wardrobe").getAsDouble();
+		if (json.has("inventory")) nw.inventory = json.get("inventory").getAsDouble();
+		if (json.has("enderchest")) nw.enderchest = json.get("enderchest").getAsDouble();
+		if (json.has("pets")) nw.pets = json.get("pets").getAsDouble();
+		if (json.has("accessories")) nw.talismans = json.get("accessories").getAsDouble();
+		else if (json.has("talismans")) nw.talismans = json.get("talismans").getAsDouble();
+		if (json.has("sacks")) nw.sacks = json.get("sacks").getAsDouble();
+
+		if (json.has("categories") && json.get("categories").isJsonObject()) {
+			com.google.gson.JsonObject catObj = json.getAsJsonObject("categories");
+			for (var entry : catObj.entrySet()) {
+				if (entry.getValue().isJsonPrimitive()) {
+					nw.categories.put(entry.getKey(), entry.getValue().getAsDouble());
+				}
+			}
+		}
+
+		if (nw.categories.isEmpty()) {
+			nw.categories.put("Armor", nw.armor);
+			nw.categories.put("Equipment", nw.equipment);
+			nw.categories.put("Wardrobe", nw.wardrobe);
+			nw.categories.put("Inventory", nw.inventory);
+			nw.categories.put("Ender Chest", nw.enderchest);
+			nw.categories.put("Accessories", nw.talismans);
+			nw.categories.put("Pets", nw.pets);
+			nw.categories.put("Purse & Bank", nw.purse + nw.bank);
+		}
+
+		if (nw.total <= 0) {
+			nw.total = nw.purse + nw.bank + nw.armor + nw.equipment + nw.wardrobe + nw.inventory + nw.enderchest + nw.pets + nw.talismans + nw.sacks;
+		}
+
+		return nw;
+	}
+
 	public static NetworthData calculate(MemberData member, double bankBalance) {
 		NetworthData nw = new NetworthData();
 		if (member == null) return nw;

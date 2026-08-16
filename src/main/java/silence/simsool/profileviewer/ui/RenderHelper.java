@@ -143,6 +143,56 @@ public class RenderHelper {
 		}
 	}
 
+	public static void drawRainbowProgressBar(float x, float y, float w, float h, float progress) {
+		NVGRenderer.rect(x, y, w, h, 0x44000000, h / 2f);
+		float fillW = Math.max(0, Math.min(w, w * progress));
+		if (fillW <= 0) return;
+
+		int[] colors = {
+			0xFFF472B6, // Soft Rose
+			0xFFFBBF24, // Soft Amber
+			0xFF34D399, // Soft Mint
+			0xFF38BDF8, // Soft Sky Blue
+			0xFFA78BFA, // Soft Lavender
+			0xFFF472B6  // Soft Rose loop
+		};
+		int numSegs = colors.length - 1;
+		float segW = fillW / numSegs;
+
+		for (int i = 0; i < numSegs; i++) {
+			float sx = x + i * segW;
+			float curSegW = (i == numSegs - 1) ? (x + fillW - sx) : (segW + 0.5f);
+			float r1 = (i == 0) ? h / 2f : 0f;              // Top-Left (tl)
+			float r2 = (i == numSegs - 1) ? h / 2f : 0f;    // Top-Right (tr)
+			float r3 = (i == numSegs - 1) ? h / 2f : 0f;    // Bottom-Right (br)
+			float r4 = (i == 0) ? h / 2f : 0f;              // Bottom-Left (bl)
+			NVGRenderer.gradientRect(sx, y, curSegW, h, colors[i], colors[i + 1], silence.simsool.lucent.general.enums.GradientType.LEFT_TO_RIGHT, r1, r2, r3, r4);
+		}
+	}
+
+	public static void drawRainbowBorder(float x, float y, float w, float h, float radius, float thickness) {
+		long vg = NVGRenderer.getVG();
+		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+
+			// Soft pastel gradient from Pink/Coral to Sky/Lavender
+			int col1 = 0xE0F472B6;
+			int col2 = 0xE038BDF8;
+
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((col1 >> 16) & 0xFF), (byte) ((col1 >> 8) & 0xFF), (byte) (col1 & 0xFF), (byte) ((col1 >> 24) & 0xFF), c1);
+			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((col2 >> 16) & 0xFF), (byte) ((col2 >> 8) & 0xFF), (byte) (col2 & 0xFF), (byte) ((col2 >> 24) & 0xFF), c2);
+
+			org.lwjgl.nanovg.NanoVG.nvgLinearGradient(vg, x, y, x + w, y + h, c1, c2, paint);
+			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+			org.lwjgl.nanovg.NanoVG.nvgRoundedRect(vg, x, y, w, h, radius);
+			org.lwjgl.nanovg.NanoVG.nvgStrokeWidth(vg, thickness);
+			org.lwjgl.nanovg.NanoVG.nvgStrokePaint(vg, paint);
+			org.lwjgl.nanovg.NanoVG.nvgStroke(vg);
+		}
+	}
+
 	public static void drawStatRow(String label, String value, float x, float y, float w, float fontSize, int valColor) {
 		NVGRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, UIColors.TEXT_SECONDARY, fontSize);
 		float valW = NVGRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, fontSize);

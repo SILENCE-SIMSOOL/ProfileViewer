@@ -73,6 +73,9 @@ public class OverviewTabRenderer {
 		boolean hovPlayer = isHovered(startX, leftY, leftW, playerCardH, mouseX, mouseY);
 		RenderHelper.drawModernCard(startX, leftY, leftW, playerCardH, 14f, hovPlayer);
 
+		// Soft Ambient Purple Glow behind 3D Player Mannequin
+		RenderHelper.drawAmbientGlow(startX + leftW / 2f, leftY + 160f, 95f, 0x486366F1, 0x00000000);
+
 		// Name & Level Badge Header inside player card
 		drawPlayerHeader(startX, leftY, leftW, username, data.skyBlockLevel);
 
@@ -108,34 +111,34 @@ public class OverviewTabRenderer {
 		float statColW = (rightW - 2 * 12f) / 3f;
 		float statCardH = 72f;
 
-		// Row 1: Purse, Bank, Net Worth
+		// Row 1: Purse, Bank, Networth
 		drawStatCard(rightX, rightY, statColW, statCardH, "\uE263", 0xFFFBBF24, "Purse", RenderHelper.formatCoins(data.purse), 0xFFFBBF24, mouseX, mouseY);
-		drawStatCard(rightX + statColW + 12f, rightY, statColW, statCardH, "\uE84F", 0xFF4ADE80, "Bank", data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "0", 0xFF4ADE80, mouseX, mouseY);
-		drawStatCard(rightX + (statColW + 12f) * 2, rightY, statColW, statCardH, "\uE838", 0xFFE879F9, "Net Worth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "0", 0xFFE879F9, mouseX, mouseY);
+		drawStatCard(rightX + statColW + 12f, rightY, statColW, statCardH, "\uE84F", 0xFFF97316, "Bank", data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "0", 0xFFF97316, mouseX, mouseY);
+		drawStatCard(rightX + (statColW + 12f) * 2, rightY, statColW, statCardH, "\uE838", 0xFFEF4444, "Networth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "0", 0xFFEF4444, mouseX, mouseY);
 		rightY += statCardH + 12f;
 
 		// Row 2: SkyBlock Level, Skill Average, Fairy Souls
 		drawLevelStatCard(rightX, rightY, statColW, statCardH, data.skyBlockLevel, data.skyBlockLevelProgress, mouseX, mouseY);
-		drawStatCard(rightX + statColW + 12f, rightY, statColW, statCardH, "\uE83A", 0xFF38BDF8, "Skill Average", data.skills.skillAverage > 0 ? String.format(Locale.ROOT, "%.2f", data.skills.skillAverage) : "0.00", 0xFF38BDF8, mouseX, mouseY);
-		drawStatCard(rightX + (statColW + 12f) * 2, rightY, statColW, statCardH, "\uE3A5", 0xFFF43F5E, "Fairy Souls", String.valueOf(data.fairySouls), 0xFFF43F5E, mouseX, mouseY);
-		rightY += statCardH + 14f;
+		drawStatCard(rightX + statColW + 12f, rightY, statColW, statCardH, "\uE9E4", 0xFF38BDF8, "Skill Average", data.skills.skillAverage > 0 ? String.format(Locale.ROOT, "%.2f", data.skills.skillAverage) : "0.00", 0xFF38BDF8, mouseX, mouseY);
+		drawStatCard(rightX + (statColW + 12f) * 2, rightY, statColW, statCardH, "\uE87D", 0xFFF472B6, "Fairy Souls", String.valueOf(data.fairySouls), 0xFFF472B6, mouseX, mouseY);
+		rightY += statCardH + 12f;
 
-		// 2. Bottom Two Sections: SKILLS (Left) & SLAYER / ESSENCE (Right)
-		float bottomSectionH = 434f;
-		float skillsW = rightW * 0.58f;
+		// 2. Bottom Two Sections: Skills (Left) & Slayer / Essence (Right)
+		float bottomSectionH = 444f;
+		float skillsW = (rightW - 12f) * 0.58f;
 		float rightBoxX = rightX + skillsW + 12f;
 		float rightBoxW = rightW - skillsW - 12f;
 
-		// SKILLS Card
+		// Skills Card
 		RenderHelper.drawModernCard(rightX, rightY, skillsW, bottomSectionH, 14f, isHovered(rightX, rightY, skillsW, bottomSectionH, mouseX, mouseY));
 		drawSkillsSection(rightX, rightY, skillsW, bottomSectionH, data.skills, mouseX, mouseY);
 
-		// SLAYER Card (Upper right)
-		float slayerH = 148f;
+		// Slayer Card (Upper right, height 180px for +6px row spacing)
+		float slayerH = 180f;
 		RenderHelper.drawModernCard(rightBoxX, rightY, rightBoxW, slayerH, 14f, isHovered(rightBoxX, rightY, rightBoxW, slayerH, mouseX, mouseY));
 		drawSlayerSection(rightBoxX, rightY, rightBoxW, slayerH, data.slayer, mouseX, mouseY);
 
-		// ESSENCE Card (Lower right)
+		// Essence Card (Lower right, reduced height accordingly)
 		float essenceY = rightY + slayerH + 12f;
 		float essenceH = bottomSectionH - slayerH - 12f;
 		RenderHelper.drawModernCard(rightBoxX, essenceY, rightBoxW, essenceH, 14f, isHovered(rightBoxX, essenceY, rightBoxW, essenceH, mouseX, mouseY));
@@ -189,8 +192,9 @@ public class OverviewTabRenderer {
 		float padW = w - 32f;
 		float curY = y + 15f;
 
-		// INFO Header
-		NVGRenderer.text("INFO", padX, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 15f);
+		// Information Header: [Icon] Information
+		NVGRenderer.text("\uE88F", padX, curY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
+		NVGRenderer.text("Information", padX + 22f, curY - 0.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
 		curY += 26f;
 
 		float lineH = 26f;
@@ -231,8 +235,8 @@ public class OverviewTabRenderer {
 		drawInfoRow("Fairy Souls", String.valueOf(data.fairySouls), padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 		curY += lineH;
 
-		// 8. Net Worth
-		drawInfoRow("Net Worth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "48.58B", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
+		// 8. Networth
+		drawInfoRow("Networth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "48.58B", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 	}
 
 	private static void drawInfoRow(String label, String value, float x, float y, float w, float fs, int valColor) {
@@ -260,40 +264,37 @@ public class OverviewTabRenderer {
 	private static void drawLevelStatCard(float x, float y, float w, float h, int level, int progress, float mx, float my) {
 		RenderHelper.drawModernCard(x, y, w, h, 12f, false);
 
-		// Emblem Icon on Left
+		// Emblem Icon on Left (Lime badge)
 		float iconBoxSize = 40f;
 		float ix = x + 14f;
 		float iy = y + (h - iconBoxSize) / 2f;
-		int emblemCol = 0xFFA855F7;
-		NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(emblemCol, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE8E8", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, emblemCol, 21f);
+		int limeColor = 0xFFA3E635;
+		NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(limeColor, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE202", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, limeColor, 21f);
 
 		float tx = ix + iconBoxSize + 12f;
 		NVGRenderer.text("SkyBlock Level", tx, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
 
-		String lvlStr = "Lv. " + level;
-		NVGRenderer.text(lvlStr, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFC084FC, 18f);
+		// 449.29 format: integer part in Lime color, decimal part in grey
+		String intPart = String.valueOf(level);
+		String decPart = String.format(Locale.ROOT, ".%02d", progress);
 
-		// Progress Bar to the right of level text
-		float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 18f);
-		float barX = tx + lvlW + 12f;
-		float barW = x + w - barX - 14f;
-		if (barW > 20f) {
-			RenderHelper.drawProgressBar(barX, y + 44f, barW, 4.5f, progress / 100f, 0xFF6366F1, 0xFFA855F7);
-		}
+		NVGRenderer.text(intPart, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, limeColor, 19f);
+
+		float intW = NVGRenderer.textWidth(intPart, Fonts.PRETENDARD_SEMIBOLD, 19f);
+		NVGRenderer.text(decPart, tx + intW, y + 36f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 19f);
 	}
 
 	private static void drawSkillsSection(float x, float y, float w, float h, SkillsData skills, float mx, float my) {
 		float padX = x + 16f;
-		float headerY = y + 14f;
+		float headerY = y + 16f;
 
-		// Section Header: [Icon] SKILLS
-		NVGRenderer.text("\uE6E1", padX, headerY + 8f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
-		NVGRenderer.text("SKILLS", padX + 26f, headerY + 8f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		
-		float sRowH = 72f;
-		float gridH = 4 * sRowH + 46f;
-		float curY = y + 46f + Math.max(0f, (h - 46f - gridH) / 2f);
+		// Section Header: [Icon] Skills
+		NVGRenderer.text("\uE9E4", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
+		NVGRenderer.text("Skills", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+
+		float startGridY = y + 62f;
+		float rowStep = (h - 62f - 16f) / 5f;
 
 		String[] skillKeys = {"combat", "farming", "foraging", "fishing", "alchemy", "enchanting", "runecrafting", "taming", "mining", "social"};
 		net.minecraft.world.item.Item[] skillItems = {
@@ -302,110 +303,130 @@ public class OverviewTabRenderer {
 			net.minecraft.world.item.Items.DIAMOND_PICKAXE, net.minecraft.world.item.Items.RED_TULIP
 		};
 
-		float sColW = (w - 48f) / 2f;
-		float sStartX = padX;
+		float sColW = (w - 32f - 16f) / 2f;
 
 		for (int i = 0; i < skillKeys.length; i++) {
 			int col = i % 2;
 			int row = i / 2;
-			float sx = sStartX + col * (sColW + 16f);
-			float sy = curY + row * sRowH;
+			float sx = padX + col * (sColW + 16f);
+			float sy = startGridY + row * rowStep;
 
 			String key = skillKeys[i];
 			SkillsData.SkillInfo info = skills.skills.get(key);
 			int lvl = info != null ? info.level : 0;
 			float prog = info != null ? info.progress : 0f;
-			String name = info != null ? info.name : key.substring(0, 1).toUpperCase() + key.substring(1);
-			
-			// Queue Item
-			visibleItemSlots.add(new OverviewSlotInfo(sx, sy + 4f, 14f, new net.minecraft.world.item.ItemStack(skillItems[i]), name + " Lv." + lvl));
-			
-			// Name & Level
-			NVGRenderer.text(name, sx + 20f, sy + 6f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
-			String lvlStr2 = String.valueOf(lvl);
-			NVGRenderer.text(lvlStr2, sx + sColW - NVGRenderer.textWidth(lvlStr2, Fonts.PRETENDARD_MEDIUM, 13f) - 4f, sy + 6f, Fonts.PRETENDARD_MEDIUM, 0xFF6366F1, 13f);
+			boolean isMaxed = info != null && (info.level >= info.maxLevel);
+			String name = info != null ? info.name : key.substring(0, 1).toUpperCase(Locale.ROOT) + key.substring(1);
 
-			// Progress bar
-			RenderHelper.drawProgressBar(sx + 20f, sy + 26f, sColW - 24f, 6f, prog, 0xFF6366F1, 0xFFA855F7);
+			// Small icon matching text height (~13.5px)
+			visibleItemSlots.add(new OverviewSlotInfo(sx, sy + 1f, 13.5f, new net.minecraft.world.item.ItemStack(skillItems[i]), name + " Lv." + lvl));
+
+			// Skill Name & Level Text with slightly larger font size & 2px extra gap after icon
+			float fs = 15f;
+			NVGRenderer.text(name, sx + 19f, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
+			String lvlStr = String.valueOf(lvl);
+			float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
+			int lvlColor = isMaxed ? 0xFFFFAA00 : 0xFF6366F1;
+			NVGRenderer.text(lvlStr, sx + sColW - lvlW, sy, Fonts.PRETENDARD_SEMIBOLD, lvlColor, fs);
+
+			// Progress bar: Soft Rainbow if maxed, standard indigo gradient if not
+			if (isMaxed) {
+				RenderHelper.drawRainbowProgressBar(sx, sy + 21f, sColW, 5.5f, 1.0f);
+			} else {
+				RenderHelper.drawProgressBar(sx, sy + 21f, sColW, 5.5f, prog, 0xFF4F46E5, 0xFF6366F1);
+			}
 		}
 	}
 
 	private static void drawSlayerSection(float x, float y, float w, float h, SlayerData slayer, float mx, float my) {
-		float padX = x + 14f;
-		float curY = y + 14f;
+		float padX = x + 16f;
+		float headerY = y + 16f;
 
-		// Header: [Skull] SLAYER
-		NVGRenderer.text("\uE3AF", padX, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 16f);
-		NVGRenderer.text("SLAYER", padX + 22f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 26f;
+		// Header: [Skull] Slayer
+		NVGRenderer.text("\uE3AF", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 18f);
+		NVGRenderer.text("Slayer", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
-		// 6 Bosses with 4 per row (Vertical slot style: icon on top, level on bottom)
+		// 6 Bosses in 3 columns x 2 rows without subcard boxes
 		String[] bossKeys = {"zombie", "spider", "wolf", "enderman", "blaze", "vampire"};
-
-		float slotW = (w - 28f - 3 * 8f) / 4f;
-		float slotH = 50f;
+		float colW = (w - 32f - 2 * 8f) / 3f;
+		float curY = y + 62f;
+		float iconSize = 20f; // 1.1x larger icon
 
 		for (int i = 0; i < bossKeys.length; i++) {
 			String k = bossKeys[i];
 			SlayerData.SlayerBoss b = slayer.bosses.get(k);
-			int lvl = (b != null) ? b.level : 9;
+			int lvl = (b != null) ? b.level : 0;
+			boolean isMaxed = (b != null && b.maxed);
 
-			float bx = padX + (i % 4) * (slotW + 8f);
-			float by = curY + (i / 4) * (slotH + 8f);
+			float bx = padX + (i % 3) * (colW + 8f);
+			float by = curY + (i / 3) * 60f;
 
-			RenderHelper.drawSubCard(bx, by, slotW, slotH, 8f, false);
+			float iconX = bx + (colW - iconSize) / 2f;
+			float iconY = by;
 
-			// Boss icon on top with 18x18 size
+			// Outline: Rainbow if maxed, subtle grey by default
+			if (isMaxed) {
+				RenderHelper.drawRainbowBorder(iconX - 3f, iconY - 3f, iconSize + 6f, iconSize + 6f, 6f, 1.5f);
+			} else {
+				NVGRenderer.outlineRect(iconX - 3f, iconY - 3f, iconSize + 6f, iconSize + 6f, 1f, 0x26FFFFFF, 6f);
+			}
+
+			// Boss icon centered
 			Identifier bossTexture = getSlayerTexture(k);
-			visibleItemSlots.add(new OverviewSlotInfo(bx + (slotW - 18f) / 2f, by + 6f, 18f, bossTexture, (b != null ? b.name : k) + " Lv. " + lvl));
+			visibleItemSlots.add(new OverviewSlotInfo(iconX, iconY, iconSize, bossTexture, (b != null ? b.name : k) + " Lv. " + lvl));
 
-			// Level text centered below with plenty of room
+			// Level text centered below with +2px extra gap
 			String lvlStr = String.valueOf(lvl);
-			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 15.5f);
-			NVGRenderer.text(lvlStr, bx + (slotW - lw) / 2f, by + 28f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15.5f);
+			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			int lvlColor = isMaxed ? 0xFFFFAA00 : RenderHelper.FONT_PRIMARY;
+			NVGRenderer.text(lvlStr, bx + (colW - lw) / 2f, by + 28f, Fonts.PRETENDARD_SEMIBOLD, lvlColor, 14f);
 		}
 	}
 
 	private static void drawEssenceSection(float x, float y, float w, float h, Map<String, Long> essence, float mx, float my) {
-		float padX = x + 14f;
-		float headerY = y + 14f;
+		float padX = x + 16f;
+		float headerY = y + 16f;
 
-		// Header: [Sparkle/Diamond] ESSENCE
-		NVGRenderer.text("\uE3E8", padX, headerY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
-		NVGRenderer.text("ESSENCE", padX + 22f, headerY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		
-		float rowH = 40f;
-		float vGap = 26f;
-		float gridH = 2 * (rowH + vGap) + rowH;
-		float curY = y + 40f + Math.max(0f, (h - 40f - gridH) / 2f);
+		// Header: [Sparkle/Diamond] Essence
+		NVGRenderer.text("\uE3E8", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		NVGRenderer.text("Essence", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
-		// 3x3 Grid (9 essences: wither, dragon, undead, crimson, diamond, gold, ice, spider, forest)
-		String[] essenceKeys = {"wither", "dragon", "undead", "crimson", "diamond", "gold", "ice", "spider", "forest"};
-		float colW = (w - 28f - 2 * 8f) / 3f;
+		// 3x3 Grid starting with unified 62px margin
+		String[] essenceKeys = {"wither", "dragon", "undead", "crimson", "diamond", "gold", "ice", "spider", "foraging"};
+		float usableW = w - 32f;
+		float colW = usableW / 3f;
+
+		float iconSize = 25f; // 1.25x larger head icon
+		float curY = y + 62f;
+		float rowStep = 50f;
 
 		for (int i = 0; i < essenceKeys.length; i++) {
 			String k = essenceKeys[i];
-			long count = essence != null ? essence.getOrDefault(k, 0L) : 0L;
+			long count = 0L;
+			if (essence != null) {
+				if (k.equals("foraging") || k.equals("forest") || k.equals("wood")) {
+					count = essence.getOrDefault("wood", essence.getOrDefault("foraging", essence.getOrDefault("forest", 0L)));
+				} else {
+					count = essence.getOrDefault(k, 0L);
+				}
+			}
 
-			float ex = padX + (i % 3) * (colW + 8f);
-			float ey = curY + (i / 3) * (rowH + vGap);
+			float ex = padX + (i % 3) * colW;
+			float ey = curY + (i / 3) * rowStep;
 
-			RenderHelper.drawSubCard(ex, ey, colW, rowH, 8f, false);
-
-			// Essence Item Icon on left with 16x16 size
+			// Essence head item (25x25)
 			ItemStack essStack = getEssenceItemStack(k);
-			visibleItemSlots.add(new OverviewSlotInfo(ex + 6f, ey + 12f, 16f, essStack, capitalize(k) + " Essence: " + count));
+			visibleItemSlots.add(new OverviewSlotInfo(ex, ey, iconSize, essStack, capitalize(k) + " Essence: " + count));
 
-			// Large prominent amount text vertically centered
+			// Text vertically centered with 25px head icon
 			String countStr = count > 0 ? RenderHelper.formatCoins(count) : "0";
-			float fs = 13.5f;
-			float tx = ex + 26f;
-			
-			// Auto-scale font if it still doesn't fit
-			if (NVGRenderer.textWidth(countStr, Fonts.PRETENDARD_SEMIBOLD, fs) > colW - 30f) {
+			float fs = 14f;
+			float tx = ex + iconSize + 7f;
+
+			if (NVGRenderer.textWidth(countStr, Fonts.PRETENDARD_SEMIBOLD, fs) > colW - (iconSize + 9f)) {
 				fs = 12f;
 			}
-			NVGRenderer.text(countStr, tx, ey + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
+			NVGRenderer.text(countStr, tx, ey + (iconSize - fs) / 2f + 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
 		}
 	}
 
@@ -421,7 +442,7 @@ public class OverviewTabRenderer {
 			case "runecrafting" -> new ItemStack(Items.MAGMA_CREAM);
 			case "taming" -> new ItemStack(Items.EGG);
 			case "mining" -> new ItemStack(Items.DIAMOND_PICKAXE);
-			case "social" -> new ItemStack(Items.POPPY);
+			case "social" -> new ItemStack(Items.EMERALD);
 			default -> new ItemStack(Items.BOOK);
 		};
 	}
@@ -472,7 +493,7 @@ public class OverviewTabRenderer {
 			case "gold" -> new ItemStack(Items.GOLD_INGOT);
 			case "ice" -> new ItemStack(Items.ICE);
 			case "spider" -> new ItemStack(Items.SPIDER_EYE);
-			case "forest", "foraging" -> new ItemStack(Items.OAK_SAPLING);
+			case "forest", "foraging", "wood" -> new ItemStack(Items.OAK_SAPLING);
 			default -> new ItemStack(Items.OAK_SAPLING);
 		};
 	}
