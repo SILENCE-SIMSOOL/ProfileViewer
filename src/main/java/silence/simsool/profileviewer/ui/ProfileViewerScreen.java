@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.general.utils.useful.UDisplay;
+import silence.simsool.lucent.ui.utils.URender;
 import silence.simsool.lucent.general.utils.useful.UMouse;
 import silence.simsool.lucent.general.utils.useful.UScreen;
 import silence.simsool.lucent.ui.utils.UIColors;
@@ -212,11 +213,17 @@ public class ProfileViewerScreen extends Screen {
 		if (currentTab == PVTab.OVERVIEW) {
 			for (OverviewTabRenderer.OverviewSlotInfo slot : OverviewTabRenderer.visibleItemSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
-				if (slot.stack != null && !slot.stack.isEmpty()) {
+				if (slot.texture != null) {
+					int texX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
+					int texY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
+					int texSize = 16;
+					
+					URender.drawImage(graphics, slot.texture, texX, texY, texSize, texSize);
+				} else if (slot.stack != null && !slot.stack.isEmpty()) {
 					int itemX = (int) ((slot.x + (slot.size - 32f) / 2f) / itemScale);
 					int itemY = (int) ((slot.y + (slot.size - 32f) / 2f) / itemScale);
 					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, itemX, itemY);
-					// Lucent ItemRenderer icon rendering without numbers/durability bars
+					// ItemRenderer icon rendering without numbers/durability bars
 				}
 			}
 		} else if (currentTab == PVTab.GEAR) {
