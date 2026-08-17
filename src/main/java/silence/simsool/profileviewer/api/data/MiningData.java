@@ -18,6 +18,7 @@ public class MiningData {
 	public int commissionsCompleted = 0;
 	public int nucleusRuns = 0;
 	public String selectedAbility = "";
+	public int selectedMiningPreset = 1;
 
 	public Map<String, Integer> nodes = new LinkedHashMap<>();
 	public Map<Integer, Map<String, Integer>> presetNodes = new LinkedHashMap<>();
@@ -27,6 +28,10 @@ public class MiningData {
 	public int hotfLevel = 0;
 	public double hotfExperience = 0;
 	public String selectedForagingAbility = "";
+	public int selectedForagingPreset = 1;
+	public int centerOfTheForest = 0;
+	public int forestWhispers = 0;
+	public int desertWhispers = 0;
 	public Map<String, Integer> foragingNodes = new LinkedHashMap<>();
 	public Map<Integer, Map<String, Integer>> foragingPresetNodes = new LinkedHashMap<>();
 	public Map<Integer, String> foragingPresetAbilities = new LinkedHashMap<>();
@@ -37,6 +42,7 @@ public class MiningData {
 		MiningData d = new MiningData();
 		if (member == null) return d;
 
+		// 1. mining_core (Direct Mining Data)
 		JsonObject core = member.has("mining_core") && member.get("mining_core").isJsonObject() ? member.getAsJsonObject("mining_core") : null;
 		if (core != null) {
 			if (core.has("experience")) {
@@ -64,8 +70,7 @@ public class MiningData {
 			d.glacitePowder = core.has("powder_glacite_total") ? core.get("powder_glacite_total").getAsInt() : (glaciteCurrent + glaciteSpent);
 
 			if (core.has("nodes") && core.get("nodes").isJsonObject()) {
-				JsonObject nodesObj = core.getAsJsonObject("nodes");
-				parseNodesRecursively(nodesObj, d.nodes);
+				parseNodesRecursively(core.getAsJsonObject("nodes"), d.nodes);
 				if (d.nodes.containsKey("special_0")) d.peakOfTheMountain = d.nodes.get("special_0");
 				else if (d.nodes.containsKey("peak_of_the_mountain")) d.peakOfTheMountain = d.nodes.get("peak_of_the_mountain");
 				else if (d.nodes.containsKey("core_of_the_mountain")) d.peakOfTheMountain = d.nodes.get("core_of_the_mountain");
@@ -93,56 +98,7 @@ public class MiningData {
 			if (core.has("nucleus_runs")) d.nucleusRuns = core.get("nucleus_runs").getAsInt();
 		}
 
-		// Also parse skill_tree for multi-preset mining and foraging trees
-		if (member.has("skill_tree") && member.get("skill_tree").isJsonObject()) {
-			JsonObject st = member.getAsJsonObject("skill_tree");
-
-			// Mining presets (1..5)
-			for (int slot = 1; slot <= 5; slot++) {
-				String suffix = slot == 1 ? "" : ("_" + slot);
-				String nodeKey = "nodes.mining" + suffix;
-				Map<String, Integer> pMap = new LinkedHashMap<>();
-				if (st.has(nodeKey) && st.get(nodeKey).isJsonObject()) {
-					parseNodesRecursively(st.getAsJsonObject(nodeKey), pMap);
-				}
-				if (!pMap.isEmpty()) {
-					d.presetNodes.put(slot, pMap);
-				}
-
-				String abKey = "selected_ability.mining" + suffix;
-				if (st.has(abKey) && st.get(abKey).isJsonPrimitive()) {
-					d.presetAbilities.put(slot, st.get(abKey).getAsString());
-				}
-			}
-
-			// Foraging presets (1..5)
-			for (int slot = 1; slot <= 5; slot++) {
-				String suffix = slot == 1 ? "" : ("_" + slot);
-				String nodeKey = "nodes.foraging" + suffix;
-				Map<String, Integer> pMap = new LinkedHashMap<>();
-				if (st.has(nodeKey) && st.get(nodeKey).isJsonObject()) {
-					parseNodesRecursively(st.getAsJsonObject(nodeKey), pMap);
-				}
-				if (!pMap.isEmpty()) {
-					d.foragingPresetNodes.put(slot, pMap);
-				}
-
-				String abKey = "selected_ability.foraging" + suffix;
-				if (st.has(abKey) && st.get(abKey).isJsonPrimitive()) {
-					d.foragingPresetAbilities.put(slot, st.get(abKey).getAsString());
-				}
-			}
-		}
-
-		// Default fallback for slot 1
-		if (!d.nodes.isEmpty() && !d.presetNodes.containsKey(1)) {
-			d.presetNodes.put(1, d.nodes);
-		}
-		if (!d.selectedAbility.isEmpty() && !d.presetAbilities.containsKey(1)) {
-			d.presetAbilities.put(1, d.selectedAbility);
-		}
-
-		// Fallback for foraging core
+		// 2. foraging_core (Direct Foraging Data)
 		if (member.has("foraging_core") && member.get("foraging_core").isJsonObject()) {
 			JsonObject fc = member.getAsJsonObject("foraging_core");
 			if (fc.has("nodes") && fc.get("nodes").isJsonObject()) {
@@ -151,12 +107,134 @@ public class MiningData {
 			if (fc.has("selected_ability") && fc.get("selected_ability").isJsonPrimitive()) {
 				d.selectedForagingAbility = fc.get("selected_ability").getAsString();
 			}
+			if (fc.has("experience") && fc.get("experience").isJsonPrimitive()) {
+				d.hotfExperience = fc.get("experience").getAsDouble();
+				d.hotfLevel = calcHotfLevel(d.hotfExperience);
+			}
+		}
+
+		// 3. skill_tree (Comprehensive Multi-Tree Support)
+		if (member.has("skill_tree") && member.get("skill_tree").isJsonObject()) {
+			JsonObject st = member.getAsJsonObject("skill_tree");
+
+			// Selected skill tree slot
+			JsonObject ssts = findNestedObject(st, "selected_skill_tree_slot");
+			if (ssts != null) {
+				if (ssts.has("mining") && ssts.get("mining").isJsonPrimitive()) {
+					d.selectedMiningPreset = ssts.get("mining").getAsInt();
+				}
+				if (ssts.has("foraging") && ssts.get("foraging").isJsonPrimitive()) {
+					d.selectedForagingPreset = ssts.get("foraging").getAsInt();
+				}
+			}
+
+			// Experience
+			JsonObject exp = findNestedObject(st, "experience");
+			if (exp != null) {
+				if (exp.has("mining") && exp.get("mining").isJsonPrimitive()) {
+					d.hotmExperience = exp.get("mining").getAsDouble();
+					d.hotmLevel = calcHotmLevel(d.hotmExperience);
+				}
+				if (exp.has("foraging") && exp.get("foraging").isJsonPrimitive()) {
+					d.hotfExperience = exp.get("foraging").getAsDouble();
+					d.hotfLevel = calcHotfLevel(d.hotfExperience);
+				}
+			}
+
+			// Mining presets (1..5)
+			for (int slot = 1; slot <= 5; slot++) {
+				String suffix = slot == 1 ? "" : ("_" + slot);
+				JsonObject nodeObj = findNestedPath(st, "nodes", "mining" + suffix);
+				if (nodeObj == null) nodeObj = findNestedObject(st, "nodes.mining" + suffix);
+
+				if (nodeObj != null) {
+					Map<String, Integer> pMap = new LinkedHashMap<>();
+					parseNodesRecursively(nodeObj, pMap);
+					if (!pMap.isEmpty()) {
+						d.presetNodes.put(slot, pMap);
+						if (slot == 1 && d.nodes.isEmpty()) d.nodes.putAll(pMap);
+					}
+				}
+
+				String ab = findNestedString(st, "selected_ability", "mining" + suffix);
+				if (ab == null) ab = findNestedString(st, "selected_ability.mining" + suffix);
+				if (ab != null && !ab.isEmpty()) {
+					d.presetAbilities.put(slot, ab);
+					if (slot == 1 && d.selectedAbility.isEmpty()) d.selectedAbility = ab;
+				}
+			}
+
+			// Foraging presets (1..5)
+			for (int slot = 1; slot <= 5; slot++) {
+				String suffix = slot == 1 ? "" : ("_" + slot);
+				JsonObject nodeObj = findNestedPath(st, "nodes", "foraging" + suffix);
+				if (nodeObj == null) nodeObj = findNestedObject(st, "nodes.foraging" + suffix);
+
+				if (nodeObj != null) {
+					Map<String, Integer> pMap = new LinkedHashMap<>();
+					parseNodesRecursively(nodeObj, pMap);
+					if (!pMap.isEmpty()) {
+						d.foragingPresetNodes.put(slot, pMap);
+						if (slot == 1 && d.foragingNodes.isEmpty()) d.foragingNodes.putAll(pMap);
+					}
+				}
+
+				String ab = findNestedString(st, "selected_ability", "foraging" + suffix);
+				if (ab == null) ab = findNestedString(st, "selected_ability.foraging" + suffix);
+				if (ab != null && !ab.isEmpty()) {
+					d.foragingPresetAbilities.put(slot, ab);
+					if (slot == 1 && d.selectedForagingAbility.isEmpty()) d.selectedForagingAbility = ab;
+				}
+			}
+		}
+
+		// Fallback linking for Slot 1
+		if (!d.nodes.isEmpty() && !d.presetNodes.containsKey(1)) {
+			d.presetNodes.put(1, d.nodes);
+		}
+		if (!d.selectedAbility.isEmpty() && !d.presetAbilities.containsKey(1)) {
+			d.presetAbilities.put(1, d.selectedAbility);
 		}
 		if (!d.foragingNodes.isEmpty() && !d.foragingPresetNodes.containsKey(1)) {
 			d.foragingPresetNodes.put(1, d.foragingNodes);
 		}
+		if (!d.selectedForagingAbility.isEmpty() && !d.foragingPresetAbilities.containsKey(1)) {
+			d.foragingPresetAbilities.put(1, d.selectedForagingAbility);
+		}
+
+		if (d.foragingNodes.containsKey("center_of_the_forest")) {
+			d.centerOfTheForest = d.foragingNodes.get("center_of_the_forest");
+		} else if (d.foragingNodes.containsKey("core_of_the_forest")) {
+			d.centerOfTheForest = d.foragingNodes.get("core_of_the_forest");
+		}
 
 		return d;
+	}
+
+	private static JsonObject findNestedObject(JsonObject root, String key) {
+		if (root == null || !root.has(key)) return null;
+		JsonElement el = root.get(key);
+		return el.isJsonObject() ? el.getAsJsonObject() : null;
+	}
+
+	private static JsonObject findNestedPath(JsonObject root, String parentKey, String childKey) {
+		JsonObject p = findNestedObject(root, parentKey);
+		return (p != null) ? findNestedObject(p, childKey) : null;
+	}
+
+	private static String findNestedString(JsonObject root, String parentKey, String childKey) {
+		JsonObject p = findNestedObject(root, parentKey);
+		if (p != null && p.has(childKey) && p.get(childKey).isJsonPrimitive()) {
+			return p.get(childKey).getAsString();
+		}
+		return null;
+	}
+
+	private static String findNestedString(JsonObject root, String key) {
+		if (root != null && root.has(key) && root.get(key).isJsonPrimitive()) {
+			return root.get(key).getAsString();
+		}
+		return null;
 	}
 
 	private static void parseNodesRecursively(JsonObject nodesObj, Map<String, Integer> target) {
@@ -171,7 +249,7 @@ public class MiningData {
 	}
 
 	private static final double[] HOTM_XP_TABLE = {
-		0, 3000, 9000, 25000, 60000, 100000, 150000, 210000, 290000, 400000
+		0, 3000, 12000, 37000, 97000, 197000, 347000, 557000, 847000, 1247000
 	};
 
 	public static int calcHotmLevel(double xp) {
@@ -181,5 +259,18 @@ public class MiningData {
 			}
 		}
 		return 10;
+	}
+
+	private static final double[] HOTF_XP_TABLE = {
+		0, 2000, 7000, 20000, 50000, 100000, 200000, 350000
+	};
+
+	public static int calcHotfLevel(double xp) {
+		for (int i = 0; i < HOTF_XP_TABLE.length; i++) {
+			if (xp < HOTF_XP_TABLE[i]) {
+				return i;
+			}
+		}
+		return 8;
 	}
 }

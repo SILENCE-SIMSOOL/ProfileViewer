@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -17,6 +18,7 @@ import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
+import silence.simsool.profileviewer.api.data.HotfTreeData;
 import silence.simsool.profileviewer.api.data.HotmTreeData;
 import silence.simsool.profileviewer.api.data.InventoryData;
 import silence.simsool.profileviewer.api.data.MemberData;
@@ -295,68 +297,94 @@ public class GearTabRenderer {
 	// =========================================================================
 	private static float renderLoadoutView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
-		InventoryData inv = data.inventory;
-		InventoryData.LoadoutData loadout = inv.loadouts;
-		float gap = 14f;
+		InventoryData inv = (data != null) ? data.inventory : null;
+		InventoryData.LoadoutData loadout = (inv != null) ? inv.loadouts : null;
+		float gap = 12f;
 
-		// =========================================================
-		// ROW 1: Loadouts (Left 3x9 vertical box) & Equipment + Info (Right)
-		// =========================================================
+		// Dimensions matching skyblock-pv
 		float selSlotSize = 34f;
 		float selSlotGap = 4f;
 		float selPad = 12f;
-		float loadoutsW = 3 * selSlotSize + 2 * selSlotGap + 2 * selPad;
-		float row1H = 9 * selSlotSize + 8 * selSlotGap + 48f;
-		float eqW = width - gap - loadoutsW;
+		float loadoutsW = 3 * selSlotSize + 2 * selSlotGap + 2 * selPad; // 134f
+		float mainH = 10 * 30f + 9 * 4f + 48f; // 384f
 
-		// 1. Loadouts Card (Vertical 3 cols x 9 rows matching skyblock-pv-master)
-		RenderHelper.drawModernCard(startX, curY, loadoutsW, row1H, 12f, false);
+		// Sorted saved loadouts matching: profile.inventory?.loadouts?.savedLoadouts?.values?.sortedBy { it.id }
+		List<InventoryData.SavedLoadout> loadoutList = new ArrayList<>();
+		if (loadout != null && loadout.savedLoadouts != null) {
+			loadoutList.addAll(loadout.savedLoadouts.values());
+			loadoutList.sort(Comparator.comparingInt(a -> a.id));
+		}
+
+		// 1. Left Loadouts Selector Card (3 cols x 9 rows = 27 preset templates)
+		RenderHelper.drawModernCard(startX, curY, loadoutsW, mainH, 12f, false);
 		NVGRenderer.text("\uE8EF", startX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 15f);
 		NVGRenderer.text("Loadouts", startX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 		for (int r = 0; r < 9; r++) {
 			for (int c = 0; c < 3; c++) {
-				int id = r * 3 + c + 1;
+				int index = r * 3 + c;
+				InventoryData.SavedLoadout sl = (index < loadoutList.size()) ? loadoutList.get(index) : null;
+				int entryId = (sl != null) ? sl.id : (index + 1);
+
 				float bx = startX + selPad + c * (selSlotSize + selSlotGap);
 				float by = curY + 36f + r * (selSlotSize + selSlotGap);
 
-				loadoutButtons.add(new LoadoutButtonBounds(bx, by, selSlotSize, selSlotSize, id));
+				loadoutButtons.add(new LoadoutButtonBounds(bx, by, selSlotSize, selSlotSize, entryId));
 
-				boolean isSelected = (id == selectedLoadoutId);
+				boolean isSelected = (entryId == selectedLoadoutId || (sl == null && selectedLoadoutId == entryId));
 				boolean isHov = mx >= bx && mx <= bx + selSlotSize && my >= by && my <= by + selSlotSize;
-
-				InventoryData.SavedLoadout sl = (loadout != null && loadout.savedLoadouts != null) ? loadout.savedLoadouts.get(id) : null;
-				boolean isEmpty = (sl == null || sl.isEmpty());
 
 				int bgCol = isSelected ? 0xFF2A3450 : (isHov ? 0xFF252738 : 0x40161824);
 				int borderCol = isSelected ? 0xFF818CF8 : (isHov ? 0x66FFFFFF : 0x1AFFFFFF);
 				NVGRenderer.rect(bx, by, selSlotSize, selSlotSize, bgCol, 6f);
 				NVGRenderer.outlineRect(bx, by, selSlotSize, selSlotSize, isSelected ? 1.8f : 1f, borderCol, 6f);
 
-				ParsedItem repItem = getLoadoutRepresentativeItem(inv, sl);
-				if (repItem != null && !repItem.isEmpty()) {
-					drawSlot(bx + 2f, by + 2f, selSlotSize - 4f, repItem, mx, my, false);
-				} else {
-					// 1..9 unlocked (gray dye), 10..27 locked (red dye)
-					int dotCol = id <= 9 ? (isEmpty ? 0xFF6B7280 : 0xFF10B981) : 0xFFE11D48;
-					NVGRenderer.circle(bx + selSlotSize / 2f, by + selSlotSize / 2f, 4f, dotCol);
-				}
+				ParsedItem selectorItem = getLoadoutSelectorItem(data, sl, index);
+				drawSlot(bx + 2f, by + 2f, selSlotSize - 4f, selectorItem, mx, my, false);
 			}
 		}
 
-		// 2. Equipment & Info Card (Right)
-		float eqX = startX + loadoutsW + gap;
-		RenderHelper.drawModernCard(eqX, curY, eqW, row1H, 12f, false);
-		NVGRenderer.text("\uE8C9", eqX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
-		NVGRenderer.text("Equipment & Info", eqX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		// Right Main Area: 3-column Layout (HOTM Loadout | Equipment | HOTF Loadout)
+		float mainStartX = startX + loadoutsW + gap;
+		float mainW = width - loadoutsW - gap;
 
-		InventoryData.SavedLoadout curSl = (loadout != null && loadout.savedLoadouts != null) ? loadout.savedLoadouts.get(selectedLoadoutId) : null;
+		float colGap = 10f;
+		float eqW = 160f;
+		float treeW = (mainW - eqW - 2 * colGap) / 2f;
+
+		InventoryData.SavedLoadout curSl = null;
+		for (InventoryData.SavedLoadout sl : loadoutList) {
+			if (sl.id == selectedLoadoutId) {
+				curSl = sl;
+				break;
+			}
+		}
+		if (curSl == null && !loadoutList.isEmpty()) {
+			curSl = loadoutList.get(0);
+		}
+
+		int miningSlot = (curSl != null && curSl.miningCoreSelectedSlot != null) ? curSl.miningCoreSelectedSlot : (data.mining != null ? data.mining.selectedMiningPreset : 1);
+		int foragingSlot = (curSl != null && curSl.foragingCoreSelectedSlot != null) ? curSl.foragingCoreSelectedSlot : (data.mining != null ? data.mining.selectedForagingPreset : 1);
+
+		// Column 1: HOTM Loadout Card
+		float hotmX = mainStartX;
+		RenderHelper.drawModernCard(hotmX, curY, treeW, mainH, 12f, false);
+		NVGRenderer.text("\uE52F", hotmX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
+		NVGRenderer.text("HOTM Loadout", hotmX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		renderFullHotmTree(hotmX, curY + 36f, treeW, mainH - 44f, data, miningSlot, mx, my);
+
+		// Column 2: Equipment Card (Center)
+		float eqX = hotmX + treeW + colGap;
+		RenderHelper.drawModernCard(eqX, curY, eqW, mainH, 12f, false);
+		NVGRenderer.text("\uE8C9", eqX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 15f);
+		NVGRenderer.text("Equipment", eqX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+
 		List<ParsedItem> armorItems = getLoadoutArmorItems(inv, curSl);
 		List<ParsedItem> equipmentItems = getLoadoutEquipmentItems(inv, curSl);
 
-		float eqSlotSize = 42f;
-		float eqSlotGap = 6f;
-		float eqGridStartX = eqX + 24f;
+		float eqSlotSize = 34f;
+		float eqSlotGap = 4f;
+		float eqGridStartX = eqX + (eqW - (2 * eqSlotSize + eqSlotGap)) / 2f;
 		float eqGridStartY = curY + 44f;
 
 		// 4 Rows x 2 Columns (Armor + Equipment)
@@ -375,92 +403,69 @@ public class GearTabRenderer {
 		ParsedItem petItem = getLoadoutPetItem(data, curSl);
 		drawSlot(petX, petY, eqSlotSize, petItem, mx, my, false);
 
-		if (data.pets != null && data.pets.activePet != null && petItem != null && !petItem.isEmpty()) {
-			String lvlStr = String.valueOf(data.pets.activePet.level);
-			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-			NVGRenderer.rect(petX + eqSlotSize - lw - 4f, petY + eqSlotSize - 12f, lw + 3f, 11f, 0xDD111218, 2f);
-			NVGRenderer.text(lvlStr, petX + eqSlotSize - lw - 2.5f, petY + eqSlotSize - 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 10f);
+		if (data.pets != null && petItem != null && !petItem.isEmpty()) {
+			int petLvl = 100;
+			if (curSl != null && curSl.petUuid != null) {
+				for (var p : data.pets.pets) {
+					if (curSl.petUuid.equalsIgnoreCase(p.uuid)) {
+						petLvl = p.level;
+						break;
+					}
+				}
+			} else if (data.pets.activePet != null) {
+				petLvl = data.pets.activePet.level;
+			}
+			String lvlStr = String.valueOf(petLvl);
+			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 9f);
+			NVGRenderer.rect(petX + eqSlotSize - lw - 4f, petY + eqSlotSize - 11f, lw + 3f, 10f, 0xDD111218, 2f);
+			NVGRenderer.text(lvlStr, petX + eqSlotSize - lw - 2.5f, petY + eqSlotSize - 10.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 9f);
 		}
 
-		// Right side: Info texts
-		float infoStartX = eqGridStartX + 2 * eqSlotSize + eqSlotGap + 28f;
-		float infoY = curY + 46f;
-
-		String loadoutTitle = (curSl != null && curSl.name != null && !curSl.name.isEmpty())
-				? curSl.name
-				: ("Loadout " + selectedLoadoutId);
-		NVGRenderer.text(loadoutTitle, infoStartX, infoY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		infoY += 32f;
-
-		int miningSlot = (curSl != null && curSl.miningCoreSelectedSlot != null) ? curSl.miningCoreSelectedSlot : 1;
-		int foragingSlot = (curSl != null && curSl.foragingCoreSelectedSlot != null) ? curSl.foragingCoreSelectedSlot : 1;
-
-		NVGRenderer.text("HOTM Preset:", infoStartX, infoY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text("Slot " + miningSlot, infoStartX + 90f, infoY, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 13.5f);
-		infoY += 24f;
-
-		NVGRenderer.text("HOTF Preset:", infoStartX, infoY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text("Slot " + foragingSlot, infoStartX + 90f, infoY, Fonts.PRETENDARD_SEMIBOLD, 0xFF34D399, 13.5f);
-		infoY += 24f;
-
-		String powerVal = (curSl != null && curSl.powerStone != null && !curSl.powerStone.isEmpty())
-				? capitalize(curSl.powerStone)
-				: (inv.maxwell != null && !inv.maxwell.selectedPower.isEmpty() ? capitalize(inv.maxwell.selectedPower) : "None");
-		NVGRenderer.text("Power Stone:", infoStartX, infoY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(powerVal, infoStartX + 90f, infoY, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 13.5f);
-		infoY += 24f;
-
-		if (curSl != null && curSl.tuningPointsSlot != null) {
-			NVGRenderer.text("Tuning Slot:", infoStartX, infoY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-			NVGRenderer.text("#" + curSl.tuningPointsSlot, infoStartX + 90f, infoY, Fonts.PRETENDARD_SEMIBOLD, 0xFFA78BFA, 13.5f);
-		}
-
-		curY += row1H + gap;
-
-		// =========================================================
-		// ROW 2: HOTM Loadout (Left 50%) & HOTF Loadout (Right 50%)
-		// =========================================================
-		float row2H = 430f;
-		float treeW = (width - gap) / 2f;
-
-		// HOTM Card
-		float hotmX = startX;
-		RenderHelper.drawModernCard(hotmX, curY, treeW, row2H, 12f, false);
-		NVGRenderer.text("\uE52F", hotmX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
-		NVGRenderer.text("HOTM Loadout (Preset #" + miningSlot + ")", hotmX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-		renderFullHotmTree(hotmX, curY + 36f, treeW, row2H - 44f, data, miningSlot, mx, my);
-
-		// HOTF Card
-		float hotfX = startX + treeW + gap;
-		RenderHelper.drawModernCard(hotfX, curY, treeW, row2H, 12f, false);
+		// Column 3: HOTF Loadout Card
+		float hotfX = eqX + eqW + colGap;
+		RenderHelper.drawModernCard(hotfX, curY, treeW, mainH, 12f, false);
 		NVGRenderer.text("\uE56C", hotfX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF34D399, 16f);
-		NVGRenderer.text("HOTF Loadout (Preset #" + foragingSlot + ")", hotfX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-		renderFullHotfTree(hotfX, curY + 36f, treeW, row2H - 44f, data, foragingSlot, mx, my);
+		NVGRenderer.text("HOTF Loadout", hotfX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		renderFullHotfTree(hotfX, curY + 36f, treeW, mainH - 44f, data, foragingSlot, mx, my);
 
-		curY += row2H + 16f;
+		curY += mainH + 16f;
 		return curY - y0;
 	}
 
 	private static void renderFullHotmTree(float x, float y, float w, float h, MemberData data, int slot, float mx, float my) {
-		float slotSize = 34f;
-		float slotGap = 5f;
+		float slotSize = 30f;
+		float slotGap = 4f;
 		int cols = 7;
-		int rows = 9;
+		int rows = 10;
 
 		float treeW = cols * slotSize + (cols - 1) * slotGap;
+		float treeH = rows * slotSize + (rows - 1) * slotGap;
 		float startTreeX = x + (w - treeW) / 2f;
-		float startTreeY = y + 10f;
+		float startTreeY = y + (h - treeH) / 2f;
 
-		MiningData m = data.mining;
-		Map<String, Integer> activeNodes = (m != null && m.presetNodes.containsKey(slot))
-				? m.presetNodes.get(slot)
-				: (m != null ? m.nodes : Collections.emptyMap());
-		String activeAb = (m != null && m.presetAbilities.containsKey(slot))
-				? m.presetAbilities.get(slot)
-				: (m != null ? m.selectedAbility : "");
+		MiningData m = (data != null) ? data.mining : null;
+		Map<String, Integer> activeNodes = Collections.emptyMap();
+		String activeAb = "";
+
+		if (m != null) {
+			if (m.presetNodes.containsKey(slot) && !m.presetNodes.get(slot).isEmpty()) {
+				activeNodes = m.presetNodes.get(slot);
+			} else if (!m.nodes.isEmpty()) {
+				activeNodes = m.nodes;
+			}
+
+			if (m.presetAbilities.containsKey(slot) && !m.presetAbilities.get(slot).isEmpty()) {
+				activeAb = m.presetAbilities.get(slot);
+			} else {
+				activeAb = m.selectedAbility;
+			}
+		}
+
+		int coreLevel = activeNodes.getOrDefault("core_of_the_mountain", activeNodes.getOrDefault("peak_of_the_mountain", activeNodes.getOrDefault("special_0", 0)));
+		int treeLevel = (m != null) ? m.hotmLevel : 10;
 
 		for (HotmTreeData.HotmNode node : HotmTreeData.ALL_NODES) {
-			if (node.type == HotmTreeData.NodeType.TIER) continue;
+			if (node.type == HotmTreeData.NodeType.TIER || node.type == HotmTreeData.NodeType.SPACER) continue;
 
 			int r = 9 - node.y;
 			int c = node.x;
@@ -469,128 +474,110 @@ public class GearTabRenderer {
 			float sx = startTreeX + c * (slotSize + slotGap);
 			float sy = startTreeY + r * (slotSize + slotGap);
 
-			int lvl = activeNodes.getOrDefault(node.id, 0);
-			boolean isSelAb = node.id.equalsIgnoreCase(activeAb);
-			ItemStack icon = node.getItemIcon(lvl, isSelAb);
+			int rawLevel = node.getNodeLevel(activeNodes);
+			int level = rawLevel;
+			if (node.type == HotmTreeData.NodeType.ABILITY && rawLevel != -1) {
+				level = coreLevel >= 1 ? 2 : 1;
+			}
 
+			boolean disabled = false;
+			if (node.type == HotmTreeData.NodeType.ABILITY) {
+				disabled = !node.matchesAbility(activeAb);
+			}
+
+			boolean isSelAb = (node.type == HotmTreeData.NodeType.ABILITY && node.matchesAbility(activeAb));
 			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
 
-			int bgCol = isSelAb ? 0xFF1E382B : (lvl > 0 ? 0xFF1C2A3A : 0x5514151E);
-			int borderCol = isSelAb ? 0xFF55FF55 : (lvl >= node.maxLevel ? 0xFF55FFFF : (lvl > 0 ? 0xFF3B82F6 : 0x33555566));
+			int bgCol = isSelAb ? 0xFF1E382B : (level >= node.maxLevel ? 0xFF1C3240 : (level > 0 ? 0xFF1C2A3A : 0x5514151E));
+			int borderCol = isSelAb ? 0xFF55FF55 : (level >= node.maxLevel ? 0xFF55FFFF : (level > 0 ? 0xFF3B82F6 : 0x33555566));
 
-			NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 6f);
-			NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, 1.2f, borderCol, 6f);
+			NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 5f);
+			NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelAb ? 1.5f : 1f, borderCol, 5f);
 
-			// SkyBlock-style custom tooltip
-			ParsedItem pi = new ParsedItem();
-			pi.itemStack = icon;
-			pi.displayName = (isSelAb ? "§a" : (lvl > 0 ? "§b" : "§c")) + node.name;
-			pi.lore = new ArrayList<>();
-			if (node.type == HotmTreeData.NodeType.CORE) {
-				pi.lore.add("§7Peak of the Mountain: §e" + lvl + "§7/§e" + node.maxLevel);
-			} else if (node.type == HotmTreeData.NodeType.ABILITY) {
-				pi.lore.add(isSelAb ? "§a§lSELECTED ABILITY" : "§7Pickaxe Ability");
-			} else {
-				pi.lore.add(lvl > 0 ? ("§7Level " + lvl + "§8/§7" + node.maxLevel) : "§cLocked Perk");
-			}
-			pi.lore.add("");
-			String desc = node.description != null ? node.description.replace("%d", String.valueOf(lvl > 0 ? lvl : 1)) : "";
-			pi.lore.add("§7" + desc);
-
+			ParsedItem pi = node.createParsedItem(level, disabled, activeAb, treeLevel);
 			drawSlot(sx, sy, slotSize, pi, mx, my, false);
 
-			if (lvl > 1 && node.maxLevel > 1) {
-				String lvlStr = String.valueOf(lvl);
-				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-				NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 12f, lw + 3f, 11f, 0xDD111218, 2f);
-				NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 10f);
+			if (level > 1 && node.maxLevel > 1 && node.type != HotmTreeData.NodeType.UNLEVELABLE) {
+				String lvlStr = String.valueOf(level);
+				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 8.5f);
+				NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 10.5f, lw + 3f, 9.5f, 0xDD111218, 2f);
+				NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 10f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 8.5f);
 			}
 		}
 	}
 
 	private static void renderFullHotfTree(float x, float y, float w, float h, MemberData data, int slot, float mx, float my) {
-		float slotSize = 34f;
-		float slotGap = 5f;
+		float slotSize = 30f;
+		float slotGap = 4f;
 		int cols = 7;
-		int rows = 7;
+		int rows = 10;
 
 		float treeW = cols * slotSize + (cols - 1) * slotGap;
+		float treeH = rows * slotSize + (rows - 1) * slotGap;
 		float startTreeX = x + (w - treeW) / 2f;
-		float startTreeY = y + 20f;
+		float startTreeY = y + (h - treeH) / 2f;
 
-		MiningData m = data.mining;
-		Map<String, Integer> activeNodes = (m != null && m.foragingPresetNodes.containsKey(slot))
-				? m.foragingPresetNodes.get(slot)
-				: (m != null ? m.foragingNodes : Collections.emptyMap());
+		MiningData m = (data != null) ? data.mining : null;
+		Map<String, Integer> activeNodes = Collections.emptyMap();
+		String activeAb = "";
 
-		int[][] hotfLevels = {
-			{0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 1},
-			{0, 0, 1, 0, 4, 0, 0},
-			{1, 1, 1, 1, 0, 0, 0},
-			{0, 1, 0, 0, 3, 0, 0},
-			{0, 0, 0, 37, 12, 2, 0}
-		};
+		if (m != null) {
+			if (m.foragingPresetNodes.containsKey(slot) && !m.foragingPresetNodes.get(slot).isEmpty()) {
+				activeNodes = m.foragingPresetNodes.get(slot);
+			} else if (!m.foragingNodes.isEmpty()) {
+				activeNodes = m.foragingNodes;
+			}
 
-		ItemType[][] hotfItems = {
-			{ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON},
-			{ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON},
-			{ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.SAPLING},
-			{ItemType.BUTTON, ItemType.BUTTON, ItemType.LOG, ItemType.BUTTON, ItemType.LOG, ItemType.BUTTON, ItemType.BUTTON},
-			{ItemType.LOG, ItemType.LOG, ItemType.LOG, ItemType.LOG, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON},
-			{ItemType.SAPLING, ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.LOG, ItemType.BUTTON, ItemType.BUTTON},
-			{ItemType.BUTTON, ItemType.BUTTON, ItemType.BUTTON, ItemType.LOG, ItemType.LOG, ItemType.LEAF, ItemType.BUTTON}
-		};
-
-		for (int r = 0; r < rows; r++) {
-			for (int c = 0; c < cols; c++) {
-				float sx = startTreeX + c * (slotSize + slotGap);
-				float sy = startTreeY + r * (slotSize + slotGap);
-
-				ItemType type = hotfItems[r][c];
-				int lvl = hotfLevels[r][c];
-
-				ItemStack stack = switch (type) {
-					case LOG -> new ItemStack(Items.OAK_LOG);
-					case SAPLING -> new ItemStack(Items.OAK_SAPLING);
-					case LEAF -> new ItemStack(Items.OAK_LEAVES);
-					case BUTTON -> new ItemStack(Items.IRON_NUGGET);
-				};
-
-				boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
-				int bgCol = (type != ItemType.BUTTON) ? 0xFF2A2218 : 0x33181820;
-				int borderCol = (type != ItemType.BUTTON) ? 0xFF854D0E : 0x22FFFFFF;
-
-				NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 6f);
-				NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, 1.2f, borderCol, 6f);
-
-				ParsedItem pi = new ParsedItem();
-				pi.itemStack = stack;
-				if (type != ItemType.BUTTON) {
-					pi.displayName = "§aForaging Perk (Lv " + (lvl > 0 ? lvl : 1) + ")";
-					pi.lore = new ArrayList<>();
-					pi.lore.add("§7Level: §e" + (lvl > 0 ? lvl : 1));
-					pi.lore.add("§7Grants additional Foraging stats.");
-				} else {
-					pi.displayName = "§cLocked Node";
-					pi.lore = new ArrayList<>();
-					pi.lore.add("§7Requires previous tier perks unlocked.");
-				}
-				drawSlot(sx, sy, slotSize, pi, mx, my, false);
-
-				if (lvl > 1) {
-					String lvlStr = String.valueOf(lvl);
-					float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-					NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 12f, lw + 3f, 11f, 0xDD111218, 2f);
-					NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 10f);
-				}
+			if (m.foragingPresetAbilities.containsKey(slot) && !m.foragingPresetAbilities.get(slot).isEmpty()) {
+				activeAb = m.foragingPresetAbilities.get(slot);
+			} else {
+				activeAb = m.selectedForagingAbility;
 			}
 		}
-	}
 
-	private enum ItemType {
-		BUTTON, LOG, SAPLING, LEAF
+		int coreLevel = activeNodes.getOrDefault("center_of_the_forest", activeNodes.getOrDefault("core_of_the_forest", 0));
+		int treeLevel = (m != null) ? m.hotfLevel : 8;
+
+		for (HotfTreeData.HotfNode node : HotfTreeData.ALL_NODES) {
+			if (node.type == HotfTreeData.NodeType.TIER || node.type == HotfTreeData.NodeType.SPACER) continue;
+
+			int r = 9 - node.y;
+			int c = node.x;
+			if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+
+			float sx = startTreeX + c * (slotSize + slotGap);
+			float sy = startTreeY + r * (slotSize + slotGap);
+
+			int rawLevel = node.getNodeLevel(activeNodes);
+			int level = rawLevel;
+			if (node.type == HotfTreeData.NodeType.ABILITY && rawLevel != -1) {
+				level = coreLevel >= 1 ? 2 : 1;
+			}
+
+			boolean disabled = false;
+			if (node.type == HotfTreeData.NodeType.ABILITY) {
+				disabled = !node.matchesAbility(activeAb);
+			}
+
+			boolean isSelAb = (node.type == HotfTreeData.NodeType.ABILITY && node.matchesAbility(activeAb));
+			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
+
+			int bgCol = isSelAb ? 0xFF1E382B : (level >= node.maxLevel ? 0xFF352B1E : (level > 0 ? 0xFF242F24 : 0x55181820));
+			int borderCol = isSelAb ? 0xFF55FF55 : (level >= node.maxLevel ? 0xFFF59E0B : (level > 0 ? 0xFF10B981 : 0x33555566));
+
+			NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 5f);
+			NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelAb ? 1.5f : 1f, borderCol, 5f);
+
+			ParsedItem pi = node.createParsedItem(level, disabled, activeAb, treeLevel);
+			drawSlot(sx, sy, slotSize, pi, mx, my, false);
+
+			if (level > 1 && node.maxLevel > 1 && node.type != HotfTreeData.NodeType.UNLEVELABLE) {
+				String lvlStr = String.valueOf(level);
+				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 8.5f);
+				NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 10.5f, lw + 3f, 9.5f, 0xDD111218, 2f);
+				NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 10f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 8.5f);
+			}
+		}
 	}
 
 	// =========================================================================
@@ -934,42 +921,158 @@ public class GearTabRenderer {
 	// =========================================================================
 	// HELPER METHODS
 	// =========================================================================
-	private static ParsedItem getLoadoutRepresentativeItem(InventoryData inv, InventoryData.SavedLoadout sl) {
-		if (sl == null || sl.isEmpty() || inv == null || inv.loadouts == null) return null;
-		if (sl.armorSetId != null && inv.loadouts.armorSets.containsKey(sl.armorSetId)) {
-			InventoryData.ArmorSet as = inv.loadouts.armorSets.get(sl.armorSetId);
-			if (as.helmet != null && !as.helmet.isEmpty()) return as.helmet;
-			if (as.chestplate != null && !as.chestplate.isEmpty()) return as.chestplate;
-			if (as.leggings != null && !as.leggings.isEmpty()) return as.leggings;
-			if (as.boots != null && !as.boots.isEmpty()) return as.boots;
-		}
-		if (sl.equipmentSlotId != null && inv.loadouts.equipmentSets.containsKey(sl.equipmentSlotId)) {
-			InventoryData.EquipmentSet es = inv.loadouts.equipmentSets.get(sl.equipmentSlotId);
-			for (ParsedItem item : es.getStacks()) {
-				if (item != null && !item.isEmpty()) return item;
+	private static ParsedItem getLoadoutSelectorItem(MemberData data, InventoryData.SavedLoadout sl, int index) {
+		InventoryData inv = (data != null) ? data.inventory : null;
+		ParsedItem pi = new ParsedItem();
+		boolean isLocked = (sl == null);
+		boolean isEmpty = (sl != null && sl.isEmpty());
+
+		// 1. Icon Resolution matching LoadoutTab.kt getIcon exactly
+		ItemStack icon = null;
+		if (sl != null) {
+			List<ParsedItem> armor = getLoadoutArmorItems(inv, sl);
+			for (ParsedItem item : armor) {
+				if (item != null && !item.isEmpty() && item.itemStack != null && !item.itemStack.isEmpty()) {
+					icon = item.itemStack;
+					break;
+				}
+			}
+
+			if (icon == null) {
+				List<ParsedItem> eq = getLoadoutEquipmentItems(inv, sl);
+				for (ParsedItem item : eq) {
+					if (item != null && !item.isEmpty() && item.itemStack != null && !item.itemStack.isEmpty()) {
+						icon = item.itemStack;
+						break;
+					}
+				}
+			}
+
+			if (icon == null && sl.miningCoreSelectedSlot != null) {
+				icon = new ItemStack(Items.DIAMOND_PICKAXE);
+			}
+
+			if (icon == null && sl.foragingCoreSelectedSlot != null) {
+				icon = new ItemStack(Items.DIAMOND_AXE);
+			}
+
+			if (icon == null && sl.petUuid != null && data.pets != null) {
+				for (var pet : data.pets.pets) {
+					if (sl.petUuid.equalsIgnoreCase(pet.uuid) && pet.itemStack != null) {
+						icon = pet.itemStack;
+						break;
+					}
+				}
+			}
+
+			if (icon == null && isEmpty) {
+				icon = new ItemStack(Items.GUNPOWDER);
 			}
 		}
-		return null;
+
+		if (icon == null) {
+			if (isLocked) {
+				icon = new ItemStack(Items.REDSTONE);
+			} else if (isEmpty) {
+				icon = new ItemStack(Items.GUNPOWDER);
+			} else {
+				icon = new ItemStack(Items.EMERALD);
+			}
+		}
+		pi.itemStack = icon;
+
+		// 2. Display Name
+		if (isLocked) {
+			pi.displayName = "§cTemplate " + index + " §8(Locked)";
+		} else if (isEmpty) {
+			pi.displayName = "§7Template " + index + " §8(Empty)";
+		} else if (sl.name != null && !sl.name.isEmpty()) {
+			pi.displayName = "§a" + sl.name;
+		} else {
+			pi.displayName = "§aTemplate " + index;
+		}
+
+		// 3. Tooltip Lore
+		pi.lore = new ArrayList<>();
+		pi.lore.add("§7Id - §b" + (sl != null ? sl.id : index));
+
+		// Armor Set
+		if (sl != null && sl.armorSetId != null) {
+			pi.lore.add("§7Armor Set - §b" + sl.armorSetId);
+			List<ParsedItem> armList = getLoadoutArmorItems(inv, sl);
+			for (ParsedItem piece : armList) {
+				String name = (piece != null && !piece.isEmpty() && piece.displayName != null) ? piece.displayName : "§cNone";
+				pi.lore.add(" §8- §7" + name);
+			}
+			pi.lore.add("");
+		} else {
+			pi.lore.add("§7Armor Set - §cNone");
+		}
+
+		// Equipment Set
+		if (sl != null && sl.equipmentSlotId != null) {
+			pi.lore.add("§7Equipment Set - §b" + sl.equipmentSlotId);
+			List<ParsedItem> eqList = getLoadoutEquipmentItems(inv, sl);
+			for (ParsedItem piece : eqList) {
+				String name = (piece != null && !piece.isEmpty() && piece.displayName != null) ? piece.displayName : "§cNone";
+				pi.lore.add(" §8- §7" + name);
+			}
+			pi.lore.add("");
+		} else {
+			pi.lore.add("§7Equipment Set - §cNone");
+		}
+
+		// HOTM & HOTF Presets
+		String hotmTxt = (sl != null && sl.miningCoreSelectedSlot != null) ? ("§b" + sl.miningCoreSelectedSlot) : "§cNone";
+		String hotfTxt = (sl != null && sl.foragingCoreSelectedSlot != null) ? ("§b" + sl.foragingCoreSelectedSlot) : "§cNone";
+		pi.lore.add("§7Hotm Preset - " + hotmTxt);
+		pi.lore.add("§7Hotf Preset - " + hotfTxt);
+
+		return pi;
 	}
 
 	private static List<ParsedItem> getLoadoutArmorItems(InventoryData inv, InventoryData.SavedLoadout sl) {
-		if (sl != null && sl.armorSetId != null && inv.loadouts != null && inv.loadouts.armorSets.containsKey(sl.armorSetId)) {
-			return inv.loadouts.armorSets.get(sl.armorSetId).getStacks();
+		if (sl == null) {
+			if (inv != null && inv.armor != null && !inv.armor.isEmpty()) {
+				List<ParsedItem> rev = new ArrayList<>(inv.armor);
+				Collections.reverse(rev);
+				return rev;
+			}
+			return Collections.emptyList();
 		}
-		if (inv.armor != null && !inv.armor.isEmpty()) {
-			List<ParsedItem> rev = new ArrayList<>(inv.armor);
-			Collections.reverse(rev);
-			return rev;
+		if (sl.armorSetId == null) {
+			return Collections.emptyList();
+		}
+		if (inv != null && inv.loadouts != null) {
+			if (sl.armorSetId.equals(inv.loadouts.equippedArmorSet) && inv.armor != null && !inv.armor.isEmpty()) {
+				List<ParsedItem> rev = new ArrayList<>(inv.armor);
+				Collections.reverse(rev);
+				return rev;
+			}
+			if (inv.loadouts.armorSets.containsKey(sl.armorSetId)) {
+				return inv.loadouts.armorSets.get(sl.armorSetId).getStacks();
+			}
 		}
 		return Collections.emptyList();
 	}
 
 	private static List<ParsedItem> getLoadoutEquipmentItems(InventoryData inv, InventoryData.SavedLoadout sl) {
-		if (sl != null && sl.equipmentSlotId != null && inv.loadouts != null && inv.loadouts.equipmentSets.containsKey(sl.equipmentSlotId)) {
-			return inv.loadouts.equipmentSets.get(sl.equipmentSlotId).getStacks();
+		if (sl == null) {
+			if (inv != null && inv.equipment != null) {
+				return inv.equipment;
+			}
+			return Collections.emptyList();
 		}
-		if (inv.equipment != null) {
-			return inv.equipment;
+		if (sl.equipmentSlotId == null) {
+			return Collections.emptyList();
+		}
+		if (inv != null && inv.loadouts != null) {
+			if (sl.equipmentSlotId.equals(inv.loadouts.equippedEquipmentSet) && inv.equipment != null) {
+				return inv.equipment;
+			}
+			if (inv.loadouts.equipmentSets.containsKey(sl.equipmentSlotId)) {
+				return inv.loadouts.equipmentSets.get(sl.equipmentSlotId).getStacks();
+			}
 		}
 		return Collections.emptyList();
 	}

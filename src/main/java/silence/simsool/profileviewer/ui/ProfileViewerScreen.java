@@ -112,6 +112,7 @@ public class ProfileViewerScreen extends Screen {
 		errorMessage = "";
 		OverviewTabRenderer.visibleItemSlots.clear();
 		OverviewTabRenderer.playerBounds.visible = false;
+		GearTabRenderer.selectedLoadoutId = 1;
 		PvApi.fetchPlayerStatusAsync(uuid).thenAccept(st -> this.playerStatus = st);
 		PvApi.fetchProfilesAsync(uuid, forceRefresh).thenAccept(list -> {
 			loading = false;
