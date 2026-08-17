@@ -18,6 +18,7 @@ public class PetData {
 	};
 
 	public static class PetItem {
+		public String uuid = "";
 		public String type = "";
 		public String rarity = "COMMON";
 		public int level = 1;
@@ -75,6 +76,7 @@ public class PetData {
 					if (elem.isJsonObject()) {
 						JsonObject po = elem.getAsJsonObject();
 						PetItem p = new PetItem();
+						p.uuid = po.has("uuid") && !po.get("uuid").isJsonNull() ? po.get("uuid").getAsString() : "";
 						p.type = po.has("type") ? po.get("type").getAsString() : "Unknown";
 						p.rarity = po.has("tier") ? po.get("tier").getAsString() : "COMMON";
 						p.exp = po.has("exp") ? po.get("exp").getAsDouble() : 0;

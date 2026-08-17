@@ -859,6 +859,10 @@ public class ProfileViewerScreen extends Screen {
 			if (PetsTabRenderer.charTyped((char) event.codepoint(), 0)) {
 				return true;
 			}
+		} else if (currentTab == PVTab.GEAR) {
+			if (GearTabRenderer.charTyped((char) event.codepoint(), 0)) {
+				return true;
+			}
 		}
 		return super.charTyped(event);
 	}
@@ -915,6 +919,10 @@ public class ProfileViewerScreen extends Screen {
 
 		if (currentTab == PVTab.PETS) {
 			if (PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+				return true;
+			}
+		} else if (currentTab == PVTab.GEAR) {
+			if (GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
 				return true;
 			}
 		}
