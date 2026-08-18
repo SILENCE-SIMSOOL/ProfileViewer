@@ -12,16 +12,18 @@ import silence.simsool.profileviewer.ui.RenderHelper;
 public class CollectionsTabRenderer {
 
 	public enum ColCategory {
-		FARMING("pv.col.subtab.farming"),
-		MINING("pv.col.subtab.mining"),
-		COMBAT("pv.col.subtab.combat"),
-		FORAGING("pv.col.subtab.foraging"),
-		FISHING("pv.col.subtab.fishing"),
-		MINIONS("pv.col.subtab.minions");
+		FARMING("pv.col.subtab.farming", "\uE56C"),
+		MINING("pv.col.subtab.mining", "\uE52F"),
+		COMBAT("pv.col.subtab.combat", "\uE834"),
+		FORAGING("pv.col.subtab.foraging", "\uE5D2"),
+		FISHING("pv.col.subtab.fishing", "\uEA40"),
+		MINIONS("pv.col.subtab.minions", "\uE88A");
 
 		public final String translationKey;
-		ColCategory(String translationKey) {
+		public final String icon;
+		ColCategory(String translationKey, String icon) {
 			this.translationKey = translationKey;
+			this.icon = icon;
 		}
 
 		public String getTitle() {
@@ -35,26 +37,29 @@ public class CollectionsTabRenderer {
 		float curY = startY;
 		CollectionData col = data.collections;
 
-		// Sub-tabs bar
-		float subTabH = 28f;
+		// Sub-tabs bar (Modern Pills)
+		float subTabH = 32f;
 		float subTabX = startX;
 		for (ColCategory cat : ColCategory.values()) {
 			String title = cat.getTitle();
-			float catW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, RenderHelper.FS_BUTTON) + 20f;
+			float catW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			boolean active = (cat == activeCategory);
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + catW && mouseY >= curY && mouseY <= curY + subTabH;
 
 			if (active) {
-				NVGRenderer.rect(subTabX, curY, catW, subTabH, UIColors.ACCENT_BLUE, 6f);
+				NVGRenderer.rect(subTabX, curY, catW, subTabH, 0xBF4F46E5, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(subTabX, curY, catW, subTabH, 0x22FFFFFF, 6f);
+				NVGRenderer.rect(subTabX, curY, catW, subTabH, 0x1AFFFFFF, 8f);
 			}
-			NVGRenderer.text(title, subTabX + 10f, curY + 7f, Fonts.PRETENDARD_MEDIUM, active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED), RenderHelper.FS_BUTTON);
+
+			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
+			NVGRenderer.text(cat.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
+			NVGRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
 
 			subTabX += catW + 8f;
 		}
 
-		curY += subTabH + 18f;
+		curY += subTabH + 16f;
 
 		if (activeCategory == ColCategory.MINIONS) {
 			curY += renderMinionsView(col, startX, curY, width, mouseX, mouseY);
@@ -76,92 +81,118 @@ public class CollectionsTabRenderer {
 	private static float renderCollectionItemsGrid(List<CollectionData.CollectionItem> items, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		if (items == null || items.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.col.no_data"), startX + 10, curY + 20, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(L10n.translate("pv.col.no_data"), startX + 14f, curY + 20f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 			return 50f;
 		}
 
-		float cardW = (width - 16) / 2f;
-		float cardH = 58f;
+		float cardW = (width - 16f) / 2f;
+		float cardH = 64f;
 		int idx = 0;
 
 		for (CollectionData.CollectionItem item : items) {
-			float cx = startX + (idx % 2) * (cardW + 16);
-			float cy = curY + (idx / 2) * (cardH + 10);
+			float cx = startX + (idx % 2) * (cardW + 16f);
+			float cy = curY + (idx / 2) * (cardH + 12f);
 
 			boolean hov = mx >= cx && mx <= cx + cardW && my >= cy && my <= cy + cardH;
-			RenderHelper.drawModernCard(cx, cy, cardW, cardH, 8f, hov);
+			RenderHelper.drawModernCard(cx, cy, cardW, cardH, 10f, hov);
 
-			NVGRenderer.text(item.name, cx + 14, cy + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(item.name, cx + 14f, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
 
-			String status = item.isMax ? "§a" + L10n.translate("pv.ui.max") : String.format(L10n.translate("pv.ui.tier") + " %d/%d (%.1f%%)", item.tier, item.maxTier, item.progress * 100f);
-			RenderHelper.drawColoredText(status, cx + cardW - 14 - NVGRenderer.textWidth(status.replace("§a", ""), Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION), cy + 10, RenderHelper.FS_CAPTION, RenderHelper.FONT_SECONDARY);
+			String status = item.isMax ? L10n.translate("pv.ui.max") : String.format(L10n.translate("pv.ui.tier") + " %d/%d (%.1f%%)", item.tier, item.maxTier, item.progress * 100f);
+			int statCol = item.isMax ? 0xFFFFAA00 : 0xFF38BDF8;
+			float sw = NVGRenderer.textWidth(status, Fonts.PRETENDARD_SEMIBOLD, 13f);
+			NVGRenderer.text(status, cx + cardW - 14f - sw, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, statCol, 13f);
 
 			String amtStr = RenderHelper.formatNumber(item.amount) + " " + L10n.translate("pv.col.collected");
-			NVGRenderer.text(amtStr, cx + 14, cy + 28, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			NVGRenderer.text(amtStr, cx + 14f, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
-			int barColor = item.isMax ? 0xFF55FF55 : UIColors.ACCENT_BLUE;
-			RenderHelper.drawProgressBar(cx + 14, cy + 44, cardW - 28, 4.5f, item.progress, barColor, 0xFF38BDF8);
+			if (item.isMax) {
+				RenderHelper.drawRainbowProgressBar(cx + 14f, cy + 48f, cardW - 28f, 5f, 1.0f);
+			} else {
+				RenderHelper.drawProgressBar(cx + 14f, cy + 48f, cardW - 28f, 5f, item.progress, 0xFF4F46E5, 0xFF818CF8);
+			}
 
 			idx++;
 		}
 
-		curY += ((idx + 1) / 2) * (cardH + 10) + 10;
+		curY += ((idx + 1) / 2) * (cardH + 12f) + 12f;
 		return curY - y0;
 	}
 
 	private static float renderMinionsView(CollectionData col, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 
-		// Summary Row
-		float colW = (width - 24) / 3f;
-		float cardH = 76f;
+		// Summary Row (3 Cards)
+		float colW = (width - 24f) / 3f;
+		float cardH = 80f;
+		float iconBoxSize = 40f;
 
-		RenderHelper.drawModernCard(startX, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.col.unlocked_minions"), startX + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(col.unlockedMinions + " " + L10n.translate("pv.ui.unique"), startX + 14, curY + 34, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_H2);
+		// Unlocked Minions
+		RenderHelper.drawModernCard(startX, curY, colW, cardH, 12f, false);
+		float ix1 = startX + 14f;
+		float iy = curY + (cardH - iconBoxSize) / 2f;
+		NVGRenderer.rect(ix1, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE88A", ix1 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 21f);
 
-		float c2X = startX + colW + 12;
-		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.col.minion_slots"), c2X + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(col.minionSlots + " Slots", c2X + 14, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FF55, RenderHelper.FS_H2);
+		float tx1 = ix1 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.col.unlocked_minions"), tx1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(col.unlockedMinions + " " + L10n.translate("pv.ui.unique"), tx1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 19f);
 
-		float c3X = c2X + colW + 12;
-		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.col.crafted_generators"), c3X + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(col.craftedMinions.size() + " " + L10n.translate("pv.dungeons.total_runs"), c3X + 14, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFD700, RenderHelper.FS_H2);
+		// Minion Slots
+		float c2X = startX + colW + 12f;
+		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 12f, false);
+		float ix2 = c2X + 14f;
+		NVGRenderer.rect(ix2, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF10B981, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE838", ix2 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
 
-		curY += cardH + 24;
+		float tx2 = ix2 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.col.minion_slots"), tx2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(col.minionSlots + " Slots", tx2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 19f);
+
+		// Crafted Minions
+		float c3X = c2X + colW + 12f;
+		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 12f, false);
+		float ix3 = c3X + 14f;
+		NVGRenderer.rect(ix3, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFBBF24, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE8C9", ix3 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 21f);
+
+		float tx3 = ix3 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.col.crafted_generators"), tx3, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(col.craftedMinions.size() + " Crafted", tx3, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 19f);
+
+		curY += cardH + 24f;
 
 		if (!col.craftedMinions.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.col.crafted_minions_list"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-			curY += 22;
+			NVGRenderer.text("\uE8C9", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+			NVGRenderer.text(L10n.translate("pv.col.crafted_minions_list"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+			curY += 24f;
 
-			float mColW = (width - 3 * 10) / 4f;
-			float mH = 40f;
+			float mColW = (width - 3 * 10f) / 4f;
+			float mH = 46f;
 			int idx = 0;
 
 			for (String minion : col.craftedMinions) {
-				float mx_ = startX + (idx % 4) * (mColW + 10);
-				float my_ = curY + (idx / 4) * (mH + 8);
+				float mx_ = startX + (idx % 4) * (mColW + 10f);
+				float my_ = curY + (idx / 4) * (mH + 8f);
 
-				RenderHelper.drawModernCard(mx_, my_, mColW, mH, 6f, false);
+				RenderHelper.drawModernCard(mx_, my_, mColW, mH, 8f, false);
 				String mName = minion.replace("_GENERATOR_", " ").replace("_", " ").toLowerCase();
 				mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);
-				NVGRenderer.text(mName, mx_ + 10, my_ + 12, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, RenderHelper.FS_CAPTION);
+				NVGRenderer.text(mName, mx_ + 12f, my_ + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
 
 				idx++;
 			}
-			curY += ((idx + 3) / 4) * (mH + 8) + 10;
+			curY += ((idx + 3) / 4) * (mH + 8f) + 12f;
 		}
 
 		return curY - y0;
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
-		float subTabH = 28f;
+		float subTabH = 32f;
 		float subTabX = startX;
 		for (ColCategory cat : ColCategory.values()) {
-			float catW = NVGRenderer.textWidth(cat.getTitle(), Fonts.PRETENDARD_MEDIUM, RenderHelper.FS_BUTTON) + 20f;
+			float catW = NVGRenderer.textWidth(cat.getTitle(), Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + catW && my >= startY && my <= startY + subTabH) {
 				activeCategory = cat;
 				return true;

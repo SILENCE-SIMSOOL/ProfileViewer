@@ -2,9 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
@@ -17,14 +15,16 @@ import silence.simsool.profileviewer.ui.RenderHelper;
 public class MiningTabRenderer {
 
 	public enum MiningSubTab {
-		MAIN("pv.mining.subtab.main"),
-		HOTM_TREE("pv.mining.subtab.hotm_tree"),
-		GEAR("pv.mining.subtab.gear"),
-		GLACITE("pv.mining.subtab.glacite");
+		MAIN("pv.mining.subtab.main", "\uE52F"),
+		HOTM_TREE("pv.mining.subtab.hotm_tree", "\uE8EF"),
+		GEAR("pv.mining.subtab.gear", "\uE8C9"),
+		GLACITE("pv.mining.subtab.glacite", "\uE3E8");
 
 		public final String translationKey;
-		MiningSubTab(String translationKey) {
+		public final String icon;
+		MiningSubTab(String translationKey, String icon) {
 			this.translationKey = translationKey;
+			this.icon = icon;
 		}
 
 		public String getTitle() {
@@ -59,26 +59,29 @@ public class MiningTabRenderer {
 		visibleTreeSlots.clear();
 		hoveredTreeSlot = null;
 
-		// Sub-tabs bar
-		float subTabH = 28f;
+		// Sub-tabs bar (Modern Pills)
+		float subTabH = 32f;
 		float subTabX = startX;
 		for (MiningSubTab st : MiningSubTab.values()) {
 			String title = st.getTitle();
-			float stW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, RenderHelper.FS_BUTTON) + 20f;
+			float stW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			boolean active = (st == activeSubTab);
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + stW && mouseY >= curY && mouseY <= curY + subTabH;
 
 			if (active) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, UIColors.ACCENT_BLUE, 6f);
+				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0xBF4F46E5, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0x22FFFFFF, 6f);
+				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0x1AFFFFFF, 8f);
 			}
-			NVGRenderer.text(title, subTabX + 10f, curY + 7f, Fonts.PRETENDARD_MEDIUM, active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED), RenderHelper.FS_BUTTON);
+
+			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
+			NVGRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
+			NVGRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
 
 			subTabX += stW + 8f;
 		}
 
-		curY += subTabH + 18f;
+		curY += subTabH + 16f;
 
 		switch (activeSubTab) {
 			case MAIN -> curY += renderMainView(m, startX, curY, width, mouseX, mouseY);
@@ -93,58 +96,88 @@ public class MiningTabRenderer {
 	private static float renderMainView(MiningData m, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 
-		// Summary Card
-		float cardH = 84f;
+		// Summary Card (HOTM Level)
+		float cardH = 80f;
 		RenderHelper.drawModernCard(startX, curY, width, cardH, 12f, false);
-		NVGRenderer.text(L10n.translate("pv.mining.hotm"), startX + 18, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(L10n.translate("pv.ui.tier") + " " + m.hotmLevel + " / 10", startX + 18, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FF55, RenderHelper.FS_H2);
-		NVGRenderer.text(L10n.translate("pv.mining.potm") + ": " + m.peakOfTheMountain + "  |  " + L10n.translate("pv.mining.nucleus_runs") + ": " + m.nucleusRuns, startX + width - 280, curY + 38, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
 
-		curY += cardH + 24;
+		float iconBoxSize = 40f;
+		float ix = startX + 16f;
+		float iy = curY + (cardH - iconBoxSize) / 2f;
+		int hotmCol = 0xFF10B981;
+		NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(hotmCol, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE52F", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, hotmCol, 21f);
+
+		float tx = ix + iconBoxSize + 14f;
+		NVGRenderer.text(L10n.translate("pv.mining.hotm"), tx, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(L10n.translate("pv.ui.tier") + " " + m.hotmLevel + " / 10", tx, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, hotmCol, 19f);
+
+		String potmStr = L10n.translate("pv.mining.potm") + ": " + m.peakOfTheMountain + "  •  " + L10n.translate("pv.mining.nucleus_runs") + ": " + m.nucleusRuns;
+		NVGRenderer.text(potmStr, startX + width - 280f, curY + 32f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 14f);
+
+		curY += cardH + 20f;
 
 		// 3 Powders Row
-		NVGRenderer.text(L10n.translate("pv.mining.powders"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		NVGRenderer.text("\uE3E8", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		NVGRenderer.text(L10n.translate("pv.mining.powders"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		curY += 24f;
 
-		float colW = (width - 24) / 3f;
-		float pH = 74f;
+		float colW = (width - 24f) / 3f;
+		float pH = 76f;
 
-		RenderHelper.drawModernCard(startX, curY, colW, pH, 10f, false);
-		NVGRenderer.text("Mithril Powder", startX + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, 0xFF00AA00, RenderHelper.FS_BUTTON);
-		NVGRenderer.text(RenderHelper.formatNumber(m.mithrilPowder), startX + 14, curY + 36, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_H3);
+		// Mithril Powder
+		RenderHelper.drawModernCard(startX, curY, colW, pH, 12f, false);
+		float ixP = startX + 14f;
+		float iyP = curY + (pH - iconBoxSize) / 2f;
+		NVGRenderer.rect(ixP, iyP, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF10B981, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE52F", ixP + 9.5f, iyP + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
+		float txP = ixP + iconBoxSize + 12f;
+		NVGRenderer.text("Mithril Powder", txP, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
+		NVGRenderer.text(RenderHelper.formatNumber(m.mithrilPowder), txP, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 18f);
 
-		float gX = startX + colW + 12;
-		RenderHelper.drawModernCard(gX, curY, colW, pH, 10f, false);
-		NVGRenderer.text("Gemstone Powder", gX + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF55FF, RenderHelper.FS_BUTTON);
-		NVGRenderer.text(RenderHelper.formatNumber(m.gemstonePowder), gX + 14, curY + 36, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_H3);
+		// Gemstone Powder
+		float gX = startX + colW + 12f;
+		RenderHelper.drawModernCard(gX, curY, colW, pH, 12f, false);
+		float ixG = gX + 14f;
+		NVGRenderer.rect(ixG, iyP, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFF55FF, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE3E8", ixG + 9.5f, iyP + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFF55FF, 21f);
+		float txG = ixG + iconBoxSize + 12f;
+		NVGRenderer.text("Gemstone Powder", txG, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
+		NVGRenderer.text(RenderHelper.formatNumber(m.gemstonePowder), txG, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF55FF, 18f);
 
-		float glX = gX + colW + 12;
-		RenderHelper.drawModernCard(glX, curY, colW, pH, 10f, false);
-		NVGRenderer.text("Glacite Powder", glX + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FFFF, RenderHelper.FS_BUTTON);
-		NVGRenderer.text(RenderHelper.formatNumber(m.glacitePowder), glX + 14, curY + 36, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_H3);
+		// Glacite Powder
+		float glX = gX + colW + 12f;
+		RenderHelper.drawModernCard(glX, curY, colW, pH, 12f, false);
+		float ixGl = glX + 14f;
+		NVGRenderer.rect(ixGl, iyP, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE87D", ixGl + 9.5f, iyP + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 21f);
+		float txGl = ixGl + iconBoxSize + 12f;
+		NVGRenderer.text("Glacite Powder", txGl, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
+		NVGRenderer.text(RenderHelper.formatNumber(m.glacitePowder), txGl, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 18f);
 
-		curY += pH + 24;
+		curY += pH + 24f;
 
 		// Crystal Nucleus Crystals (5 Gems)
-		NVGRenderer.text("CRYSTAL NUCLEUS (5 GEMS)", startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		NVGRenderer.text("\uE838", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 18f);
+		NVGRenderer.text("CRYSTAL NUCLEUS (5 GEMS)", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		curY += 24f;
 
-		float crW = (width - 4 * 10) / 5f;
-		float crH = 54f;
+		float crW = (width - 4 * 10f) / 5f;
+		float crH = 58f;
 		String[] crystals = {"jade_crystal", "amethyst_crystal", "topaz_crystal", "sapphire_crystal", "amber_crystal"};
 		String[] cNames = {"Jade", "Amethyst", "Topaz", "Sapphire", "Amber"};
-		int[] cColors = {0xFF55FF55, 0xFFAA00AA, 0xFFFFAA00, 0xFF5555FF, 0xFFFFD700};
+		int[] cColors = {0xFF10B981, 0xFFA855F7, 0xFFF59E0B, 0xFF38BDF8, 0xFFFBBF24};
 
 		for (int i = 0; i < crystals.length; i++) {
-			float cx = startX + i * (crW + 10);
+			float cx = startX + i * (crW + 10f);
 			boolean found = m.crystals.getOrDefault(crystals[i], false);
-			RenderHelper.drawModernCard(cx, curY, crW, crH, 8f, false);
-			NVGRenderer.text(cNames[i], cx + 12, curY + 10, Fonts.PRETENDARD_SEMIBOLD, cColors[i], RenderHelper.FS_BUTTON);
-			String foundStr = found ? "§a" + L10n.translate("pv.ui.unlocked") : "§7" + L10n.translate("pv.ui.locked");
-			RenderHelper.drawColoredText(foundStr, cx + 12, curY + 28, RenderHelper.FS_CAPTION, RenderHelper.FONT_MUTED);
+			RenderHelper.drawModernCard(cx, curY, crW, crH, 10f, false);
+			NVGRenderer.text(cNames[i], cx + 14f, curY + 10f, Fonts.PRETENDARD_SEMIBOLD, cColors[i], 14f);
+			String foundStr = found ? L10n.translate("pv.ui.unlocked") : L10n.translate("pv.ui.locked");
+			int statCol = found ? 0xFF10B981 : RenderHelper.FONT_DISABLED;
+			NVGRenderer.text(foundStr, cx + 14f, curY + 32f, Fonts.PRETENDARD_MEDIUM, statCol, 13f);
 		}
 
-		curY += crH + 24;
+		curY += crH + 20f;
 		return curY - y0;
 	}
 
@@ -152,8 +185,8 @@ public class MiningTabRenderer {
 		float y0 = curY;
 
 		// Loadout Selector Buttons (Slot 1 .. 5)
-		float loadoutBtnW = 60f;
-		float loadoutBtnH = 26f;
+		float loadoutBtnW = 70f;
+		float loadoutBtnH = 30f;
 		float btnStartX = startX + (width - (5 * (loadoutBtnW + 8f) - 8f)) / 2f;
 
 		for (int slot = 1; slot <= 5; slot++) {
@@ -161,24 +194,24 @@ public class MiningTabRenderer {
 			boolean isSel = (slot == activeLoadoutSlot);
 			boolean hov = mx >= bx && mx <= bx + loadoutBtnW && my >= curY && my <= curY + loadoutBtnH;
 
-			NVGRenderer.rect(bx, curY, loadoutBtnW, loadoutBtnH, isSel ? UIColors.ACCENT_BLUE : (hov ? 0x33FFFFFF : 0x221B1C26), 6f);
-			NVGRenderer.outlineRect(bx, curY, loadoutBtnW, loadoutBtnH, 1f, isSel ? 0xFF55FFFF : 0x44FFFFFF, 6f);
+			NVGRenderer.rect(bx, curY, loadoutBtnW, loadoutBtnH, isSel ? 0xBF4F46E5 : (hov ? 0x1AFFFFFF : 0x44141624), 8f);
+			NVGRenderer.outlineRect(bx, curY, loadoutBtnW, loadoutBtnH, 1f, isSel ? 0xFF818CF8 : 0x22FFFFFF, 8f);
 			String slotTxt = "Slot " + slot;
-			float stW = NVGRenderer.textWidth(slotTxt, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION);
-			NVGRenderer.text(slotTxt, bx + (loadoutBtnW - stW) / 2f, curY + 6f, Fonts.PRETENDARD_SEMIBOLD, isSel ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			float stW = NVGRenderer.textWidth(slotTxt, Fonts.PRETENDARD_SEMIBOLD, 13f);
+			NVGRenderer.text(slotTxt, bx + (loadoutBtnW - stW) / 2f, curY + 8f, Fonts.PRETENDARD_SEMIBOLD, isSel ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_SECONDARY, 13f);
 		}
 
 		curY += loadoutBtnH + 18f;
 
 		// 7x9 HOTM Skill Tree Card Layout
 		float treeCardW = width;
-		float treeCardH = 430f;
-		RenderHelper.drawModernCard(startX, curY, treeCardW, treeCardH, 12f, false);
+		float treeCardH = 440f;
+		RenderHelper.drawModernCard(startX, curY, treeCardW, treeCardH, 14f, false);
 
 		// Grid Dimensions
-		float slotSize = 34f;
+		float slotSize = 36f;
 		float slotGap = 6f;
-		float tierColW = 34f;
+		float tierColW = 36f;
 		float gridStartX = startX + (treeCardW - (tierColW + 16f + 7 * (slotSize + slotGap) - slotGap)) / 2f;
 		float gridStartY = curY + 20f;
 
@@ -193,8 +226,8 @@ public class MiningTabRenderer {
 				ItemStack icon = tierNode.getItemIcon(m.hotmLevel, false);
 				boolean hov = mx >= tx && mx <= tx + slotSize && my >= ty && my <= ty + slotSize;
 
-				NVGRenderer.rect(tx, ty, slotSize, slotSize, m.hotmLevel >= t ? 0xFF1E382B : (hov ? 0xFF2A2C3A : 0x55111218), 6f);
-				NVGRenderer.outlineRect(tx, ty, slotSize, slotSize, 1.2f, m.hotmLevel >= t ? 0xFF55FF55 : (hov ? 0xFFFFFF55 : 0xFF555555), 6f);
+				NVGRenderer.rect(tx, ty, slotSize, slotSize, m.hotmLevel >= t ? 0xFF1E382B : (hov ? 0xFF2A2C3A : 0x55111218), 8f);
+				NVGRenderer.outlineRect(tx, ty, slotSize, slotSize, 1.2f, m.hotmLevel >= t ? 0xFF10B981 : (hov ? 0xFFFFAA00 : 0xFF374151), 8f);
 
 				TreeSlotInfo info = new TreeSlotInfo(tx, ty, slotSize, tierNode, m.hotmLevel >= t ? 1 : 0, icon);
 				visibleTreeSlots.add(info);
@@ -208,7 +241,7 @@ public class MiningTabRenderer {
 		for (HotmTreeData.HotmNode node : HotmTreeData.ALL_NODES) {
 			if (node.type == HotmTreeData.NodeType.TIER) continue;
 
-			int row = 9 - node.y; // invert y so Tier 10 is at top
+			int row = 9 - node.y;
 			int col = node.x;
 
 			float nx = nodeGridStartX + col * (slotSize + slotGap);
@@ -221,17 +254,17 @@ public class MiningTabRenderer {
 			boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
 
 			int bgCol = isSelAb ? 0xFF1E382B : (lvl > 0 ? 0xFF1C2A3A : 0x5514151E);
-			int borderCol = isSelAb ? 0xFF55FF55 : (lvl >= node.maxLevel ? 0xFF55FFFF : (lvl > 0 ? 0xFF3B82F6 : 0x44555566));
+			int borderCol = isSelAb ? 0xFF10B981 : (lvl >= node.maxLevel ? 0xFF38BDF8 : (lvl > 0 ? 0xFF6366F1 : 0x334B5563));
 
-			NVGRenderer.rect(nx, ny, slotSize, slotSize, bgCol, 6f);
-			NVGRenderer.outlineRect(nx, ny, slotSize, slotSize, 1.2f, borderCol, 6f);
+			NVGRenderer.rect(nx, ny, slotSize, slotSize, bgCol, 8f);
+			NVGRenderer.outlineRect(nx, ny, slotSize, slotSize, 1.2f, borderCol, 8f);
 
 			// Level badge at bottom-right of slot if > 1
 			if (lvl > 1 && node.maxLevel > 1) {
 				String lvlStr = String.valueOf(lvl);
-				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 9f);
-				NVGRenderer.rect(nx + slotSize - lw - 4f, ny + slotSize - 11f, lw + 3f, 10f, 0xDD111218, 2f);
-				NVGRenderer.text(lvlStr, nx + slotSize - lw - 2.5f, ny + slotSize - 10.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 9f);
+				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 9.5f);
+				NVGRenderer.rect(nx + slotSize - lw - 5f, ny + slotSize - 12f, lw + 4f, 11f, 0xDD111218, 3f);
+				NVGRenderer.text(lvlStr, nx + slotSize - lw - 3f, ny + slotSize - 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 9.5f);
 			}
 
 			TreeSlotInfo info = new TreeSlotInfo(nx, ny, slotSize, node, lvl, icon);
@@ -245,11 +278,11 @@ public class MiningTabRenderer {
 
 	private static float renderGearView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
-		float cardH = 120f;
-		RenderHelper.drawModernCard(startX, curY, width, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.mining.subtab.gear"), startX + 16, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(L10n.translate("pv.mining.drill"), startX + 16, curY + 36, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_H3);
-		NVGRenderer.text(L10n.translate("pv.mining.commissions"), startX + 16, curY + 68, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
+		float cardH = 100f;
+		RenderHelper.drawModernCard(startX, curY, width, cardH, 12f, false);
+		NVGRenderer.text(L10n.translate("pv.mining.subtab.gear"), startX + 16f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(L10n.translate("pv.mining.drill"), startX + 16f, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
+		NVGRenderer.text(L10n.translate("pv.mining.commissions"), startX + 16f, curY + 64f, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, 14f);
 
 		curY += cardH + 16f;
 		return curY - y0;
@@ -258,20 +291,20 @@ public class MiningTabRenderer {
 	private static float renderGlaciteView(MiningData m, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		float cardH = 90f;
-		RenderHelper.drawModernCard(startX, curY, width, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.mining.subtab.glacite"), startX + 16, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text("Glacite Powder: " + RenderHelper.formatNumber(m.glacitePowder), startX + 16, curY + 36, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FFFF, RenderHelper.FS_H3);
-		NVGRenderer.text(L10n.translate("pv.mining.glacite_corpses"), startX + 16, curY + 66, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
+		RenderHelper.drawModernCard(startX, curY, width, cardH, 12f, false);
+		NVGRenderer.text(L10n.translate("pv.mining.subtab.glacite"), startX + 16f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text("Glacite Powder: " + RenderHelper.formatNumber(m.glacitePowder), startX + 16f, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 17f);
+		NVGRenderer.text(L10n.translate("pv.mining.glacite_corpses"), startX + 16f, curY + 62f, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, 14f);
 
 		curY += cardH + 16f;
 		return curY - y0;
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
-		float subTabH = 28f;
+		float subTabH = 32f;
 		float subTabX = startX;
 		for (MiningSubTab st : MiningSubTab.values()) {
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_MEDIUM, RenderHelper.FS_BUTTON) + 20f;
+			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
 				activeSubTab = st;
 				return true;
@@ -280,10 +313,10 @@ public class MiningTabRenderer {
 		}
 
 		if (activeSubTab == MiningSubTab.HOTM_TREE) {
-			float loadoutBtnW = 60f;
-			float loadoutBtnH = 26f;
+			float loadoutBtnW = 70f;
+			float loadoutBtnH = 30f;
 			float btnStartX = startX + (width - (5 * (loadoutBtnW + 8f) - 8f)) / 2f;
-			float btnY = startY + subTabH + 18f;
+			float btnY = startY + subTabH + 16f;
 
 			for (int slot = 1; slot <= 5; slot++) {
 				float bx = btnStartX + (slot - 1) * (loadoutBtnW + 8f);

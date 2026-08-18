@@ -15,89 +15,116 @@ public class FarmingTabRenderer {
 		float curY = startY;
 		GardenData g = data.garden;
 
-		// Card 1: Garden Overview (Level & Copper & Visitors)
-		float colW = (width - 24) / 3f;
-		float cardH = 86f;
+		// Row 1: Garden Overview (3 Stat Cards)
+		float colW = (width - 24f) / 3f;
+		float cardH = 80f;
+		float iconBoxSize = 40f;
 
-		RenderHelper.drawModernCard(startX, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.farming.garden_level"), startX + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(L10n.translate("pv.ui.level") + " " + g.gardenLevel, startX + 14, curY + 34, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FF55, RenderHelper.FS_H2);
-		NVGRenderer.text(L10n.translate("pv.farming.copper") + ": " + RenderHelper.formatNumber(g.copper), startX + 14, curY + 62, Fonts.PRETENDARD, 0xFFFF8844, RenderHelper.FS_CAPTION);
+		// Card 1: Garden Level
+		RenderHelper.drawModernCard(startX, curY, colW, cardH, 12f, false);
+		float ix1 = startX + 14f;
+		float iy = curY + (cardH - iconBoxSize) / 2f;
+		NVGRenderer.rect(ix1, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF10B981, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE56C", ix1 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
 
-		float c2X = startX + colW + 12;
-		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.farming.garden_visitors"), c2X + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		NVGRenderer.text(RenderHelper.formatNumber(g.completedVisitors) + " " + L10n.translate("pv.farming.served"), c2X + 14, curY + 34, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_H2);
-		NVGRenderer.text(L10n.translate("pv.farming.unique_visitors") + ": " + g.uniqueVisitors, c2X + 14, curY + 62, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+		float tx1 = ix1 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.farming.garden_level"), tx1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(L10n.translate("pv.ui.level") + " " + g.gardenLevel, tx1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 19f);
+		NVGRenderer.text(L10n.translate("pv.farming.copper") + ": " + RenderHelper.formatNumber(g.copper), tx1, curY + 58f, Fonts.PRETENDARD_MEDIUM, 0xFFF97316, 12.5f);
 
-		float c3X = c2X + colW + 12;
-		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.farming.jacobs_medals"), c3X + 14, curY + 14, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, RenderHelper.FS_CAPTION);
-		String medalStr = String.format("§6%d Gold  §7%d Silver  §c%d Bronze", g.jacobGold, g.jacobSilver, g.jacobBronze);
-		RenderHelper.drawColoredText(medalStr, c3X + 14, curY + 36, RenderHelper.FS_BUTTON, RenderHelper.FONT_PRIMARY);
-		NVGRenderer.text(L10n.translate("pv.farming.contests_completed"), c3X + 14, curY + 62, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+		// Card 2: Visitors
+		float c2X = startX + colW + 12f;
+		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 12f, false);
+		float ix2 = c2X + 14f;
+		NVGRenderer.rect(ix2, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE88A", ix2 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 21f);
 
-		curY += cardH + 24;
+		float tx2 = ix2 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.farming.garden_visitors"), tx2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		NVGRenderer.text(RenderHelper.formatNumber(g.completedVisitors) + " " + L10n.translate("pv.farming.served"), tx2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 19f);
+		NVGRenderer.text(L10n.translate("pv.farming.unique_visitors") + ": " + g.uniqueVisitors, tx2, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+
+		// Card 3: Jacob's Medals
+		float c3X = c2X + colW + 12f;
+		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 12f, false);
+		float ix3 = c3X + 14f;
+		NVGRenderer.rect(ix3, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFBBF24, 32), iconBoxSize / 2f);
+		NVGRenderer.text("\uE838", ix3 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 21f);
+
+		float tx3 = ix3 + iconBoxSize + 12f;
+		NVGRenderer.text(L10n.translate("pv.farming.jacobs_medals"), tx3, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		String medalStr = String.format("§6%d G  §7%d S  §c%d B", g.jacobGold, g.jacobSilver, g.jacobBronze);
+		RenderHelper.drawColoredText(medalStr, tx3, curY + 36f, 17f, RenderHelper.FONT_PRIMARY);
+		NVGRenderer.text(L10n.translate("pv.farming.contests_completed"), tx3, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+
+		curY += cardH + 24f;
 
 		// 10 Crop Milestones Grid
-		NVGRenderer.text(L10n.translate("pv.farming.crop_milestones"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		NVGRenderer.text("\uE56C", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		NVGRenderer.text(L10n.translate("pv.farming.crop_milestones"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		curY += 24f;
 
-		float cropCardW = (width - 16) / 2f;
-		float cropCardH = 56f;
+		float cropCardW = (width - 16f) / 2f;
+		float cropCardH = 64f;
 		int idx = 0;
 
 		for (Map.Entry<String, Long> entry : g.cropMilestones.entrySet()) {
-			float cx = startX + (idx % 2) * (cropCardW + 16);
-			float cy = curY + (idx / 2) * (cropCardH + 10);
+			float cx = startX + (idx % 2) * (cropCardW + 16f);
+			float cy = curY + (idx / 2) * (cropCardH + 12f);
 
 			boolean hov = mouseX >= cx && mouseX <= cx + cropCardW && mouseY >= cy && mouseY <= cy + cropCardH;
-			RenderHelper.drawModernCard(cx, cy, cropCardW, cropCardH, 8f, hov);
+			RenderHelper.drawModernCard(cx, cy, cropCardW, cropCardH, 10f, hov);
 
 			String cropName = formatCropName(entry.getKey());
-			NVGRenderer.text(cropName, cx + 14, cy + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(cropName, cx + 14f, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
 
 			long count = entry.getValue();
 			int milestoneTier = calcCropTier(count);
 			float progress = calcCropProgress(count, milestoneTier);
 
 			String tierStr = L10n.translate("pv.ui.tier") + " " + milestoneTier;
-			NVGRenderer.text(tierStr, cx + cropCardW - 14 - NVGRenderer.textWidth(tierStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION), cy + 10, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FF55, RenderHelper.FS_CAPTION);
+			float tw = NVGRenderer.textWidth(tierStr, Fonts.PRETENDARD_SEMIBOLD, 13f);
+			NVGRenderer.text(tierStr, cx + cropCardW - 14f - tw, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, milestoneTier >= 16 ? 0xFFFFAA00 : 0xFF10B981, 13f);
 
 			String cntStr = RenderHelper.formatNumber(count) + " " + L10n.translate("pv.farming.harvested");
-			NVGRenderer.text(cntStr, cx + 14, cy + 28, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			NVGRenderer.text(cntStr, cx + 14f, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
-			RenderHelper.drawProgressBar(cx + 14, cy + 42, cropCardW - 28, 4.5f, progress, 0xFF55FF55, 0xFF00AA00);
+			if (milestoneTier >= 16) {
+				RenderHelper.drawRainbowProgressBar(cx + 14f, cy + 48f, cropCardW - 28f, 5f, 1.0f);
+			} else {
+				RenderHelper.drawProgressBar(cx + 14f, cy + 48f, cropCardW - 28f, 5f, progress, 0xFF059669, 0xFF10B981);
+			}
 
 			idx++;
 		}
 
-		curY += ((idx + 1) / 2) * (cropCardH + 10) + 20;
+		curY += ((idx + 1) / 2) * (cropCardH + 12f) + 20f;
 
 		// Composter Upgrades
-		NVGRenderer.text(L10n.translate("pv.farming.composter_upgrades"), startX + 4, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		curY += 22;
+		NVGRenderer.text("\uE5D5", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		NVGRenderer.text(L10n.translate("pv.farming.composter_upgrades"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		curY += 24f;
 
-		float compW = (width - 3 * 10) / 4f;
-		float compH = 54f;
+		float compW = (width - 3 * 10f) / 4f;
+		float compH = 58f;
 
-		RenderHelper.drawModernCard(startX, curY, compW, compH, 8f, false);
-		NVGRenderer.text("Speed", startX + 12, curY + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		NVGRenderer.text("Lv. " + g.composterSpeed, startX + 12, curY + 28, Fonts.PRETENDARD_SEMIBOLD, UIColors.ACCENT_BLUE, RenderHelper.FS_BODY);
+		RenderHelper.drawModernCard(startX, curY, compW, compH, 10f, false);
+		NVGRenderer.text("Speed", startX + 14f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text("Lv. " + g.composterSpeed, startX + 14f, curY + 31f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 16f);
 
-		RenderHelper.drawModernCard(startX + compW + 10, curY, compW, compH, 8f, false);
-		NVGRenderer.text("Multi Drop", startX + compW + 22, curY + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		NVGRenderer.text("Lv. " + g.composterMultiDrop, startX + compW + 22, curY + 28, Fonts.PRETENDARD_SEMIBOLD, 0xFF55FF55, RenderHelper.FS_BODY);
+		RenderHelper.drawModernCard(startX + compW + 10f, curY, compW, compH, 10f, false);
+		NVGRenderer.text("Multi Drop", startX + compW + 24f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text("Lv. " + g.composterMultiDrop, startX + compW + 24f, curY + 31f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
-		RenderHelper.drawModernCard(startX + 2 * (compW + 10), curY, compW, compH, 8f, false);
-		NVGRenderer.text("Fuel Cap", startX + 2 * (compW + 10) + 12, curY + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		NVGRenderer.text("Lv. " + g.composterFuelCap, startX + 2 * (compW + 10) + 12, curY + 28, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, RenderHelper.FS_BODY);
+		RenderHelper.drawModernCard(startX + 2 * (compW + 10f), curY, compW, compH, 10f, false);
+		NVGRenderer.text("Fuel Cap", startX + 2 * (compW + 10f) + 14f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text("Lv. " + g.composterFuelCap, startX + 2 * (compW + 10f) + 14f, curY + 31f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 16f);
 
-		RenderHelper.drawModernCard(startX + 3 * (compW + 10), curY, compW, compH, 8f, false);
-		NVGRenderer.text("Cost Reduction", startX + 3 * (compW + 10) + 12, curY + 10, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-		NVGRenderer.text("Lv. " + g.composterCostReduction, startX + 3 * (compW + 10) + 12, curY + 28, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF55FF, RenderHelper.FS_BODY);
+		RenderHelper.drawModernCard(startX + 3 * (compW + 10f), curY, compW, compH, 10f, false);
+		NVGRenderer.text("Cost Reduction", startX + 3 * (compW + 10f) + 14f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text("Lv. " + g.composterCostReduction, startX + 3 * (compW + 10f) + 14f, curY + 31f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF472B6, 16f);
 
-		curY += compH + 20;
+		curY += compH + 20f;
 
 		return curY - startY;
 	}

@@ -2,7 +2,6 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
@@ -72,20 +71,21 @@ public class PetsTabRenderer {
 			selectedPet = data.pets.activePet != null ? data.pets.activePet : allPets.get(0);
 		}
 
-		// Top Row Header: Title, Pet Score, Search Box
+		// Top Row Header: [Icon] Pet Collection (Score Badge) & Search Box
+		NVGRenderer.text("\uE91D", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
 		String titleStr = L10n.translate("pv.pets.collection") + " (" + allPets.size() + ")";
-		NVGRenderer.text(titleStr, startX + 4, curY + 4, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+		NVGRenderer.text(titleStr, startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
-		float titleW = NVGRenderer.textWidth(titleStr, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_BUTTON);
-		String scoreStr = L10n.translate("pv.pets.score") + ": §b" + petScore + " §7(§b+" + magicFindBonus + " " + L10n.translate("pv.pets.magic_find") + "§7)";
-		RenderHelper.drawColoredText(scoreStr, startX + titleW + 16f, curY + 5, RenderHelper.FS_CAPTION, RenderHelper.FONT_SECONDARY);
+		float titleW = NVGRenderer.textWidth(titleStr, Fonts.PRETENDARD_SEMIBOLD, 17f);
+		String scoreStr = L10n.translate("pv.pets.score") + ": " + petScore + " (+" + magicFindBonus + " " + L10n.translate("pv.pets.magic_find") + ")";
+		RenderHelper.drawBadge(scoreStr, startX + 38f + titleW, curY - 1f, 0x3338BDF8, 0xFF38BDF8);
 
 		float searchW = 180f;
 		float searchX = startX + width - searchW;
-		searchBox.setPosition((int) searchX, (int) curY);
+		searchBox.setPosition((int) searchX, (int) curY - 2);
 		searchBox.render(null, (int) mouseX, (int) mouseY, delta);
 
-		curY += 36;
+		curY += 36f;
 
 		// Sort Pets: Rarity desc -> Level desc -> Exp desc
 		List<PetData.PetItem> sortedPets = new ArrayList<>(allPets);
@@ -108,50 +108,50 @@ public class PetsTabRenderer {
 
 		// Two-column Layout: Left 62% Grid, Right 38% Details Panel
 		float gap = 14f;
-		float leftW = (width - gap) * 0.62f;
+		float leftW = (width - gap) * 0.60f;
 		float rightW = width - gap - leftW;
 		float leftX = startX;
 		float rightX = startX + leftW + gap;
 
 		// Left Column: Pet Grid
-		float slotSize = 38f;
+		float slotSize = 40f;
 		float slotGap = 6f;
 		int cols = Math.max(1, (int) ((leftW - 24f + slotGap) / (slotSize + slotGap)));
 		int rows = (int) Math.ceil((double) filtered.size() / cols);
-		float gridH = Math.max(340f, rows * (slotSize + slotGap) + 20f);
+		float gridH = Math.max(360f, rows * (slotSize + slotGap) + 24f);
 
-		RenderHelper.drawModernCard(leftX, curY, leftW, gridH, 10f, false);
+		RenderHelper.drawModernCard(leftX, curY, leftW, gridH, 14f, false);
 
 		if (filtered.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), leftX + leftW / 2f - 60f, curY + 40f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), leftX + 24f, curY + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 		} else {
 			for (int i = 0; i < filtered.size(); i++) {
 				PetData.PetItem pet = filtered.get(i);
 				int col = i % cols;
 				int row = i / cols;
-				float sx = leftX + 12f + col * (slotSize + slotGap);
-				float sy = curY + 12f + row * (slotSize + slotGap);
+				float sx = leftX + 14f + col * (slotSize + slotGap);
+				float sy = curY + 14f + row * (slotSize + slotGap);
 
 				boolean isSelected = (pet == selectedPet);
 				boolean hov = mouseX >= sx && mouseX <= sx + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
 				if (hov) hoveredPet = pet;
 
 				// Slot Background & Outline
-				int bgCol = isSelected ? 0xFF2A364F : (hov ? 0xFF282A38 : 0x551B1C26);
-				int borderCol = isSelected ? UIColors.ACCENT_BLUE : (hov ? pet.getRarityColor() : UIColors.withAlpha(pet.getRarityColor(), 140));
-				NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 6f);
-				NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelected ? 1.8f : 1.0f, borderCol, 6f);
+				int bgCol = isSelected ? 0xFF222638 : (hov ? 0xFF1C1E2C : 0x6611131E);
+				int borderCol = isSelected ? 0xFF818CF8 : (hov ? pet.getRarityColor() : UIColors.withAlpha(pet.getRarityColor(), 100));
+				NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 8f);
+				NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelected ? 1.5f : 1.0f, borderCol, 8f);
 
-				// Active Badge (Small green dot)
+				// Active Badge (Green dot)
 				if (pet.active) {
-					NVGRenderer.rect(sx + 3f, sy + 3f, 6f, 6f, 0xFF55FF55, 3f);
+					NVGRenderer.circle(sx + 6f, sy + 6f, 3f, 0xFF10B981);
 				}
 
 				// Level Badge at bottom-right of slot
 				String lvlStr = String.valueOf(pet.level);
 				float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-				NVGRenderer.rect(sx + slotSize - lvlW - 5f, sy + slotSize - 13f, lvlW + 4f, 11f, 0xCC111218, 3f);
-				NVGRenderer.text(lvlStr, sx + slotSize - lvlW - 3f, sy + slotSize - 12f, Fonts.PRETENDARD_SEMIBOLD, pet.getRarityColor(), 10f);
+				NVGRenderer.rect(sx + slotSize - lvlW - 6f, sy + slotSize - 13f, lvlW + 4f, 11f, 0xDD111218, 3f);
+				NVGRenderer.text(lvlStr, sx + slotSize - lvlW - 4f, sy + slotSize - 12.5f, Fonts.PRETENDARD_SEMIBOLD, pet.getRarityColor(), 10f);
 
 				visiblePetSlots.add(new PetSlotInfo(sx, sy, slotSize, pet));
 			}
@@ -160,77 +160,88 @@ public class PetsTabRenderer {
 		// Right Column: Selected Pet Details Card
 		renderSelectedPetDetails(rightX, curY, rightW, gridH);
 
-		curY += Math.max(gridH, 300f) + 16f;
+		curY += Math.max(gridH, 360f) + 16f;
 		return curY - startY;
 	}
 
 	private static void renderSelectedPetDetails(float x, float y, float w, float h) {
-		RenderHelper.drawModernCard(x, y, w, h, 10f, false);
+		RenderHelper.drawModernCard(x, y, w, h, 14f, false);
 
 		if (selectedPet == null) {
-			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), x + w / 2f - 55f, y + 40f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, RenderHelper.FS_BUTTON);
+			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), x + 24f, y + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 			return;
 		}
 
 		PetData.PetItem pet = selectedPet;
-		float px = x + 14f;
-		float py = y + 14f;
+		float px = x + 16f;
+		float py = y + 16f;
 
 		// Large Pet Icon Slot (52x52)
 		float bigSlotSize = 52f;
-		NVGRenderer.rect(px, py, bigSlotSize, bigSlotSize, 0xFF222433, 8f);
-		NVGRenderer.outlineRect(px, py, bigSlotSize, bigSlotSize, 1.5f, pet.getRarityColor(), 8f);
+		boolean isMaxed = pet.level >= pet.maxLevel;
+
+		if (isMaxed) {
+			RenderHelper.drawRainbowBorder(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 10f, 1.5f);
+		} else {
+			NVGRenderer.rect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 0xFF181A26, 10f);
+			NVGRenderer.outlineRect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 1.2f, pet.getRarityColor(), 10f);
+		}
 		visiblePetSlots.add(new PetSlotInfo(px, py, bigSlotSize, pet, true));
 
 		// Name & Rarity & Level
-		float nameX = px + bigSlotSize + 12f;
+		float nameX = px + bigSlotSize + 14f;
 		String cleanName = pet.type.replace("_", " ");
-		NVGRenderer.text(cleanName, nameX, py + 2f, Fonts.PRETENDARD_SEMIBOLD, pet.getRarityColor(), RenderHelper.FS_BODY);
+		NVGRenderer.text(cleanName, nameX, py + 2f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
 		String tag = pet.rarity + " PET";
-		RenderHelper.drawBadge(tag, nameX, py + 22f, 0x33000000, pet.getRarityColor());
+		RenderHelper.drawBadge(tag, nameX, py + 24f, UIColors.withAlpha(pet.getRarityColor(), 32), pet.getRarityColor());
 
 		if (pet.active) {
-			RenderHelper.drawBadge(L10n.translate("pv.gear.active"), nameX + NVGRenderer.textWidth(tag, Fonts.PRETENDARD_SEMIBOLD, 10f) + 18f, py + 22f, 0xFF1B3D24, 0xFF55FF55);
+			float tagW = NVGRenderer.textWidth(tag, Fonts.PRETENDARD_SEMIBOLD, 11f);
+			RenderHelper.drawBadge(L10n.translate("pv.gear.active"), nameX + tagW + 18f, py + 24f, 0x3310B981, 0xFF10B981);
 		}
 
-		py += bigSlotSize + 16f;
+		py += bigSlotSize + 20f;
 
 		// Level & XP Progress
 		String lvlText = L10n.translate("pv.ui.level") + " " + pet.level + " / " + pet.maxLevel;
-		NVGRenderer.text(lvlText, px, py, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_CAPTION);
+		NVGRenderer.text(lvlText, px, py, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
-		String pctText = pet.level >= pet.maxLevel ? L10n.translate("pv.ui.max") : String.format("%.1f%%", pet.progressToNextLevel * 100);
-		NVGRenderer.text(pctText, px + w - 28f - NVGRenderer.textWidth(pctText, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FS_CAPTION), py, Fonts.PRETENDARD_SEMIBOLD, pet.level >= pet.maxLevel ? 0xFF55FFFF : UIColors.ACCENT_BLUE, RenderHelper.FS_CAPTION);
+		String pctText = isMaxed ? L10n.translate("pv.ui.max") : String.format("%.1f%%", pet.progressToNextLevel * 100f);
+		float pctW = NVGRenderer.textWidth(pctText, Fonts.PRETENDARD_SEMIBOLD, 13f);
+		NVGRenderer.text(pctText, px + w - 32f - pctW, py, Fonts.PRETENDARD_SEMIBOLD, isMaxed ? 0xFFFFAA00 : 0xFF38BDF8, 13f);
 
-		py += 16f;
-		RenderHelper.drawProgressBar(px, py, w - 28f, 7f, pet.progressToNextLevel, UIColors.ACCENT_BLUE);
-		py += 14f;
+		py += 18f;
+		if (isMaxed) {
+			RenderHelper.drawRainbowProgressBar(px, py, w - 32f, 5.5f, 1.0f);
+		} else {
+			RenderHelper.drawProgressBar(px, py, w - 32f, 5.5f, pet.progressToNextLevel, 0xFF4F46E5, 0xFF818CF8);
+		}
+		py += 18f;
 
 		// Total XP Info
-		RenderHelper.drawStatRow(L10n.translate("pv.pets.exp"), String.format("%,.0f XP", pet.exp), px, py, w - 28f, RenderHelper.FS_CAPTION, 0xFFFFDD55);
-		py += 22f;
+		RenderHelper.drawStatRow(L10n.translate("pv.pets.exp"), String.format("%,.0f XP", pet.exp), px, py, w - 32f, 13.5f, 0xFFFBBF24);
+		py += 24f;
 
 		if (pet.level < pet.maxLevel) {
-			RenderHelper.drawStatRow("Next Level", String.format("%,.0f / %,.0f", pet.currentLevelExp, pet.nextLevelExp), px, py, w - 28f, RenderHelper.FS_CAPTION, RenderHelper.FONT_PRIMARY);
-			py += 22f;
+			RenderHelper.drawStatRow("Next Level", String.format("%,.0f / %,.0f", pet.currentLevelExp, pet.nextLevelExp), px, py, w - 32f, 13.5f, RenderHelper.FONT_PRIMARY);
+			py += 24f;
 		}
 
 		// Candy Used
 		String candyVal = pet.candyUsed > 0 ? (pet.candyUsed + " / 10") : "0 / 10";
-		RenderHelper.drawStatRow("Candy", candyVal, px, py, w - 28f, RenderHelper.FS_CAPTION, pet.candyUsed > 0 ? 0xFFFF77DD : RenderHelper.FONT_SECONDARY);
-		py += 22f;
+		RenderHelper.drawStatRow("Candy", candyVal, px, py, w - 32f, 13.5f, pet.candyUsed > 0 ? 0xFFF472B6 : RenderHelper.FONT_SECONDARY);
+		py += 24f;
 
 		// Held Item
 		String heldVal = pet.heldItem.isEmpty() ? L10n.translate("pv.ui.none") : pet.heldItem.replace("PET_ITEM_", "").replace("_", " ");
-		RenderHelper.drawStatRow(L10n.translate("pv.pets.held_item"), heldVal, px, py, w - 28f, RenderHelper.FS_CAPTION, !pet.heldItem.isEmpty() ? 0xFF55FF55 : RenderHelper.FONT_SECONDARY);
-		py += 22f;
+		RenderHelper.drawStatRow(L10n.translate("pv.pets.held_item"), heldVal, px, py, w - 32f, 13.5f, !pet.heldItem.isEmpty() ? 0xFF10B981 : RenderHelper.FONT_SECONDARY);
+		py += 24f;
 
 		// Skin
 		if (!pet.skin.isEmpty()) {
 			String skinVal = pet.skin.replace("PET_SKIN_", "").replace("_", " ");
-			RenderHelper.drawStatRow(L10n.translate("pv.pets.skin"), skinVal, px, py, w - 28f, RenderHelper.FS_CAPTION, 0xFFFFAA00);
-			py += 22f;
+			RenderHelper.drawStatRow(L10n.translate("pv.pets.skin"), skinVal, px, py, w - 32f, 13.5f, 0xFFFFAA00);
 		}
 	}
 
