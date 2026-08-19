@@ -36,23 +36,27 @@ public class SlayerTabRenderer {
 			boolean hov = mouseX >= bx && mouseX <= bx + cardW && mouseY >= by && mouseY <= by + cardH;
 			RenderHelper.drawModernCard(bx, by, cardW, cardH, 14f, hov);
 
-			// Boss Icon / Badge on Left
-			float iconBoxSize = 40f;
+			// Boss Icon on Left (Overview-identical texture rendering)
+			float iconSize = 32f;
 			float ix = bx + 14f;
-			float iy = by + (cardH - iconBoxSize) / 2f;
+			float iy = by + (cardH - iconSize) / 2f;
 			int bossCol = getBossColor(key);
 
 			if (boss.maxed) {
-				RenderHelper.drawRainbowBorder(ix, iy, iconBoxSize, iconBoxSize, iconBoxSize / 2f, 1.5f);
-				NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(bossCol, 32), iconBoxSize / 2f);
+				RenderHelper.drawRainbowBorder(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, 8f, 1.5f);
 			} else {
-				NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(bossCol, 32), iconBoxSize / 2f);
+				NVGRenderer.rect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, UIColors.withAlpha(bossCol, 32), 8f);
+				NVGRenderer.outlineRect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, 1f, UIColors.withAlpha(bossCol, 100), 8f);
 			}
-			NVGRenderer.text("\uE3AF", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, bossCol, 21f);
+
+			net.minecraft.resources.Identifier bossTexture = getSlayerTexture(key);
+			OverviewTabRenderer.visibleItemSlots.add(new OverviewTabRenderer.OverviewSlotInfo(ix, iy, iconSize, bossTexture, boss.name + " Lv. " + boss.level));
 
 			// Name & Level Badge
-			float textX = ix + iconBoxSize + 12f;
+			float textX = ix + iconSize + 12f;
 			NVGRenderer.text(boss.name, textX, by + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+
+
 
 			String lvlStr = L10n.translate("pv.ui.level") + " " + boss.level + (boss.maxed ? " (" + L10n.translate("pv.ui.max") + ")" : "");
 			int lvlCol = boss.maxed ? 0xFFFFAA00 : 0xFF818CF8;
@@ -105,4 +109,18 @@ public class SlayerTabRenderer {
 			default -> 0xFFA855F7;
 		};
 	}
+
+	private static net.minecraft.resources.Identifier getSlayerTexture(String slayerKey) {
+		if (slayerKey == null) return net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/revenant.png");
+		return switch (slayerKey.toLowerCase(java.util.Locale.ROOT)) {
+			case "zombie" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/revenant.png");
+			case "spider" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/tarantula.png");
+			case "wolf" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/sven.png");
+			case "enderman" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/voidgloom.png");
+			case "blaze" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/inferno_demonlord.png");
+			case "vampire" -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/vampire.png");
+			default -> net.minecraft.resources.Identifier.tryParse("profileviewer:textures/icon/slayer/revenant.png");
+		};
+	}
 }
+

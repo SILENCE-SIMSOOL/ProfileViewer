@@ -1,6 +1,7 @@
 package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
@@ -86,7 +87,7 @@ public class CollectionsTabRenderer {
 		}
 
 		float cardW = (width - 16f) / 2f;
-		float cardH = 64f;
+		float cardH = 70f;
 		int idx = 0;
 
 		for (CollectionData.CollectionItem item : items) {
@@ -96,7 +97,18 @@ public class CollectionsTabRenderer {
 			boolean hov = mx >= cx && mx <= cx + cardW && my >= cy && my <= cy + cardH;
 			RenderHelper.drawModernCard(cx, cy, cardW, cardH, 10f, hov);
 
-			NVGRenderer.text(item.name, cx + 14f, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
+			// Item Slot on Left
+			float slotS = 36f;
+			float sx = cx + 12f;
+			float sy = cy + 17f;
+			boolean hovS = mx >= sx && mx <= sx + slotS && my >= sy && my <= sy + slotS;
+			RenderHelper.drawItemSlotBg(sx, sy, slotS, hovS, 0x33FFFFFF, 0x5511131E, 6f);
+
+			ItemStack colStack = createCollectionStack(item);
+			RenderHelper.registerItemSlot(sx, sy, slotS, colStack);
+
+			float tx = sx + slotS + 12f;
+			NVGRenderer.text(item.name, tx, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
 
 			String status = item.isMax ? L10n.translate("pv.ui.max") : String.format(L10n.translate("pv.ui.tier") + " %d/%d (%.1f%%)", item.tier, item.maxTier, item.progress * 100f);
 			int statCol = item.isMax ? 0xFFFFAA00 : 0xFF38BDF8;
@@ -104,12 +116,12 @@ public class CollectionsTabRenderer {
 			NVGRenderer.text(status, cx + cardW - 14f - sw, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, statCol, 13f);
 
 			String amtStr = RenderHelper.formatNumber(item.amount) + " " + L10n.translate("pv.col.collected");
-			NVGRenderer.text(amtStr, cx + 14f, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+			NVGRenderer.text(amtStr, tx, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 			if (item.isMax) {
-				RenderHelper.drawRainbowProgressBar(cx + 14f, cy + 48f, cardW - 28f, 5f, 1.0f);
+				RenderHelper.drawRainbowProgressBar(tx, cy + 50f, cx + cardW - 14f - tx, 5f, 1.0f);
 			} else {
-				RenderHelper.drawProgressBar(cx + 14f, cy + 48f, cardW - 28f, 5f, item.progress, 0xFF4F46E5, 0xFF818CF8);
+				RenderHelper.drawProgressBar(tx, cy + 50f, cx + cardW - 14f - tx, 5f, item.progress, 0xFF4F46E5, 0xFF818CF8);
 			}
 
 			idx++;
@@ -117,6 +129,23 @@ public class CollectionsTabRenderer {
 
 		curY += ((idx + 1) / 2) * (cardH + 12f) + 12f;
 		return curY - y0;
+	}
+
+	private static ItemStack createCollectionStack(CollectionData.CollectionItem item) {
+		String cleanId = item.id.toUpperCase();
+		ItemStack stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId);
+		if (stack.isEmpty()) {
+			stack = silence.simsool.profileviewer.api.nbt.NbtItemParser.resolveItemStack(0, "", cleanId, 0, 1);
+		}
+		if (stack.isEmpty()) {
+			stack = new ItemStack(net.minecraft.world.item.Items.PAPER);
+		}
+		stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("§a" + item.name));
+		List<net.minecraft.network.chat.Component> lore = new java.util.ArrayList<>();
+		lore.add(net.minecraft.network.chat.Component.literal("§7Tier: §e" + item.tier + " / " + item.maxTier));
+		lore.add(net.minecraft.network.chat.Component.literal("§7Collected: §b" + RenderHelper.formatNumber(item.amount)));
+		stack.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(lore));
+		return stack;
 	}
 
 	private static float renderMinionsView(CollectionData col, float startX, float curY, float width, float mx, float my) {
@@ -164,21 +193,32 @@ public class CollectionsTabRenderer {
 
 		if (!col.craftedMinions.isEmpty()) {
 			NVGRenderer.text("\uE8C9", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
-			NVGRenderer.text(L10n.translate("pv.col.crafted_minions_list"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+			NVGRenderer.text(L10n.translate("pv.col.crafted_minions_list") + " (" + col.craftedMinions.size() + ")", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
 			float mColW = (width - 3 * 10f) / 4f;
-			float mH = 46f;
+			float mH = 50f;
 			int idx = 0;
 
 			for (String minion : col.craftedMinions) {
 				float mx_ = startX + (idx % 4) * (mColW + 10f);
 				float my_ = curY + (idx / 4) * (mH + 8f);
 
-				RenderHelper.drawModernCard(mx_, my_, mColW, mH, 8f, false);
+				boolean hov = mx >= mx_ && mx <= mx_ + mColW && my >= my_ && my <= my_ + mH;
+				RenderHelper.drawModernCard(mx_, my_, mColW, mH, 8f, hov);
+
+				float msS = 32f;
+				float msX = mx_ + 8f;
+				float msY = my_ + 9f;
+				boolean hovS = mx >= msX && mx <= msX + msS && my >= msY && my <= msY + msS;
+				RenderHelper.drawItemSlotBg(msX, msY, msS, hovS, 0x33FFFFFF, 0x5511131E, 4f);
+
+				ItemStack minionStack = createMinionStack(minion);
+				RenderHelper.registerItemSlot(msX, msY, msS, minionStack);
+
 				String mName = minion.replace("_GENERATOR_", " ").replace("_", " ").toLowerCase();
 				mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);
-				NVGRenderer.text(mName, mx_ + 12f, my_ + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
+				NVGRenderer.text(mName, msX + msS + 8f, my_ + 17f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
 
 				idx++;
 			}
@@ -186,6 +226,21 @@ public class CollectionsTabRenderer {
 		}
 
 		return curY - y0;
+	}
+
+	private static ItemStack createMinionStack(String minionKey) {
+		String cleanId = minionKey.toUpperCase();
+		ItemStack stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId);
+		if (stack.isEmpty()) {
+			stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId + "_1");
+		}
+		if (stack.isEmpty()) {
+			stack = new ItemStack(net.minecraft.world.item.Items.PLAYER_HEAD);
+		}
+		String mName = minionKey.replace("_GENERATOR_", " ").replace("_", " ").toLowerCase();
+		mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);
+		stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("§a" + mName + " Minion"));
+		return stack;
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {

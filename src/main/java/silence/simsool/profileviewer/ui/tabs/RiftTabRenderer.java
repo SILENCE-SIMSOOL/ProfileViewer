@@ -66,7 +66,8 @@ public class RiftTabRenderer {
 		curY += 24f;
 
 		float tcW = (width - 3 * 10f) / 4f;
-		float tcH = 54f;
+		float tcH = 62f;
+		float slotS = 36f;
 
 		for (int i = 0; i < RiftData.TIMECHARMS.length; i++) {
 			String tc = RiftData.TIMECHARMS[i];
@@ -75,14 +76,39 @@ public class RiftTabRenderer {
 			float tcx = startX + (i % 4) * (tcW + 10f);
 			float tcy = curY + (i / 4) * (tcH + 10f);
 
-			RenderHelper.drawModernCard(tcx, tcy, tcW, tcH, 10f, false);
-			NVGRenderer.text(tc, tcx + 12f, tcy + 10f, Fonts.PRETENDARD_SEMIBOLD, unlocked ? 0xFF38BDF8 : RenderHelper.FONT_MUTED, 13.5f);
+			boolean hov = mouseX >= tcx && mouseX <= tcx + tcW && mouseY >= tcy && mouseY <= tcy + tcH;
+			RenderHelper.drawModernCard(tcx, tcy, tcW, tcH, 10f, hov);
+
+			// Slot
+			float sx = tcx + 10f;
+			float sy = tcy + 13f;
+			boolean hovS = mouseX >= sx && mouseX <= sx + slotS && mouseY >= sy && mouseY <= sy + slotS;
+			RenderHelper.drawItemSlotBg(sx, sy, slotS, hovS, unlocked ? 0x4438BDF8 : 0x22FFFFFF, 0x5511131E, 6f);
+
+			net.minecraft.world.item.ItemStack tcStack = createTimecharmStack(tc, unlocked);
+			RenderHelper.registerItemSlot(sx, sy, slotS, tcStack);
+
+			float tx = sx + slotS + 10f;
+			NVGRenderer.text(tc.replace(" Timecharm", ""), tx, tcy + 14f, Fonts.PRETENDARD_SEMIBOLD, unlocked ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED, 13.5f);
 			String statusStr = unlocked ? L10n.translate("pv.ui.unlocked") : L10n.translate("pv.ui.locked");
 			int statCol = unlocked ? 0xFF10B981 : RenderHelper.FONT_DISABLED;
-			NVGRenderer.text(statusStr, tcx + 12f, tcy + 29f, Fonts.PRETENDARD_MEDIUM, statCol, 12.5f);
+			NVGRenderer.text(statusStr, tx, tcy + 34f, Fonts.PRETENDARD_MEDIUM, statCol, 12.5f);
 		}
 
 		curY += 2 * (tcH + 10f) + 20f;
 		return curY - startY;
+	}
+
+	private static net.minecraft.world.item.ItemStack createTimecharmStack(String charmName, boolean unlocked) {
+		String cleanId = charmName.toUpperCase().replace(" ", "_");
+		net.minecraft.world.item.ItemStack stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId);
+		if (stack.isEmpty()) {
+			stack = unlocked ? new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.AMETHYST_SHARD) : new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GUNPOWDER);
+		}
+		stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal(unlocked ? "§b" + charmName : "§7" + charmName));
+		java.util.List<net.minecraft.network.chat.Component> lore = new java.util.ArrayList<>();
+		lore.add(net.minecraft.network.chat.Component.literal(unlocked ? "§aStatus: Unlocked" : "§cStatus: Locked"));
+		stack.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(lore));
+		return stack;
 	}
 }

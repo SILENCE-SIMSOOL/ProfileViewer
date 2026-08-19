@@ -101,6 +101,25 @@
 	"pv.mining.glacite_corpses": "GLACITE CORPSES LOOTED",
 	"pv.mining.no_data": "No mining data available.",
 
+	"pv.tab.slayer": "Slayer",
+	"pv.tab.mining": "Mining",
+	"pv.tab.foraging": "Foraging",
+	"pv.tab.garden": "Garden",
+	"pv.tab.farming": "Garden",
+	"pv.tab.fishing": "Fishing",
+	"pv.tab.museum": "Museum",
+	"pv.tab.rift": "Rift",
+	"pv.tab.chocolate_factory": "Chocolate Factory",
+	"pv.tab.collections": "Collections",
+
+	"pv.foraging.subtab.main": "Main Foraging",
+	"pv.foraging.subtab.hotf": "HotF Tree",
+
+	"pv.garden.subtab.overview": "Overview",
+	"pv.garden.subtab.crops": "Crops",
+	"pv.garden.subtab.composter": "Composter",
+	"pv.garden.subtab.visitors": "Visitors",
+
 	"pv.farming.garden_level": "GARDEN LEVEL",
 	"pv.farming.copper": "Copper",
 	"pv.farming.garden_visitors": "GARDEN VISITORS",
@@ -115,9 +134,12 @@
 	"pv.fishing.subtab.overview": "Overview",
 	"pv.fishing.subtab.trophy_fish": "Trophy Fish",
 	"pv.fishing.subtab.sea_creatures": "Sea Creatures",
+	"pv.fishing.trophy_fish": "Trophy Fish",
+	"pv.fishing.sea_creatures": "Sea Creatures",
 	"pv.fishing.trophy_overview": "TROPHY FISH OVERVIEW",
 	"pv.fishing.total_catches": "TOTAL",
 	"pv.fishing.sea_creatures_kills": "SEA CREATURES KILLS",
+
 
 	"pv.museum.subtab.weapons": "Weapons",
 	"pv.museum.subtab.armor_sets": "Armor Sets",

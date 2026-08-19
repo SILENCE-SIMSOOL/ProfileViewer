@@ -22,4 +22,19 @@ public class ParsedItem {
 	public boolean isEmpty() {
 		return (itemStack.isEmpty() && mcId.equals("minecraft:air")) && displayName.isEmpty();
 	}
-}
+
+	public ItemStack toItemStack() {
+		ItemStack stack = itemStack != null && !itemStack.isEmpty() ? itemStack.copy() : new ItemStack(net.minecraft.world.item.Items.PAPER);
+		if (displayName != null && !displayName.isEmpty()) {
+			stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal(displayName));
+		}
+		if (lore != null && !lore.isEmpty()) {
+			List<net.minecraft.network.chat.Component> compLore = new ArrayList<>();
+			for (String l : lore) {
+				compLore.add(net.minecraft.network.chat.Component.literal(l));
+			}
+			stack.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(compLore));
+		}
+		return stack;
+	}
+}

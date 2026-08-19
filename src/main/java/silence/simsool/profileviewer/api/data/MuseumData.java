@@ -1,6 +1,7 @@
 package silence.simsool.profileviewer.api.data;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +15,11 @@ public class MuseumData {
 
 	public double totalValue = 0;
 	public int donatedItems = 0;
+
+	// Item ID -> List of parsed stacks (e.g. 4 armor pieces or single weapon)
+	public Map<String, List<ParsedItem>> donatedItemsMap = new LinkedHashMap<>();
+	public List<ParsedItem> specialItems = new ArrayList<>();
+
 	public List<String> weapons = new ArrayList<>();
 	public List<String> armorSets = new ArrayList<>();
 	public List<String> rarities = new ArrayList<>();
@@ -46,10 +52,22 @@ public class MuseumData {
 		if (userMuseum.has("items") && userMuseum.get("items").isJsonObject()) {
 			JsonObject itemsObj = userMuseum.getAsJsonObject("items");
 			for (Map.Entry<String, JsonElement> entry : itemsObj.entrySet()) {
-				String itemId = entry.getKey();
-				String formatted = formatMuseumName(itemId);
-				categorizeItem(data, itemId, formatted);
+				String rawId = entry.getKey();
+				String formatted = formatMuseumName(rawId);
+				categorizeItem(data, rawId, formatted);
 				data.donatedItems++;
+
+				List<ParsedItem> stacks = new ArrayList<>();
+				if (entry.getValue().isJsonObject()) {
+					JsonObject itemObj = entry.getValue().getAsJsonObject();
+					if (itemObj.has("items") && itemObj.get("items").isJsonObject()) {
+						JsonObject cont = itemObj.getAsJsonObject("items");
+						if (cont.has("data") && cont.get("data").isJsonPrimitive()) {
+							stacks = NbtItemParser.parseBase64Nbt(cont.get("data").getAsString());
+						}
+					}
+				}
+				data.donatedItemsMap.put(rawId.toUpperCase(), stacks);
 			}
 		}
 
@@ -58,10 +76,11 @@ public class MuseumData {
 			for (JsonElement elem : specArr) {
 				if (elem.isJsonObject() && elem.getAsJsonObject().has("items")) {
 					JsonObject itemContainer = elem.getAsJsonObject().getAsJsonObject("items");
-					if (itemContainer.has("data")) {
+					if (itemContainer.has("data") && itemContainer.get("data").isJsonPrimitive()) {
 						List<ParsedItem> parsed = NbtItemParser.parseBase64Nbt(itemContainer.get("data").getAsString());
 						for (ParsedItem p : parsed) {
 							if (!p.isEmpty()) {
+								data.specialItems.add(p);
 								data.special.add(p.displayName.isEmpty() ? p.skyblockId : p.displayName);
 								data.donatedItems++;
 							}

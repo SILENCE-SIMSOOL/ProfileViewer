@@ -101,6 +101,25 @@
 	"pv.mining.glacite_corpses": "발굴한 얼어붙은 시체",
 	"pv.mining.no_data": "채굴 데이터가 없습니다.",
 
+	"pv.tab.slayer": "슬레이어",
+	"pv.tab.mining": "마이닝",
+	"pv.tab.foraging": "포리징",
+	"pv.tab.garden": "가든",
+	"pv.tab.farming": "가든",
+	"pv.tab.fishing": "피싱",
+	"pv.tab.museum": "뮤지엄",
+	"pv.tab.rift": "리프트",
+	"pv.tab.chocolate_factory": "초콜릿 팩토리",
+	"pv.tab.collections": "컬렉션",
+
+	"pv.foraging.subtab.main": "메인 포리징",
+	"pv.foraging.subtab.hotf": "HotF 트리",
+
+	"pv.garden.subtab.overview": "개요",
+	"pv.garden.subtab.crops": "작물",
+	"pv.garden.subtab.composter": "퇴비통",
+	"pv.garden.subtab.visitors": "방문자",
+
 	"pv.farming.garden_level": "가든 레벨",
 	"pv.farming.copper": "구리",
 	"pv.farming.garden_visitors": "가든 방문자",
@@ -115,9 +134,12 @@
 	"pv.fishing.subtab.overview": "개요",
 	"pv.fishing.subtab.trophy_fish": "트로피 피시",
 	"pv.fishing.subtab.sea_creatures": "바다 생물",
+	"pv.fishing.trophy_fish": "트로피 피시",
+	"pv.fishing.sea_creatures": "바다 생물",
 	"pv.fishing.trophy_overview": "트로피 피시 개요",
 	"pv.fishing.total_catches": "총 낚시 횟수",
 	"pv.fishing.sea_creatures_kills": "바다 생물 처치 수",
+
 
 	"pv.museum.subtab.weapons": "무기",
 	"pv.museum.subtab.armor_sets": "갑옷 세트",

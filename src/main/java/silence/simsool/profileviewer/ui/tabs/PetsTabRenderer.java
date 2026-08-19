@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
@@ -9,7 +10,9 @@ import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.PetData;
+import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
+
 
 public class PetsTabRenderer {
 
@@ -35,7 +38,7 @@ public class PetsTabRenderer {
 	}
 
 	public static final List<PetSlotInfo> visiblePetSlots = new ArrayList<>();
-	public static TextBox searchBox = new TextBox(0, 0, 180, 26, "");
+	public static TextBox searchBox = new TextBox(0, 0, 160, 26, "");
 	public static PetData.PetItem selectedPet = null;
 	public static PetData.PetItem hoveredPet = null;
 
@@ -71,7 +74,7 @@ public class PetsTabRenderer {
 			selectedPet = data.pets.activePet != null ? data.pets.activePet : allPets.get(0);
 		}
 
-		// Top Row Header: [Icon] Pet Collection (Score Badge) & Search Box
+		// Top Row Header: [Icon] Pet Collection (Score Badge) & Search Box with Icon
 		NVGRenderer.text("\uE91D", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
 		String titleStr = L10n.translate("pv.pets.collection") + " (" + allPets.size() + ")";
 		NVGRenderer.text(titleStr, startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
@@ -80,8 +83,10 @@ public class PetsTabRenderer {
 		String scoreStr = L10n.translate("pv.pets.score") + ": " + petScore + " (+" + magicFindBonus + " " + L10n.translate("pv.pets.magic_find") + ")";
 		RenderHelper.drawBadge(scoreStr, startX + 38f + titleW, curY - 1f, 0x3338BDF8, 0xFF38BDF8);
 
-		float searchW = 180f;
+		// Search Box with Search Icon (\uE8B6)
+		float searchW = 170f;
 		float searchX = startX + width - searchW;
+		NVGRenderer.text("\uE8B6", searchX - 22f, curY + 4f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 18f);
 		searchBox.setPosition((int) searchX, (int) curY - 2);
 		searchBox.render(null, (int) mouseX, (int) mouseY, delta);
 
@@ -106,7 +111,7 @@ public class PetsTabRenderer {
 			}
 		}
 
-		// Two-column Layout: Left 62% Grid, Right 38% Details Panel
+		// Two-column Layout: Left 60% Grid, Right 40% Details Panel
 		float gap = 14f;
 		float leftW = (width - gap) * 0.60f;
 		float rightW = width - gap - leftW;
@@ -118,7 +123,7 @@ public class PetsTabRenderer {
 		float slotGap = 6f;
 		int cols = Math.max(1, (int) ((leftW - 24f + slotGap) / (slotSize + slotGap)));
 		int rows = (int) Math.ceil((double) filtered.size() / cols);
-		float gridH = Math.max(360f, rows * (slotSize + slotGap) + 24f);
+		float gridH = Math.max(380f, rows * (slotSize + slotGap) + 24f);
 
 		RenderHelper.drawModernCard(leftX, curY, leftW, gridH, 14f, false);
 
@@ -147,12 +152,6 @@ public class PetsTabRenderer {
 					NVGRenderer.circle(sx + 6f, sy + 6f, 3f, 0xFF10B981);
 				}
 
-				// Level Badge at bottom-right of slot
-				String lvlStr = String.valueOf(pet.level);
-				float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-				NVGRenderer.rect(sx + slotSize - lvlW - 6f, sy + slotSize - 13f, lvlW + 4f, 11f, 0xDD111218, 3f);
-				NVGRenderer.text(lvlStr, sx + slotSize - lvlW - 4f, sy + slotSize - 12.5f, Fonts.PRETENDARD_SEMIBOLD, pet.getRarityColor(), 10f);
-
 				visiblePetSlots.add(new PetSlotInfo(sx, sy, slotSize, pet));
 			}
 		}
@@ -160,7 +159,7 @@ public class PetsTabRenderer {
 		// Right Column: Selected Pet Details Card
 		renderSelectedPetDetails(rightX, curY, rightW, gridH);
 
-		curY += Math.max(gridH, 360f) + 16f;
+		curY += Math.max(gridH, 380f) + 16f;
 		return curY - startY;
 	}
 
@@ -176,7 +175,7 @@ public class PetsTabRenderer {
 		float px = x + 16f;
 		float py = y + 16f;
 
-		// Large Pet Icon Slot (52x52)
+		// Large Pet Icon Slot (52x52 box, enlarged item rendering texture)
 		float bigSlotSize = 52f;
 		boolean isMaxed = pet.level >= pet.maxLevel;
 
@@ -233,25 +232,45 @@ public class PetsTabRenderer {
 		RenderHelper.drawStatRow("Candy", candyVal, px, py, w - 32f, 13.5f, pet.candyUsed > 0 ? 0xFFF472B6 : RenderHelper.FONT_SECONDARY);
 		py += 24f;
 
-		// Held Item
-		String heldVal = pet.heldItem.isEmpty() ? L10n.translate("pv.ui.none") : pet.heldItem.replace("PET_ITEM_", "").replace("_", " ");
-		RenderHelper.drawStatRow(L10n.translate("pv.pets.held_item"), heldVal, px, py, w - 32f, 13.5f, !pet.heldItem.isEmpty() ? 0xFF10B981 : RenderHelper.FONT_SECONDARY);
-		py += 24f;
+		// Held Item (Render item icon without tooltip)
+		if (!pet.heldItem.isEmpty()) {
+			float itemSlotS = 24f;
+			float itemSlotX = px + w - 32f - itemSlotS;
+			float itemSlotY = py - 4f;
 
-		// Skin
-		if (!pet.skin.isEmpty()) {
-			String skinVal = pet.skin.replace("PET_SKIN_", "").replace("_", " ");
-			RenderHelper.drawStatRow(L10n.translate("pv.pets.skin"), skinVal, px, py, w - 32f, 13.5f, 0xFFFFAA00);
+			RenderHelper.drawStatRow("Held Item", pet.heldItem.replace("_", " "), px, py, w - 32f - itemSlotS - 8f, 13.5f, 0xFF60A5FA);
+
+			NVGRenderer.rect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 0xFF1E293B, 4f);
+			NVGRenderer.outlineRect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 1f, 0xFF334155, 4f);
+
+			ItemStack heldStack = ItemRepo.getItemStack(pet.heldItem);
+			if (!heldStack.isEmpty()) {
+				// Register as decorative slot without tooltip
+				RenderHelper.registerItemSlot(itemSlotX, itemSlotY, itemSlotS, heldStack, false);
+
+			}
+		} else {
+			RenderHelper.drawStatRow("Held Item", "None", px, py, w - 32f, 13.5f, RenderHelper.FONT_MUTED);
+		}
+
+	}
+
+	public static void renderPetLevelBadges() {
+		for (PetSlotInfo slot : visiblePetSlots) {
+			if (slot.isDetailSlot || slot.pet == null || slot.pet.level <= 0) continue;
+			String lvlStr = String.valueOf(slot.pet.level);
+			float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
+			NVGRenderer.rect(slot.x + slot.size - lvlW - 6f, slot.y + slot.size - 13f, lvlW + 4f, 11f, 0xDD111218, 3f);
+			NVGRenderer.text(lvlStr, slot.x + slot.size - lvlW - 4f, slot.y + slot.size - 12.5f, Fonts.PRETENDARD_SEMIBOLD, slot.pet.getRarityColor(), 10f);
 		}
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
-		if (searchBox.mouseClicked(mx, my, 0)) {
-			return true;
-		}
+		if (searchBox.mouseClicked(mx, my, 0)) return true;
 
 		for (PetSlotInfo slot : visiblePetSlots) {
-			if (!slot.isDetailSlot && mx >= slot.x && mx <= slot.x + slot.size && my >= slot.y && my <= slot.y + slot.size) {
+			if (slot.isDetailSlot) continue;
+			if (mx >= slot.x && mx <= slot.x + slot.size && my >= slot.y && my <= slot.y + slot.size) {
 				selectedPet = slot.pet;
 				return true;
 			}

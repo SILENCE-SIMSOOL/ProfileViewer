@@ -291,6 +291,8 @@ public final class PetRepo {
 		} catch (Exception ignored) {}
 	}
 
+
+
 	public static char getRarityCode(String rarity) {
 		if (rarity == null) return 'f';
 		return switch (rarity.toUpperCase(Locale.ROOT)) {

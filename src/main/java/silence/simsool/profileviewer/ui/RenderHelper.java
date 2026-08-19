@@ -269,4 +269,70 @@ public class RenderHelper {
 		String clean = text.replaceAll("§[0-9a-fk-orA-FK-OR]", "");
 		return NVGRenderer.textWidth(clean, Fonts.PRETENDARD, fontSize);
 	}
+
+	// =========================================================================
+	// Unified Item Slot System
+	// =========================================================================
+	public static class ItemSlotInfo {
+		public float x, y, size;
+		public net.minecraft.world.item.ItemStack stack;
+		public String customText = "";
+		public int customTextColor = 0xFFFFFFFF;
+		public boolean hasGlint = false;
+		public boolean showTooltip = true;
+
+		public ItemSlotInfo(float x, float y, float size, net.minecraft.world.item.ItemStack stack) {
+			this.x = x;
+			this.y = y;
+			this.size = size;
+			this.stack = stack;
+		}
+
+		public ItemSlotInfo(float x, float y, float size, net.minecraft.world.item.ItemStack stack, boolean showTooltip) {
+			this.x = x;
+			this.y = y;
+			this.size = size;
+			this.stack = stack;
+			this.showTooltip = showTooltip;
+		}
+
+		public ItemSlotInfo(float x, float y, float size, net.minecraft.world.item.ItemStack stack, String customText, int customTextColor) {
+			this.x = x;
+			this.y = y;
+			this.size = size;
+			this.stack = stack;
+			this.customText = customText;
+			this.customTextColor = customTextColor;
+		}
+	}
+
+	public static final java.util.List<ItemSlotInfo> globalItemSlots = new java.util.ArrayList<>();
+
+	public static void clearGlobalSlots() {
+		globalItemSlots.clear();
+	}
+
+	public static void registerItemSlot(float x, float y, float size, net.minecraft.world.item.ItemStack stack) {
+		if (stack != null && !stack.isEmpty()) {
+			globalItemSlots.add(new ItemSlotInfo(x, y, size, stack));
+		}
+	}
+
+	public static void registerItemSlot(float x, float y, float size, net.minecraft.world.item.ItemStack stack, boolean showTooltip) {
+		if (stack != null && !stack.isEmpty()) {
+			globalItemSlots.add(new ItemSlotInfo(x, y, size, stack, showTooltip));
+		}
+	}
+
+	public static void registerItemSlot(float x, float y, float size, net.minecraft.world.item.ItemStack stack, String customText, int customTextColor) {
+		if (stack != null && !stack.isEmpty()) {
+			globalItemSlots.add(new ItemSlotInfo(x, y, size, stack, customText, customTextColor));
+		}
+	}
+
+
+	public static void drawItemSlotBg(float x, float y, float size, boolean hovered, int borderColor, int bgColor, float radius) {
+		NVGRenderer.rect(x, y, size, size, bgColor, radius);
+		NVGRenderer.outlineRect(x, y, size, size, hovered ? 1.4f : 1.0f, borderColor, radius);
+	}
 }

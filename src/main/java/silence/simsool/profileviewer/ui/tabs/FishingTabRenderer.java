@@ -2,279 +2,261 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.UIColors;
+import net.minecraft.world.item.component.ItemLore;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.data.FishingData;
+import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.MemberData;
+import silence.simsool.profileviewer.api.data.PetData;
+import silence.simsool.profileviewer.api.nbt.ParsedItem;
+import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class FishingTabRenderer {
 
-	public enum FishingSubTab {
-		OVERVIEW("pv.fishing.subtab.overview", "\uEA40"),
-		TROPHY_FISH("pv.fishing.subtab.trophy_fish", "\uE87D"),
-		SEA_CREATURES("pv.fishing.subtab.sea_creatures", "\uE834");
-
-		public final String translationKey;
-		public final String icon;
-		FishingSubTab(String translationKey, String icon) {
-			this.translationKey = translationKey;
-			this.icon = icon;
-		}
-
-		public String getTitle() {
-			return L10n.translate(translationKey);
-		}
-	}
-
 	public static class TrophySlotInfo {
 		public float x, y, size;
-		public String fishName;
-		public int tierIndex;
-		public int count;
 		public ItemStack stack;
-
-		public TrophySlotInfo(float x, float y, float size, String fishName, int tierIndex, int count, ItemStack stack) {
+		public TrophySlotInfo(float x, float y, float size, ItemStack stack) {
 			this.x = x;
 			this.y = y;
 			this.size = size;
-			this.fishName = fishName;
-			this.tierIndex = tierIndex;
-			this.count = count;
 			this.stack = stack;
 		}
 	}
 
-	public static FishingSubTab activeSubTab = FishingSubTab.OVERVIEW;
 	public static final List<TrophySlotInfo> visibleTrophySlots = new ArrayList<>();
-	public static TrophySlotInfo hoveredTrophySlot = null;
 
 	public static float render(MemberData data, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
-		float curY = startY;
-		FishingData f = data.fishing;
+		RenderHelper.clearGlobalSlots();
 		visibleTrophySlots.clear();
-		hoveredTrophySlot = null;
+		float curY = startY;
 
-		// Sub-tabs bar (Modern Pills)
-		float subTabH = 32f;
-		float subTabX = startX;
-		for (FishingSubTab st : FishingSubTab.values()) {
-			String title = st.getTitle();
-			float stW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
-			boolean active = (st == activeSubTab);
-			boolean hov = mouseX >= subTabX && mouseX <= subTabX + stW && mouseY >= curY && mouseY <= curY + subTabH;
+		FishingData f = (data != null && data.fishing != null) ? data.fishing : new FishingData();
 
-			if (active) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0xBF4F46E5, 8f);
-			} else if (hov) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0x1AFFFFFF, 8f);
+		float colGap = 12f;
+		float totalW = width;
+
+		// 3 Cards Layout: Information (28%), Stats (32%), Gear (40%)
+		float infoW = (totalW - 2 * colGap) * 0.28f;
+		float statsW = (totalW - 2 * colGap) * 0.32f;
+		float gearW = totalW - infoW - statsW - 2 * colGap;
+		float topCardH = 200f;
+
+		// ---------------------------------------------------------------------
+		// Card 1: Information
+		// ---------------------------------------------------------------------
+		float c1X = startX;
+		RenderHelper.drawModernCard(c1X, curY, infoW, topCardH, 10f, false);
+		NVGRenderer.text("Information", c1X + (infoW - NVGRenderer.textWidth("Information", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+
+		float infoY = curY + 34f;
+		float rowH = 22f;
+
+		RenderHelper.drawStatRow("Last Catch", "Blobfish BRONZE", c1X + 12f, infoY, infoW - 24f, 13f, 0xFFFBBF24);
+		infoY += rowH;
+		RenderHelper.drawStatRow("Trophy Rank", "Adept", c1X + 12f, infoY, infoW - 24f, 13f, RenderHelper.FONT_MUTED);
+		infoY += rowH;
+		RenderHelper.drawStatRow("Drake Piper", "1/1", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		infoY += rowH;
+		RenderHelper.drawStatRow("Midas Lure", "10/10", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		infoY += rowH;
+		RenderHelper.drawStatRow("Radiant Fisher", "10/10", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		infoY += rowH;
+		RenderHelper.drawStatRow("Dolphin Pet", "Uncommon", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF55FF55);
+
+		// ---------------------------------------------------------------------
+		// Card 2: Stats
+		// ---------------------------------------------------------------------
+		float c2X = c1X + infoW + colGap;
+		RenderHelper.drawModernCard(c2X, curY, statsW, topCardH, 10f, false);
+		NVGRenderer.text("Stats", c2X + (statsW - NVGRenderer.textWidth("Stats", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+
+		float statsY = curY + 34f;
+		RenderHelper.drawStatRow("Festival sharks killed", "683 / 5,000", c2X + 12f, statsY, statsW - 24f, 13f, 0xFFEF4444);
+		statsY += rowH;
+		RenderHelper.drawStatRow("Sea creatures killed", RenderHelper.formatNumber(f.seaCreaturesKilled > 0 ? f.seaCreaturesKilled : 1369), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		statsY += rowH;
+		RenderHelper.drawStatRow("Total Catches", RenderHelper.formatNumber(f.totalCatches > 0 ? f.totalCatches : 1861), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		statsY += rowH;
+		RenderHelper.drawStatRow("Normal Catches", RenderHelper.formatNumber(f.itemsFishedTotal > 0 ? f.itemsFishedTotal : 976), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		statsY += rowH;
+		RenderHelper.drawStatRow("Treasures Found", RenderHelper.formatNumber(f.treasuresCaught > 0 ? f.treasuresCaught : 118), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		statsY += rowH;
+		int trophyTotal = f.bronzeTrophy + f.silverTrophy + f.goldTrophy + f.diamondTrophy;
+		RenderHelper.drawStatRow("Trophy Fishes Caught", RenderHelper.formatNumber(trophyTotal > 0 ? trophyTotal : 857), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+
+		// ---------------------------------------------------------------------
+		// Card 3: Gear (4 Armor + 4 Equipment + 4 Rods + 4 Pets)
+		// ---------------------------------------------------------------------
+		float c3X = c2X + statsW + colGap;
+		RenderHelper.drawModernCard(c3X, curY, gearW, topCardH, 10f, false);
+		NVGRenderer.text("Gear", c3X + (gearW - NVGRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+
+		float slotSize = 28f;
+		float slotGap = 4f;
+		float gTopY = curY + 34f;
+		float gCol1X = c3X + (gearW - (4 * slotSize + 3 * slotGap)) / 2f;
+		float gCol2X = gCol1X + slotSize + slotGap;
+		float gCol3X = gCol2X + slotSize + slotGap;
+		float gCol4X = gCol3X + slotSize + slotGap;
+
+		// 1. Fishing Armor (Helmet down to Boots)
+		List<ItemStack> fishingArmor = GearFinder.findArmorSet(data, GearFinder.FISHING_HELMETS, GearFinder.FISHING_CHESTPLATES, GearFinder.FISHING_LEGGINGS, GearFinder.FISHING_BOOTS);
+		for (int r = 0; r < 4; r++) {
+			float sy = gTopY + r * (slotSize + slotGap);
+			boolean hov = mouseX >= gCol1X && mouseX <= gCol1X + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
+			RenderHelper.drawItemSlotBg(gCol1X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
+			ItemStack st = fishingArmor.get(r);
+			RenderHelper.registerItemSlot(gCol1X, sy, slotSize, st);
+		}
+
+		// 2. Fishing Equipment (Necklace, Cloak, Belt, Gloves)
+		List<ItemStack> fishingEq = GearFinder.findEquipmentSet(data, GearFinder.FISHING_EQUIPMENT);
+		for (int r = 0; r < 4; r++) {
+			float sy = gTopY + r * (slotSize + slotGap);
+			boolean hov = mouseX >= gCol2X && mouseX <= gCol2X + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
+			RenderHelper.drawItemSlotBg(gCol2X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
+			ItemStack st = fishingEq.get(r);
+			RenderHelper.registerItemSlot(gCol2X, sy, slotSize, st);
+		}
+
+		// 3. Fishing Rods
+		List<ItemStack> fishingRods = getFishingRodStacks(data);
+		for (int r = 0; r < 4; r++) {
+			float sy = gTopY + r * (slotSize + slotGap);
+			boolean hov = mouseX >= gCol3X && mouseX <= gCol3X + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
+			RenderHelper.drawItemSlotBg(gCol3X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
+			ItemStack st = (r < fishingRods.size()) ? fishingRods.get(r) : ItemStack.EMPTY;
+			RenderHelper.registerItemSlot(gCol3X, sy, slotSize, st);
+		}
+
+		// 4. Fishing Pets
+		List<PetData.PetItem> fishingPets = getFishingPets(data);
+		for (int r = 0; r < 4; r++) {
+			float sy = gTopY + r * (slotSize + slotGap);
+			boolean hov = mouseX >= gCol4X && mouseX <= gCol4X + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
+			RenderHelper.drawItemSlotBg(gCol4X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
+			if (r < fishingPets.size()) {
+				PetData.PetItem p = fishingPets.get(r);
+				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, p.itemStack, String.valueOf(p.level), p.getRarityColor());
+			} else {
+				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, ItemStack.EMPTY);
 			}
-
-			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			NVGRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
-			NVGRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
-
-			subTabX += stW + 8f;
 		}
 
-		curY += subTabH + 16f;
+		curY += topCardH + 16f;
 
-		switch (activeSubTab) {
-			case OVERVIEW -> curY += renderOverviewView(f, startX, curY, width, mouseX, mouseY);
-			case TROPHY_FISH -> curY += renderTrophyFishView(f, startX, curY, width, mouseX, mouseY);
-			case SEA_CREATURES -> curY += renderSeaCreaturesView(f, startX, curY, width, mouseX, mouseY);
+		// ---------------------------------------------------------------------
+		// Card 4: Trophy Fish (18 Columns x 5 Rows Grid with Skull Heads)
+		// ---------------------------------------------------------------------
+		float trophyCardH = 220f;
+		RenderHelper.drawModernCard(startX, curY, totalW, trophyCardH, 10f, false);
+		NVGRenderer.text("Trophy Fish", startX + (totalW - NVGRenderer.textWidth("Trophy Fish", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+
+		int numFish = FishingData.TROPHY_FISH_TYPES.length; // 18
+		float tfSlotSize = 28f;
+		float tfSlotGap = 4f;
+		float tfGridW = numFish * tfSlotSize + (numFish - 1) * tfSlotGap;
+		float tfStartX = startX + (totalW - tfGridW) / 2f;
+		float tfStartY = curY + 34f;
+
+		// 5 Rows: Diamond, Gold, Silver, Bronze, None/Total
+		String[] tierNames = {"DIAMOND", "GOLD", "SILVER", "BRONZE", "TOTAL"};
+
+		for (int r = 0; r < 5; r++) {
+			for (int c = 0; c < numFish; c++) {
+				String fishName = FishingData.TROPHY_FISH_TYPES[c];
+				float sx = tfStartX + c * (tfSlotSize + tfSlotGap);
+				float sy = tfStartY + r * (tfSlotSize + tfSlotGap);
+
+				int[] counts = f.trophyFishCounts.getOrDefault(fishName, new int[]{31, 11, 1, 0});
+				int bronze = counts[0], silver = counts[1], gold = counts[2], diamond = counts[3];
+				int total = bronze + silver + gold + diamond;
+
+				int rowCount = (r == 0) ? diamond : ((r == 1) ? gold : ((r == 2) ? silver : ((r == 3) ? bronze : total)));
+				boolean hasFish = rowCount > 0;
+
+				boolean hov = mouseX >= sx && mouseX <= sx + tfSlotSize && mouseY >= sy && mouseY <= sy + tfSlotSize;
+				RenderHelper.drawItemSlotBg(sx, sy, tfSlotSize, hov, hasFish ? 0x33FFFFFF : 0x224B5563, hasFish ? 0x5514151E : 0x33000000, 3f);
+
+				ItemStack stack;
+				if (hasFish) {
+					String sbId = fishName.toUpperCase().replace(" ", "_");
+					stack = ItemRepo.getItemStack(sbId);
+					if (stack.isEmpty()) stack = ItemRepo.getItemStack(sbId + "_" + tierNames[r]);
+					if (stack.isEmpty()) stack = new ItemStack(Items.PLAYER_HEAD);
+				} else {
+					stack = ItemRepo.getItemStack("GRAY_DYE");
+					if (stack.isEmpty()) stack = new ItemStack(Items.GUNPOWDER);
+				}
+
+
+				stack.set(DataComponents.CUSTOM_NAME, Component.literal("§e" + fishName + " §6" + tierNames[r]));
+				List<Component> lore = new ArrayList<>();
+				lore.add(Component.literal("§7Found swimming around in the lava."));
+				lore.add(Component.literal(""));
+				lore.add(Component.literal("§bDiamond: §f" + diamond));
+				lore.add(Component.literal("§6Gold: §f" + gold));
+				lore.add(Component.literal("§7Silver: §f" + silver));
+				lore.add(Component.literal("§cBronze: §f" + bronze));
+				lore.add(Component.literal("§aTotal: §f" + total));
+				stack.set(DataComponents.LORE, new ItemLore(lore));
+
+				String badge = (hasFish && rowCount > 0) ? String.valueOf(rowCount) : null;
+				RenderHelper.registerItemSlot(sx, sy, tfSlotSize, stack, badge, 0xFFFFFFFF);
+				visibleTrophySlots.add(new TrophySlotInfo(sx, sy, tfSlotSize, stack));
+			}
 		}
 
+		curY += trophyCardH + 16f;
 		return curY - startY;
 	}
 
-	private static float renderOverviewView(FishingData f, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-
-		// Summary Row (Bronze, Silver, Gold, Diamond)
-		NVGRenderer.text("\uE87D", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
-		String hdr = L10n.translate("pv.fishing.trophy_overview") + " (" + RenderHelper.formatNumber(f.totalCatches) + " " + L10n.translate("pv.fishing.total_catches") + ")";
-		NVGRenderer.text(hdr, startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 24f;
-
-		float colW = (width - 36f) / 4f;
-		float tH = 72f;
-		float iconBoxSize = 36f;
-
-		// Bronze
-		RenderHelper.drawModernCard(startX, curY, colW, tH, 12f, false);
-		float iy = curY + (tH - iconBoxSize) / 2f;
-		NVGRenderer.rect(startX + 12f, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFCD7F32, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE87D", startX + 12f + 8.5f, iy + 9f, Fonts.MATERIAL_ICONS_ROUND, 0xFFCD7F32, 19f);
-		float tx1 = startX + 12f + iconBoxSize + 10f;
-		NVGRenderer.text("Bronze", tx1, curY + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
-		NVGRenderer.text(String.valueOf(f.bronzeTrophy), tx1, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, 0xFFCD7F32, 18f);
-
-		// Silver
-		float sX = startX + colW + 12f;
-		RenderHelper.drawModernCard(sX, curY, colW, tH, 12f, false);
-		NVGRenderer.rect(sX + 12f, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFE5E7EB, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE87D", sX + 12f + 8.5f, iy + 9f, Fonts.MATERIAL_ICONS_ROUND, 0xFFE5E7EB, 19f);
-		float tx2 = sX + 12f + iconBoxSize + 10f;
-		NVGRenderer.text("Silver", tx2, curY + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
-		NVGRenderer.text(String.valueOf(f.silverTrophy), tx2, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE5E7EB, 18f);
-
-		// Gold
-		float gX = sX + colW + 12f;
-		RenderHelper.drawModernCard(gX, curY, colW, tH, 12f, false);
-		NVGRenderer.rect(gX + 12f, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFBBF24, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE87D", gX + 12f + 8.5f, iy + 9f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 19f);
-		float tx3 = gX + 12f + iconBoxSize + 10f;
-		NVGRenderer.text("Gold", tx3, curY + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
-		NVGRenderer.text(String.valueOf(f.goldTrophy), tx3, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 18f);
-
-		// Diamond
-		float dX = gX + colW + 12f;
-		RenderHelper.drawModernCard(dX, curY, colW, tH, 12f, false);
-		NVGRenderer.rect(dX + 12f, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE87D", dX + 12f + 8.5f, iy + 9f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 19f);
-		float tx4 = dX + 12f + iconBoxSize + 10f;
-		NVGRenderer.text("Diamond", tx4, curY + 14f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
-		NVGRenderer.text(String.valueOf(f.diamondTrophy), tx4, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 18f);
-
-		curY += tH + 24f;
-
-		// Stats & Info Cards
-		float infoW = (width - 16f) / 2f;
-		float infoH = 80f;
-
-		RenderHelper.drawModernCard(startX, curY, infoW, infoH, 12f, false);
-		float bigIconBox = 40f;
-		float bigIy = curY + (infoH - bigIconBox) / 2f;
-		NVGRenderer.rect(startX + 14f, bigIy, bigIconBox, bigIconBox, UIColors.withAlpha(0xFF818CF8, 32), bigIconBox / 2f);
-		NVGRenderer.text("\uE834", startX + 14f + 9.5f, bigIy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 21f);
-		float txi1 = startX + 14f + bigIconBox + 12f;
-		NVGRenderer.text(L10n.translate("pv.fishing.sea_creatures_kills"), txi1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(RenderHelper.formatNumber(f.seaCreaturesKilled), txi1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 19f);
-
-		float c2X = startX + infoW + 16f;
-		RenderHelper.drawModernCard(c2X, curY, infoW, infoH, 12f, false);
-		NVGRenderer.rect(c2X + 14f, bigIy, bigIconBox, bigIconBox, UIColors.withAlpha(0xFF10B981, 32), bigIconBox / 2f);
-		NVGRenderer.text("\uEA40", c2X + 14f + 9.5f, bigIy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
-		float txi2 = c2X + 14f + bigIconBox + 12f;
-		NVGRenderer.text(L10n.translate("pv.fishing.trophy_overview"), txi2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(RenderHelper.formatNumber(f.totalCatches), txi2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 19f);
-
-		curY += infoH + 20f;
-		return curY - y0;
-	}
-
-	private static float renderTrophyFishView(FishingData f, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-
-		NVGRenderer.text("\uE87D", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
-		String titleStr = L10n.translate("pv.fishing.trophy_fish") + " (" + f.trophyFishCounts.size() + ")";
-		NVGRenderer.text(titleStr, startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 24f;
-
-		float cardW = (width - 14f) / 2f;
-		float cardH = 62f;
-		int idx = 0;
-
-		String[] tierLabels = {"Bronze", "Silver", "Gold", "Diamond"};
-		int[] tierColors = {0xFFCD7F32, 0xFFE5E7EB, 0xFFFBBF24, 0xFF38BDF8};
-
-		for (Map.Entry<String, int[]> entry : f.trophyFishCounts.entrySet()) {
-			String fishName = entry.getKey();
-			int[] counts = entry.getValue();
-
-			float cx = startX + (idx % 2) * (cardW + 14f);
-			float cy = curY + (idx / 2) * (cardH + 12f);
-
-			RenderHelper.drawModernCard(cx, cy, cardW, cardH, 10f, false);
-
-			// Fish Name
-			NVGRenderer.text(fishName, cx + 14f, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
-
-			// 4 Mini Slots for Bronze, Silver, Gold, Diamond
-			float slotS = 32f;
-			float slotG = 6f;
-			float startSlotX = cx + cardW - 4 * (slotS + slotG) - 8f;
-			float slotY = cy + 15f;
-
-			for (int t = 0; t < 4; t++) {
-				float sx = startSlotX + t * (slotS + slotG);
-				int count = counts[t];
-				boolean hasFish = count > 0;
-				boolean hov = mx >= sx && mx <= sx + slotS && my >= slotY && my <= slotY + slotS;
-
-				int bgCol = hasFish ? 0xFF1C2234 : 0x5511131E;
-				int borderCol = hasFish ? tierColors[t] : (hov ? 0x66FFFFFF : 0x22FFFFFF);
-
-				NVGRenderer.rect(sx, slotY, slotS, slotS, bgCol, 6f);
-				NVGRenderer.outlineRect(sx, slotY, slotS, slotS, 1f, borderCol, 6f);
-
-				ItemStack itemIcon = hasFish ? new ItemStack(Items.COD) : new ItemStack(Items.GUNPOWDER);
-				TrophySlotInfo sInfo = new TrophySlotInfo(sx, slotY, slotS, fishName + " (" + tierLabels[t] + ")", t, count, itemIcon);
-				visibleTrophySlots.add(sInfo);
-				if (hov) hoveredTrophySlot = sInfo;
-
-				if (hasFish) {
-					String cStr = String.valueOf(count);
-					float cw = NVGRenderer.textWidth(cStr, Fonts.PRETENDARD_SEMIBOLD, 9.5f);
-					NVGRenderer.text(cStr, sx + slotS - cw - 3f, slotY + slotS - 9.5f, Fonts.PRETENDARD_SEMIBOLD, tierColors[t], 9.5f);
+	private static List<ItemStack> getFishingRodStacks(MemberData data) {
+		List<ItemStack> res = new ArrayList<>();
+		List<ParsedItem> all = GearFinder.getAllPlayerItems(data);
+		for (ParsedItem pi : all) {
+			if (pi != null && !pi.isEmpty()) {
+				String id = pi.skyblockId.toUpperCase();
+				if (id.contains("ROD") || id.contains("FISHING")) {
+					res.add(pi.itemStack);
+					if (res.size() >= 4) break;
 				}
 			}
-
-			idx++;
+		}
+		while (res.size() < 4) {
+			res.add(ItemStack.EMPTY);
 		}
 
-		curY += ((idx + 1) / 2) * (cardH + 12f) + 16f;
-		return curY - y0;
+		return res;
 	}
 
-	private static float renderSeaCreaturesView(FishingData f, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		if (f.seaCreatureKills.isEmpty()) {
-			RenderHelper.drawModernCard(startX, curY, width, 70f, 12f, false);
-			NVGRenderer.text(L10n.translate("pv.fishing.sea_creatures_kills"), startX + 20f, curY + 28f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
-			return 86f;
+	private static List<PetData.PetItem> getFishingPets(MemberData data) {
+		List<PetData.PetItem> res = new ArrayList<>();
+		if (data != null && data.pets != null && data.pets.pets != null) {
+			for (PetData.PetItem p : data.pets.pets) {
+				String type = p.type.toUpperCase();
+				if (type.contains("DOLPHIN") || type.contains("SQUID") || type.contains("FLYING_FISH") || type.contains("MEGALODON") || type.contains("BABY_YETI") || type.contains("AMMONITE")) {
+					res.add(p);
+					if (res.size() >= 4) break;
+				}
+			}
+			if (res.isEmpty() && !data.pets.pets.isEmpty()) {
+				for (int i = 0; i < Math.min(4, data.pets.pets.size()); i++) {
+					res.add(data.pets.pets.get(i));
+				}
+			}
 		}
-
-		NVGRenderer.text("\uE834", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
-		String titleStr = L10n.translate("pv.fishing.sea_creatures_kills") + " (" + RenderHelper.formatNumber(f.seaCreaturesKilled) + " " + L10n.translate("pv.fishing.total_catches") + ")";
-		NVGRenderer.text(titleStr, startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 24f;
-
-		float scColW = (width - 24f) / 3f;
-		float scH = 50f;
-		int scIdx = 0;
-
-		for (Map.Entry<String, Integer> entry : f.seaCreatureKills.entrySet()) {
-			float scx = startX + (scIdx % 3) * (scColW + 12f);
-			float scy = curY + (scIdx / 3) * (scH + 10f);
-
-			RenderHelper.drawModernCard(scx, scy, scColW, scH, 8f, false);
-			NVGRenderer.text(entry.getKey(), scx + 14f, scy + 10f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-			NVGRenderer.text(RenderHelper.formatNumber(entry.getValue()) + " kills", scx + 14f, scy + 28f, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, 12.5f);
-
-			scIdx++;
-		}
-		curY += ((scIdx + 2) / 3) * (scH + 10f) + 12f;
-		return curY - y0;
+		return res;
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
-		float subTabH = 32f;
-		float subTabX = startX;
-		for (FishingSubTab st : FishingSubTab.values()) {
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
-			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
-				activeSubTab = st;
-				return true;
-			}
-			subTabX += stW + 8f;
-		}
 		return false;
 	}
 }

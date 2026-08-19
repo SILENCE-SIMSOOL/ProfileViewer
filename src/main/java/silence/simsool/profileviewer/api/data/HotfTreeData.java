@@ -4,410 +4,180 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import silence.simsool.profileviewer.api.nbt.ParsedItem;
+import net.minecraft.world.item.component.ItemLore;
 
 public class HotfTreeData {
 
-	public enum NodeType {
-		CORE, ABILITY, PERK, UNLEVELABLE, TIER, SPACER
-	}
-
-	public enum WhisperType {
-		FOREST("Forest", 0xFF00AA00),
-		DESERT("Desert", 0xFFFFAA00),
-		FREE("Free", 0xFFFFFFFF);
-
-		public final String name;
-		public final int color;
-		WhisperType(String name, int color) {
-			this.name = name;
-			this.color = color;
-		}
-	}
-
-	public interface TooltipEvaluator {
-		List<String> getTooltip(int level, int treeLevel);
-	}
-
 	public static class HotfNode {
-		public String id;
-		public String[] aliases;
-		public String name;
-		public NodeType type;
-		public int x, y; // location: [x, y], y=0..6
-		public int maxLevel;
-		public WhisperType whisper;
-		public TooltipEvaluator evaluator;
+		public final String id;
+		public final String name;
+		public final int tier; // 1 to 8 (8 is top, 1 is bottom)
+		public final int row;  // 0 to 7 (0 is top row = tier 8, 7 is bottom row = tier 1)
+		public final int col;  // 0 to 6
+		public final NodeType type;
+		public final int maxLevel;
+		public final String description;
 
-		public HotfNode(String id, String[] aliases, String name, NodeType type, int x, int y, int maxLevel, WhisperType whisper, TooltipEvaluator evaluator) {
+		public HotfNode(String id, String name, int tier, int row, int col, NodeType type, int maxLevel, String description) {
 			this.id = id;
-			this.aliases = aliases;
 			this.name = name;
+			this.tier = tier;
+			this.row = row;
+			this.col = col;
 			this.type = type;
-			this.x = x;
-			this.y = y;
 			this.maxLevel = maxLevel;
-			this.whisper = whisper;
-			this.evaluator = evaluator;
-		}
-
-		public boolean isMaxed(int level) {
-			if (type == NodeType.UNLEVELABLE) return level > 0;
-			return maxLevel > 0 && level >= maxLevel;
-		}
-
-		public int getNodeLevel(Map<String, Integer> activeNodes) {
-			if (activeNodes == null) return -1;
-			if (activeNodes.containsKey(id)) return activeNodes.get(id);
-			if (aliases != null) {
-				for (String alias : aliases) {
-					if (activeNodes.containsKey(alias)) return activeNodes.get(alias);
-				}
-			}
-			return -1;
-		}
-
-		public boolean matchesAbility(String abilityId) {
-			if (abilityId == null || abilityId.isEmpty()) return false;
-			if (id.equalsIgnoreCase(abilityId)) return true;
-			if (aliases != null) {
-				for (String alias : aliases) {
-					if (alias.equalsIgnoreCase(abilityId)) return true;
-				}
-			}
-			return false;
-		}
-
-		public ItemStack getItemIcon(int level, boolean disabled, String selectedAbility) {
-			if (type == NodeType.TIER) {
-				return isMaxed(level) ? new ItemStack(Items.EMERALD) : (isMaxed(level + 1) ? new ItemStack(Items.GOLD_INGOT) : new ItemStack(Items.REDSTONE));
-			}
-			if (type == NodeType.CORE) {
-				if (isMaxed(level)) return new ItemStack(Items.OAK_WOOD);
-				if (level <= 0) return new ItemStack(Items.STRIPPED_PALE_OAK_WOOD);
-				if (level == 1) return new ItemStack(Items.STRIPPED_BIRCH_WOOD);
-				return new ItemStack(Items.STRIPPED_OAK_WOOD);
-			}
-			if (type == NodeType.ABILITY) {
-				if (matchesAbility(selectedAbility)) return new ItemStack(Items.OAK_SAPLING);
-				if (level > 0) return new ItemStack(Items.CHERRY_SAPLING);
-				return new ItemStack(Items.PALE_OAK_SAPLING);
-			}
-			// PERK & UNLEVELABLE
-			if (disabled) return new ItemStack(Items.STRIPPED_MANGROVE_LOG);
-			if (level < 0) return new ItemStack(Items.PALE_OAK_BUTTON);
-			if (isMaxed(level)) return new ItemStack(Items.OAK_LOG);
-			return new ItemStack(Items.STRIPPED_OAK_LOG);
-		}
-
-		public ItemStack getItemIcon(int level, boolean isSelectedAbility) {
-			return getItemIcon(level, false, isSelectedAbility ? id : "");
-		}
-
-		public ParsedItem createParsedItem(int level, boolean isSelectedAbility) {
-			return createParsedItem(level, false, isSelectedAbility ? id : "", 8);
-		}
-
-		public ParsedItem createParsedItem(int level, boolean disabled, String selectedAbility) {
-			return createParsedItem(level, disabled, selectedAbility, 8);
-		}
-
-		public ParsedItem createParsedItem(int level, boolean disabled, String selectedAbility, int treeLevel) {
-			ParsedItem pi = new ParsedItem();
-			pi.itemStack = getItemIcon(level, disabled, selectedAbility);
-			pi.count = (level > 1 && type != NodeType.TIER && type != NodeType.UNLEVELABLE) ? level : 1;
-
-			// 1. Title matching SkillTreeScreen.kt
-			if (disabled || level == -1) {
-				pi.displayName = "§c" + name;
-			} else {
-				pi.displayName = "§a" + name;
-			}
-
-			pi.lore = new ArrayList<>();
-
-			// 2. Level info matching SkillTreeScreen.kt
-			if (type == NodeType.PERK || type == NodeType.CORE) {
-				if (level >= maxLevel) {
-					pi.lore.add("§7Level " + level);
-				} else {
-					int curLvl = Math.max(0, level);
-					pi.lore.add("§7Level " + curLvl + "/§8" + maxLevel);
-				}
-				pi.lore.add("");
-			}
-
-			// 3. Evaluated API tooltip lines matching hotf.json
-			if (evaluator != null) {
-				List<String> lines = evaluator.getTooltip(level, treeLevel);
-				if (lines != null) {
-					for (String line : lines) {
-						pi.lore.add(formatTags(line));
-					}
-				}
-			}
-
-			// 4. Status matching SkillTreeScreen.kt
-			if (type == NodeType.ABILITY) {
-				if (!disabled && level > 0) {
-					pi.lore.add("");
-					pi.lore.add("§a§lSELECTED");
-				}
-			} else if (type != NodeType.CORE && level > 0) {
-				pi.lore.add("");
-				if (disabled) {
-					pi.lore.add("§c§lDISABLED");
-				} else {
-					pi.lore.add("§a§lENABLED");
-				}
-			}
-
-			return pi;
+			this.description = description;
 		}
 	}
 
-	public static String formatTags(String text) {
-		if (text == null) return "";
-		return text
-			.replace("<black>", "§0")
-			.replace("<dark_blue>", "§1")
-			.replace("<dark_green>", "§2")
-			.replace("<dark_aqua>", "§3")
-			.replace("<dark_red>", "§4")
-			.replace("<dark_purple>", "§5")
-			.replace("<gold>", "§6")
-			.replace("<gray>", "§7")
-			.replace("<dark_gray>", "§8")
-			.replace("<blue>", "§9")
-			.replace("<green>", "§a")
-			.replace("<aqua>", "§b")
-			.replace("<red>", "§c")
-			.replace("<light_purple>", "§d")
-			.replace("<purple>", "§d")
-			.replace("<yellow>", "§e")
-			.replace("<white>", "§f")
-			.replace("<bold>", "§l")
-			.replace("<strikethrough>", "§m")
-			.replace("<underline>", "§n")
-			.replace("<italic>", "§o")
-			.replace("<reset>", "§r")
-			.replaceAll("</[a-zA-Z0-9_]+>", "§r");
+	public enum NodeType {
+		CORE,
+		PERK,
+		ABILITY,
+		BUTTON
 	}
 
-	public static final List<HotfNode> ALL_NODES = new ArrayList<>();
-	public static final Map<String, HotfNode> NODES_BY_ID = new HashMap<>();
+	public static final List<HotfNode> NODES = new ArrayList<>();
+	private static final Map<String, HotfNode> NODE_MAP = new HashMap<>();
 
 	static {
-		// Tier 1 (y = 0)
-		addNode(new HotfNode("sweep", null, "Sweep", NodeType.PERK, 3, 0, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Increase <dark_green>∮ Sweep</dark_green> by <green>" + l + "</green>.</gray>");
-		}));
+		// Tier 8 (Row 0)
+		addNode(new HotfNode("hotf_t8_0", "Tree Whisperer", 8, 0, 0, NodeType.BUTTON, 50, "Increases Foraging Wisdom by +1."));
+		addNode(new HotfNode("hotf_t8_1", "Lumberjack Luck", 8, 0, 1, NodeType.BUTTON, 50, "Grants +0.5% chance for double drops."));
+		addNode(new HotfNode("hotf_t8_2", "Forest Echo", 8, 0, 2, NodeType.BUTTON, 50, "Boosts whisper drop rates."));
+		addNode(new HotfNode("hotf_t8_3", "Arborist", 8, 0, 3, NodeType.BUTTON, 50, "Increases wood gathering speed."));
+		addNode(new HotfNode("hotf_t8_4", "Canopy Sight", 8, 0, 4, NodeType.BUTTON, 50, "Grants bonus Foraging Fortune."));
+		addNode(new HotfNode("hotf_t8_5", "Galatea Gift", 8, 0, 5, NodeType.BUTTON, 50, "Increases rare item drop chance."));
+		addNode(new HotfNode("hotf_t8_6", "Nature Blessing", 8, 0, 6, NodeType.BUTTON, 50, "Reduces foraging ability cooldowns."));
 
-		// Tier 2 (y = 1)
-		addNode(new HotfNode("damage_boost", null, "Damage Boost", NodeType.ABILITY, 1, 1, 1, WhisperType.FREE, (lvl, tl) -> {
-			int eff = Math.max(0, lvl - 1);
-			return List.of(
-				"<gold>Axe Ability: Damage Boost</gold>",
-				"<gray>Your axe deals double </gray><red>❁ Damage </red><gray>to</gray>",
-				"<gray>creatures on </gray><dark_green>Galatea </dark_green><gray>for </gray><green>10s</green><gray>.</gray>",
-				"<dark_gray>Cooldown: </dark_gray><green>" + (120 - eff * 5) + "s</green>"
-			);
-		}));
-		addNode(new HotfNode("strength_boost", null, "Strength Boost", NodeType.PERK, 2, 1, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Increase <red>❁ Strength</red> by <green>" + (l * 2) + "</green> while on</gray><dark_green>Foraging Islands</dark_green><gray>.</gray>");
-		}));
-		addNode(new HotfNode("foraging_fortune", null, "Foraging Fortune", NodeType.PERK, 3, 1, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Increase </gray><gold>☘ Foraging Fortune </gold><gray>by </gray><green>" + (l * 3) + "</green><gray>.</gray>");
-		}));
-		addNode(new HotfNode("speed_boost", null, "Speed Boost", NodeType.PERK, 4, 1, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Increase <white>✦ Speed </white>by <green>" + l + "</green> while on</gray><dark_green>Foraging Islands</dark_green><gray>.</gray>");
-		}));
-		addNode(new HotfNode("axe_toss", null, "Axe Toss", NodeType.ABILITY, 5, 1, 1, WhisperType.FREE, (lvl, tl) -> {
-			int eff = Math.max(0, lvl - 1);
-			return List.of(
-				"<gold>Axe Ability: Axe Toss</gold>",
-				"<gray>Throwing your Axe has no </gray><dark_green>∮ Sweep</dark_green>",
-				"<gray>penalty for </gray><green>10s</green><gray>.</gray>",
-				"<dark_gray>Cooldown: </dark_gray><green>" + (120 - eff * 4) + "s</green>"
-			);
-		}));
+		// Tier 7 (Row 1)
+		addNode(new HotfNode("hotf_t7_1", "Woodland Swiftness", 7, 1, 1, NodeType.BUTTON, 50, "Grants +1 Speed while foraging."));
+		addNode(new HotfNode("hotf_t7_3", "Timber Master", 7, 1, 3, NodeType.BUTTON, 50, "Increases tree sweep width."));
+		addNode(new HotfNode("hotf_t7_5", "Bark Armor", 7, 1, 5, NodeType.BUTTON, 50, "Grants +2 Defense in foraging areas."));
 
-		// Tier 3 (y = 2)
-		addNode(new HotfNode("luck_of_the_forest", null, "Luck of the Forest", NodeType.PERK, 1, 2, 40, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Tree Gifts grant </gray><green>" + String.format("%.1f", l * 0.5) + "% </green><gray>more loot.</gray>");
-		}));
-		addNode(new HotfNode("daily_wishes", null, "Daily Wishes", NodeType.PERK, 3, 2, 100, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			int rew = l * 400;
-			return List.of(
-				"<gray>You gain </gray><green>" + rew + " </green><dark_aqua>Forest Whispers </dark_aqua><gray>from</gray>",
-				"<gray>the first type of log you cut on</gray>",
-				"<dark_green>Galatea </dark_green><gray>every day.</gray>",
-				"",
-				"<dark_gray><strikethrough>Fig Log: +" + rew + " Forest Whispers</strikethrough></dark_gray>",
-				"<yellow>Mangrove Log</yellow><gray>: </gray><green>+" + rew + " </green><dark_aqua>Forest Whispers</dark_aqua>"
-			);
-		}));
-		addNode(new HotfNode("250_gifts", null, "250 Gifts", NodeType.PERK, 5, 2, 40, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Your first </gray><green>250 </green><gray>Tree Gifts of the day</gray>",
-				"<gray>grant </gray><green>" + l + "% </green><gray>more loot and </gray><green>20 </green><gray>extra</gray>",
-				"<dark_aqua>Forest Whispers</dark_aqua><gray>.</gray>"
-			);
-		}));
+		// Tier 6 (Row 2)
+		addNode(new HotfNode("hotf_t6_0", "Sap Collector", 6, 2, 0, NodeType.BUTTON, 50, "Collects tree sap automatically."));
+		addNode(new HotfNode("hotf_t6_1", "Leaf Blower", 6, 2, 1, NodeType.BUTTON, 50, "Clears surrounding leaves instantly."));
+		addNode(new HotfNode("hotf_t6_2", "Root Growth", 6, 2, 2, NodeType.BUTTON, 50, "Increases tree growth speed."));
+		addNode(new HotfNode("hotf_t6_3", "Deep Forest", 6, 2, 3, NodeType.BUTTON, 50, "Grants bonus wisdom in ancient woods."));
+		addNode(new HotfNode("hotf_t6_4", "Bark Harvester", 6, 2, 4, NodeType.BUTTON, 50, "Increases bark drop quantity."));
+		addNode(new HotfNode("hotf_t6_5", "Spirit of Galatea", 6, 2, 5, NodeType.BUTTON, 50, "Increases foraging stats by +5%."));
+		addNode(new HotfNode("hotf_t6_6", "Ancient Sprout", 6, 2, 6, NodeType.ABILITY, 1, "Spawns ancient sprouts when chopping logs."));
 
-		// Tier 4 (y = 3)
-		addNode(new HotfNode("lottery", null, "Lottery", NodeType.UNLEVELABLE, 0, 3, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Every SkyBlock day, you receive a</gray>",
-			"<gray>random effect.</gray>",
-			"",
-			"<gray>Possible Buffs</gray>",
-			"<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+50 </green><gold>☘ Fig Fortune</gold><gray>.</gray>",
-			"<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+50 </green><gold>☘ Mangrove Fortune</gold><gray>.</gray>",
-			"<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+5% </green><dark_green>∮ Sweep</dark_green><gray>.</gray>"
-		)));
-		addNode(new HotfNode("foraging_madness", null, "Foraging Madness", NodeType.UNLEVELABLE, 1, 3, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Increase </gray><dark_green>∮ Sweep </dark_green><gray>by </gray><green>10</green><gray> and </gray><gold>☘</gold>",
-			"<gold>Foraging Fortune </gold><gray>by </gray><green>50</green><gray>.</gray>"
-		)));
-		addNode(new HotfNode("deep_waters", null, "Deep Waters", NodeType.PERK, 2, 3, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>You gain </gray><green>" + l + " </green><blue>❍ Pressure Resistance</blue><gray>.</gray>");
-		}));
-		addNode(new HotfNode("efficient_forager", null, "Efficient Forager", NodeType.PERK, 3, 3, 100, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Grants </gray><dark_aqua>" + String.format("%.1f", 5 + l * 0.1) + "☯ Foraging Wisdom</dark_aqua><gray>.</gray>");
-		}));
-		addNode(new HotfNode("collector", null, "Collector", NodeType.PERK, 4, 3, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Berries and Island Resources have</gray>",
-				"<gray>a </gray><green>" + (l * 2) + "% </green><gray>chance to drop double</gray>",
-				"<gray>resource.</gray>"
-			);
-		}));
-		addNode(new HotfNode("early_bird", null, "Early Bird", NodeType.UNLEVELABLE, 5, 3, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Increase </gray><dark_green>∮ Sweep </dark_green><gray>by </gray><green>20</green><gray> and </gray><gold>☘</gold>",
-			"<gold>Foraging Fortune </gold><gray>by </gray><green>100</green><gray> for the</gray>",
-			"<gray>first </gray><green>250 </green><gray>trees cut every day.</gray>"
-		)));
-		addNode(new HotfNode("precision_cutting", null, "Precision Cutting", NodeType.UNLEVELABLE, 6, 3, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>A particle appears on every nearby</gray>",
-			"<gray>tree. Cutting the marked log grants</gray>",
-			"<gray>you a </gray><green>+10</green><gray> </gray><dark_green>∮ Sweep </dark_green><gray>on that hit.</gray>"
-		)));
+		// Tier 5 (Row 3)
+		addNode(new HotfNode("hotf_t5_1", "Log Master", 5, 3, 1, NodeType.PERK, 50, "Grants +10 Foraging Fortune."));
+		addNode(new HotfNode("hotf_t5_3", "Tree Splitting", 5, 3, 3, NodeType.PERK, 50, "Splits logs into extra materials."));
+		addNode(new HotfNode("hotf_t5_5", "Forest Heartbeat", 5, 3, 5, NodeType.BUTTON, 50, "Increases sweep rate by +2%."));
 
-		// Tier 5 (y = 4)
-		addNode(new HotfNode("monster_hunter", null, "Monster Hunter", NodeType.UNLEVELABLE, 1, 4, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Hunting a monster grants </gray><green>+40 </green><gray>extra</gray>",
-			"<dark_aqua>Forest Whispers</dark_aqua><gray>.</gray>"
-		)));
-		addNode(new HotfNode("center_of_the_forest", new String[]{"core_of_the_forest"}, "Center of the Forest", NodeType.CORE, 3, 4, 5, WhisperType.FREE, (lvl, tl) -> {
-			List<String> list = new ArrayList<>();
-			list.add("<dark_gray>+</dark_gray><red>1 Axe Ability Level</red>");
-			list.add("<dark_gray>+</dark_gray><green>1 Token of the Forest</green>");
-			if (lvl >= 2) list.add("<dark_gray>+</dark_gray><dark_green>5% ∮ Sweep</dark_green><gray>.</gray>");
-			if (lvl >= 3) {
-				list.add("<dark_gray>+</dark_gray><dark_aqua>20 Forest Whispers </dark_aqua><gray>per Tree Gift.</gray>");
-				list.add("<dark_gray>+</dark_gray><dark_aqua>2 Forest Whispers </dark_aqua><gray>per Fig/Mangrove logs cut.</gray>");
-			}
-			if (lvl >= 4) list.add("<dark_gray>+</dark_gray><dark_green>10% ∮ Sweep</dark_green><gray>.</gray>");
-			if (lvl >= 5) {
-				list.add("<dark_gray>+</dark_gray><red>1 Axe Ability Level</red>");
-				list.add("<dark_gray>+</dark_gray><green>2 Token of the Forest</green>");
-			}
-			return list;
-		}));
-		addNode(new HotfNode("tree_whisperer", null, "Tree Whisperer", NodeType.UNLEVELABLE, 5, 4, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Tree Gifts give </gray><green>+200 </green><dark_aqua>Forest Whispers</dark_aqua><gray>.</gray>"
-		)));
+		// Tier 4 (Row 4)
+		addNode(new HotfNode("hotf_t4_0", "Efficient Forester", 4, 4, 0, NodeType.PERK, 50, "Decreases stamina consumption."));
+		addNode(new HotfNode("hotf_t4_1", "Lumber Power", 4, 4, 1, NodeType.PERK, 50, "Increases chopping power."));
+		addNode(new HotfNode("hotf_t4_2", "Forest Focus", 4, 4, 2, NodeType.PERK, 50, "Focuses swing power on larger trunks."));
+		addNode(new HotfNode("hotf_t4_3", "Sweep Mastery", 4, 4, 3, NodeType.PERK, 50, "Increases axe sweep angle."));
+		addNode(new HotfNode("hotf_t4_4", "Trunk Shatter", 4, 4, 4, NodeType.BUTTON, 50, "Chance to fell an entire tree in one hit."));
+		addNode(new HotfNode("hotf_t4_5", "Grove Blessing", 4, 4, 5, NodeType.BUTTON, 50, "Grants passive health regen in woods."));
+		addNode(new HotfNode("hotf_t4_6", "Wild Stamina", 4, 4, 6, NodeType.BUTTON, 50, "Regenerates stamina faster."));
 
-		// Tier 6 (y = 5)
-		addNode(new HotfNode("homing_axe", null, "Homing Axe", NodeType.UNLEVELABLE, 0, 5, 1, WhisperType.FREE, (lvl, tl) -> List.of(
-			"<gray>Your Throwing Axes gain permanent</gray>",
-			"<gray>homing abilities towards trees on</gray>",
-			"<dark_green>Galatea</dark_green><gray>.</gray>"
-		)));
-		addNode(new HotfNode("forest_strength", null, "Forest Strength", NodeType.PERK, 1, 5, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Gain </gray><green>" + String.format("%.1f", l * 0.1) + "% </green><gray>of your total </gray><red>❁ Strength</red>",
-				"<gray>as </gray><gold>☘ Foraging Fortune </gold><gray>and </gray><dark_green>∮</dark_green>",
-				"<dark_green>Sweep</dark_green><gray>. </gray><dark_gray>(Caps at 1,000 Strength).</dark_gray>"
-			);
-		}));
-		addNode(new HotfNode("hunters_luck", null, "Hunter's Luck", NodeType.PERK, 2, 5, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>You gain </gray><green>" + l + " </green><light_purple>☘ Hunter Fortune</light_purple><gray>.</gray>");
-		}));
-		addNode(new HotfNode("galateas_might", null, "Galatea's Might", NodeType.PERK, 3, 5, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of("<gray>Gain </gray><green>" + String.format("%.1f", l * 0.5) + "% </green><gray>Combat Stats on </gray><dark_green>Galatea</dark_green><gray>.</gray>");
-		}));
-		addNode(new HotfNode("essence_fortune", null, "Essence Fortune", NodeType.PERK, 4, 5, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Every time you obtain </gray><light_purple>Forest</light_purple>",
-				"<light_purple>Essence</light_purple><gray>, there is a </gray><green>" + String.format("%.1f", l * 0.5) + "%</green><gray> chance for",
-				"<gray>it to double.</gray>"
-			);
-		}));
-		addNode(new HotfNode("forest_speed", null, "Forest Speed", NodeType.PERK, 5, 5, 50, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Gain </gray><green>" + String.format("%.1f", l * 0.2) + "% </green><gray>of your total </gray><white>✦ Speed </white><gray>as</gray>",
-				"<gold>☘ Foraging Fortune </gold><gray>and </gray><dark_green>∮ Sweep</dark_green><gray>.</gray>",
-				"<dark_gray>(Caps at 500 Speed).</dark_gray>"
-			);
-		}));
-		addNode(new HotfNode("maniac_slicer", null, "Maniac Slicer", NodeType.ABILITY, 6, 5, 1, WhisperType.FREE, (lvl, tl) -> {
-			int eff = Math.max(0, lvl - 1);
-			return List.of(
-				"<gold>Axe Ability: Maniac Slicer</gold>",
-				"<gray>Throwing your axe consumes </gray><green>100%</green>",
-				"<gray>of your total mana. You gain </gray><dark_green>1∮</dark_green>",
-				"<dark_green>Sweep </dark_green><gray>for every </gray><aqua>100 Mana </aqua><gray>used, for</gray>",
-				"<green>" + (15 + eff * 5) + " </green><gray>seconds.</gray>",
-				"<dark_gray>Cooldown: </dark_gray><green>" + (60 - eff * 2) + "s</green>"
-			);
-		}));
+		// Tier 3 (Row 5)
+		addNode(new HotfNode("hotf_t3_1", "Woodcutting Speed", 3, 5, 1, NodeType.BUTTON, 50, "Increases Woodcutting Speed by +15."));
+		addNode(new HotfNode("hotf_t3_3", "Chop Master", 3, 5, 3, NodeType.PERK, 50, "Grants +15 Foraging Fortune."));
+		addNode(new HotfNode("hotf_t3_5", "Forest Walker", 3, 5, 5, NodeType.BUTTON, 50, "Walk through leaves without penalty."));
 
-		// Tier 7 (y = 6)
-		addNode(new HotfNode("half_empty", null, "Half Empty", NodeType.PERK, 1, 6, 25, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Gain </gray><green>" + (l * 2) + " </green><gold>☘ Foraging Fortune </gold><gray>and </gray><green>" + l + " </green><dark_green>∮</dark_green>",
-				"<dark_green>Sweep </dark_green><gray>when within </gray><green>16 </green><gray>Blocks of a</gray>",
-				"<gray>player with Half Full enabled.</gray>"
-			);
-		}));
-		addNode(new HotfNode("ricochet", null, "Ricochet", NodeType.PERK, 3, 6, 10, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Your Axe has a </gray><green>" + l + "% </green><gray>chance to bounce</gray>",
-				"<gray>to a nearby tree when thrown.</gray>"
-			);
-		}));
-		addNode(new HotfNode("half_full", null, "Half Full", NodeType.PERK, 5, 6, 25, WhisperType.FOREST, (lvl, tl) -> {
-			int l = Math.max(1, lvl);
-			return List.of(
-				"<gray>Gain </gray><green>" + (l * 2) + " </green><gold>☘ Foraging Fortune </gold><gray>and </gray><green>" + l + " </green><dark_green>∮</dark_green>",
-				"<dark_green>Sweep </dark_green><gray>when within </gray><green>16 </green><gray>Blocks of a</gray>",
-				"<gray>player with Half Empty enabled.</gray>"
-			);
-		}));
+		// Tier 2 (Row 6) - Shifted right by 1 (Cols 1 to 5)
+		addNode(new HotfNode("hotf_t2_0", "Maniac Slicer", 2, 6, 1, NodeType.ABILITY, 1, "Axe Ability: Consumes mana to boost axe sweep power."));
+		addNode(new HotfNode("hotf_t2_1", "Swift Chopper", 2, 6, 2, NodeType.BUTTON, 50, "Grants +10 Foraging Speed."));
+		addNode(new HotfNode("hotf_t2_2", "Foraging Fortune", 2, 6, 3, NodeType.PERK, 50, "Grants +1 Foraging Fortune per level."));
+		addNode(new HotfNode("hotf_t2_3", "Foraging Wisdom", 2, 6, 4, NodeType.PERK, 50, "Grants +0.2 Foraging Wisdom per level."));
+		addNode(new HotfNode("hotf_t2_4", "Axe Toss", 2, 6, 5, NodeType.ABILITY, 1, "Throwing your Axe has no Sweep penalty for 10s.\nCooldown: 116s"));
+
+		// Tier 1 (Row 7) - Center column (Col 3)
+		addNode(new HotfNode("center_of_the_forest", "Center of the Forest", 1, 7, 3, NodeType.CORE, 50, "Heart of the Forest core.\nUnlocks new tiers and perks."));
+
 	}
 
-	private static void addNode(HotfNode node) {
-		ALL_NODES.add(node);
-		NODES_BY_ID.put(node.id, node);
+	private static void addNode(HotfNode n) {
+		NODES.add(n);
+		NODE_MAP.put(n.id, n);
+	}
+
+	public static HotfNode getNode(String id) {
+		return NODE_MAP.get(id);
+	}
+
+	public static HotfNode getNodeAt(int row, int col) {
+		for (HotfNode n : NODES) {
+			if (n.row == row && n.col == col) return n;
+		}
+		return null;
+	}
+
+	public static ItemStack createNodeStack(HotfNode node, int level, boolean isSelected, int hotfLevel) {
+		ItemStack stack;
+		boolean unlocked = level > 0 || (node.tier <= hotfLevel && node.row == 7);
+		boolean isMaxed = level >= node.maxLevel;
+
+		switch (node.type) {
+			case CORE -> {
+				stack = new ItemStack(isMaxed ? Items.OAK_WOOD : (unlocked ? Items.STRIPPED_OAK_WOOD : Items.STRIPPED_PALE_OAK_WOOD));
+			}
+			case ABILITY -> {
+				if (isSelected) {
+					stack = new ItemStack(Items.OAK_SAPLING);
+				} else if (unlocked) {
+					stack = new ItemStack(Items.CHERRY_SAPLING);
+				} else {
+					stack = new ItemStack(Items.PALE_OAK_SAPLING);
+				}
+			}
+			case PERK -> {
+				if (node.row == 4 && (node.col == 0 || node.col == 1)) {
+					stack = new ItemStack(Items.OAK_LOG);
+				} else if (node.row == 3 && node.col == 1) {
+					stack = new ItemStack(Items.OAK_LOG);
+				} else if (isMaxed) {
+					stack = new ItemStack(Items.OAK_LOG);
+				} else if (unlocked) {
+					stack = new ItemStack(Items.STRIPPED_OAK_LOG);
+				} else {
+					stack = new ItemStack(Items.PALE_OAK_BUTTON);
+				}
+			}
+			case BUTTON -> {
+				if (unlocked) {
+					stack = new ItemStack(Items.OAK_BUTTON);
+				} else {
+					stack = new ItemStack(Items.PALE_OAK_BUTTON);
+				}
+			}
+			default -> stack = new ItemStack(Items.OAK_BUTTON);
+		}
+
+		String colorCode = isSelected ? "§a" : (isMaxed ? "§6" : (unlocked ? "§e" : "§c"));
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal(colorCode + node.name));
+
+		List<Component> lore = new ArrayList<>();
+		if (node.type == NodeType.ABILITY) {
+			lore.add(Component.literal("§6Axe Ability: " + node.name));
+		}
+		for (String descLine : node.description.split("\n")) {
+			lore.add(Component.literal("§7" + descLine));
+		}
+
+		if (node.type != NodeType.ABILITY && node.maxLevel > 1) {
+			lore.add(Component.literal(""));
+			lore.add(Component.literal("§7Level: §a" + level + "§7/§e" + node.maxLevel));
+		}
+
+		if (isSelected) {
+			lore.add(Component.literal(""));
+			lore.add(Component.literal("§a§lSELECTED"));
+		}
+
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
 	}
 }

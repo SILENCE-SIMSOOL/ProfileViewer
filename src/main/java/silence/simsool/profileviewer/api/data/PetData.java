@@ -76,7 +76,7 @@ public class PetData {
 					if (elem.isJsonObject()) {
 						JsonObject po = elem.getAsJsonObject();
 						PetItem p = new PetItem();
-						p.uuid = po.has("uuid") && !po.get("uuid").isJsonNull() ? po.get("uuid").getAsString() : "";
+						p.uuid = po.has("uniqueId") && !po.get("uniqueId").isJsonNull() ? po.get("uniqueId").getAsString() : (po.has("uuid") && !po.get("uuid").isJsonNull() ? po.get("uuid").getAsString() : "");
 						p.type = po.has("type") ? po.get("type").getAsString() : "Unknown";
 						p.rarity = po.has("tier") ? po.get("tier").getAsString() : "COMMON";
 						p.exp = po.has("exp") ? po.get("exp").getAsDouble() : 0;

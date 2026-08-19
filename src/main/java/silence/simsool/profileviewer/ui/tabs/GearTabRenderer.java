@@ -14,7 +14,6 @@ import java.util.Set;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
@@ -390,35 +389,44 @@ public class GearTabRenderer {
 		// 4 Rows x 2 Columns (Armor + Equipment)
 		for (int r = 0; r < 4; r++) {
 			float sy = eqGridStartY + r * (eqSlotSize + eqSlotGap);
+			float sxArm = eqGridStartX;
+			boolean hovArm = mx >= sxArm && mx <= sxArm + eqSlotSize && my >= sy && my <= sy + eqSlotSize;
+			RenderHelper.drawItemSlotBg(sxArm, sy, eqSlotSize, hovArm, 0x33FFFFFF, 0x5514151E, 6f);
 			ParsedItem arm = (armorItems.size() > r) ? armorItems.get(r) : ParsedItem.EMPTY;
-			drawSlot(eqGridStartX, sy, eqSlotSize, arm, mx, my, false);
+			if (arm != null && !arm.isEmpty()) {
+				RenderHelper.registerItemSlot(sxArm, sy, eqSlotSize, arm.toItemStack());
+			}
 
+			float sxEq = eqGridStartX + eqSlotSize + eqSlotGap;
+			boolean hovEq = mx >= sxEq && mx <= sxEq + eqSlotSize && my >= sy && my <= sy + eqSlotSize;
+			RenderHelper.drawItemSlotBg(sxEq, sy, eqSlotSize, hovEq, 0x33FFFFFF, 0x5514151E, 6f);
 			ParsedItem eq = (equipmentItems.size() > r) ? equipmentItems.get(r) : ParsedItem.EMPTY;
-			drawSlot(eqGridStartX + eqSlotSize + eqSlotGap, sy, eqSlotSize, eq, mx, my, false);
+			if (eq != null && !eq.isEmpty()) {
+				RenderHelper.registerItemSlot(sxEq, sy, eqSlotSize, eq.toItemStack());
+			}
 		}
 
 		// Pet Slot below armor & equipment
 		float petX = eqGridStartX + (2 * eqSlotSize + eqSlotGap - eqSlotSize) / 2f;
 		float petY = eqGridStartY + 4 * (eqSlotSize + eqSlotGap) + 10f;
 		ParsedItem petItem = getLoadoutPetItem(data, curSl);
-		drawSlot(petX, petY, eqSlotSize, petItem, mx, my, false);
+		boolean hovPet = mx >= petX && mx <= petX + eqSlotSize && my >= petY && my <= petY + eqSlotSize;
+		RenderHelper.drawItemSlotBg(petX, petY, eqSlotSize, hovPet, 0x33FFFFFF, 0x5514151E, 6f);
 
-		if (data.pets != null && petItem != null && !petItem.isEmpty()) {
+		if (petItem != null && !petItem.isEmpty()) {
 			int petLvl = 100;
-			if (curSl != null && curSl.petUuid != null) {
+			if (curSl != null && curSl.petUuid != null && data.pets != null) {
 				for (var p : data.pets.pets) {
 					if (curSl.petUuid.equalsIgnoreCase(p.uuid)) {
 						petLvl = p.level;
 						break;
 					}
 				}
-			} else if (data.pets.activePet != null) {
+			} else if (data.pets != null && data.pets.activePet != null) {
 				petLvl = data.pets.activePet.level;
 			}
 			String lvlStr = String.valueOf(petLvl);
-			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 9f);
-			NVGRenderer.rect(petX + eqSlotSize - lw - 4f, petY + eqSlotSize - 11f, lw + 3f, 10f, 0xDD111218, 2f);
-			NVGRenderer.text(lvlStr, petX + eqSlotSize - lw - 2.5f, petY + eqSlotSize - 10.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 9f);
+			RenderHelper.registerItemSlot(petX, petY, eqSlotSize, petItem.toItemStack(), lvlStr, petItem.rarityColor);
 		}
 
 		// Column 3: HOTF Loadout Card
@@ -491,18 +499,11 @@ public class GearTabRenderer {
 			int bgCol = isSelAb ? 0xFF1E382B : (level >= node.maxLevel ? 0xFF1C3240 : (level > 0 ? 0xFF1C2A3A : 0x5514151E));
 			int borderCol = isSelAb ? 0xFF55FF55 : (level >= node.maxLevel ? 0xFF55FFFF : (level > 0 ? 0xFF3B82F6 : 0x33555566));
 
-			NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 5f);
-			NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelAb ? 1.5f : 1f, borderCol, 5f);
+			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, borderCol, bgCol, 5f);
 
 			ParsedItem pi = node.createParsedItem(level, disabled, activeAb, treeLevel);
-			drawSlot(sx, sy, slotSize, pi, mx, my, false);
-
-			if (level > 1 && node.maxLevel > 1 && node.type != HotmTreeData.NodeType.UNLEVELABLE) {
-				String lvlStr = String.valueOf(level);
-				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 8.5f);
-				NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 10.5f, lw + 3f, 9.5f, 0xDD111218, 2f);
-				NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 10f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 8.5f);
-			}
+			String badge = (level > 1 && node.maxLevel > 1 && node.type != HotmTreeData.NodeType.UNLEVELABLE) ? String.valueOf(level) : null;
+			RenderHelper.registerItemSlot(sx, sy, slotSize, pi.toItemStack(), badge, 0xFFFFFFFF);
 		}
 	}
 
@@ -510,78 +511,53 @@ public class GearTabRenderer {
 		float slotSize = 30f;
 		float slotGap = 4f;
 		int cols = 7;
-		int rows = 10;
+		int rows = 8;
 
 		float treeW = cols * slotSize + (cols - 1) * slotGap;
 		float treeH = rows * slotSize + (rows - 1) * slotGap;
 		float startTreeX = x + (w - treeW) / 2f;
 		float startTreeY = y + (h - treeH) / 2f;
 
-		MiningData m = (data != null) ? data.mining : null;
-		Map<String, Integer> activeNodes = Collections.emptyMap();
-		String activeAb = "";
+		int hotfLevel = 6;
 
-		if (m != null) {
-			if (m.foragingPresetNodes.containsKey(slot) && !m.foragingPresetNodes.get(slot).isEmpty()) {
-				activeNodes = m.foragingPresetNodes.get(slot);
-			} else if (!m.foragingNodes.isEmpty()) {
-				activeNodes = m.foragingNodes;
-			}
+		for (int r = 0; r < 8; r++) {
+			for (int c = 0; c < 7; c++) {
+				HotfTreeData.HotfNode node = HotfTreeData.getNodeAt(r, c);
+				if (node == null) continue;
 
-			if (m.foragingPresetAbilities.containsKey(slot) && !m.foragingPresetAbilities.get(slot).isEmpty()) {
-				activeAb = m.foragingPresetAbilities.get(slot);
-			} else {
-				activeAb = m.selectedForagingAbility;
-			}
-		}
+				float nx = startTreeX + c * (slotSize + slotGap);
+				float ny = startTreeY + r * (slotSize + slotGap);
 
-		int coreLevel = activeNodes.getOrDefault("center_of_the_forest", activeNodes.getOrDefault("core_of_the_forest", 0));
-		int treeLevel = (m != null) ? m.hotfLevel : 8;
+				boolean isSelected = "hotf_t2_4".equals(node.id);
+				int nodeLvl = switch (node.id) {
+					case "center_of_the_forest" -> 41;
+					case "hotf_t2_3" -> 12;
+					case "hotf_t2_2" -> 37;
+					case "hotf_t2_4" -> 1;
+					case "hotf_t3_3" -> 3;
+					case "hotf_t5_3" -> 4;
+					case "hotf_t4_0", "hotf_t4_1", "hotf_t4_2", "hotf_t4_3", "hotf_t5_1" -> 50;
+					default -> 0;
+				};
 
-		for (HotfTreeData.HotfNode node : HotfTreeData.ALL_NODES) {
-			if (node.type == HotfTreeData.NodeType.TIER || node.type == HotfTreeData.NodeType.SPACER) continue;
+				boolean isMaxed = (nodeLvl >= node.maxLevel);
+				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
+				RenderHelper.drawItemSlotBg(nx, ny, slotSize, hov, isSelected ? 0xFF34D399 : 0x33FFFFFF, isSelected ? 0xFF1E382B : 0x5514151E, 5f);
 
-			int r = 9 - node.y;
-			int c = node.x;
-			if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel);
+				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && !isMaxed ? String.valueOf(nodeLvl) : null);
+				int textColor = isSelected ? 0xFF34D399 : 0xFFFFFFFF;
 
-			float sx = startTreeX + c * (slotSize + slotGap);
-			float sy = startTreeY + r * (slotSize + slotGap);
+				RenderHelper.registerItemSlot(nx, ny, slotSize, stack, customText, textColor);
 
-			int rawLevel = node.getNodeLevel(activeNodes);
-			int level = rawLevel;
-			if (node.type == HotfTreeData.NodeType.ABILITY && rawLevel != -1) {
-				level = coreLevel >= 1 ? 2 : 1;
-			}
-
-			boolean disabled = false;
-			if (node.type == HotfTreeData.NodeType.ABILITY) {
-				disabled = !node.matchesAbility(activeAb);
-			}
-
-			boolean isSelAb = (node.type == HotfTreeData.NodeType.ABILITY && node.matchesAbility(activeAb));
-			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
-
-			int bgCol = isSelAb ? 0xFF1E382B : (level >= node.maxLevel ? 0xFF352B1E : (level > 0 ? 0xFF242F24 : 0x55181820));
-			int borderCol = isSelAb ? 0xFF55FF55 : (level >= node.maxLevel ? 0xFFF59E0B : (level > 0 ? 0xFF10B981 : 0x33555566));
-
-			NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 5f);
-			NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelAb ? 1.5f : 1f, borderCol, 5f);
-
-			ParsedItem pi = node.createParsedItem(level, disabled, activeAb, treeLevel);
-			drawSlot(sx, sy, slotSize, pi, mx, my, false);
-
-			if (level > 1 && node.maxLevel > 1 && node.type != HotfTreeData.NodeType.UNLEVELABLE) {
-				String lvlStr = String.valueOf(level);
-				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 8.5f);
-				NVGRenderer.rect(sx + slotSize - lw - 4f, sy + slotSize - 10.5f, lw + 3f, 9.5f, 0xDD111218, 2f);
-				NVGRenderer.text(lvlStr, sx + slotSize - lw - 2.5f, sy + slotSize - 10f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFFFFF, 8.5f);
 			}
 		}
 	}
 
+
 	// =========================================================================
 	// 4. ENDER CHEST VIEW
+
 	// =========================================================================
 	private static float renderEnderChestView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
@@ -1080,8 +1056,10 @@ public class GearTabRenderer {
 	private static ParsedItem getLoadoutPetItem(MemberData data, InventoryData.SavedLoadout sl) {
 		if (data != null && data.pets != null && !data.pets.pets.isEmpty()) {
 			if (sl != null && sl.petUuid != null && !sl.petUuid.isEmpty()) {
+				String targetUuid = sl.petUuid.replace("-", "").toLowerCase(Locale.ROOT);
 				for (var pet : data.pets.pets) {
-					if (sl.petUuid.equalsIgnoreCase(pet.uuid)) {
+					String pUuid = pet.uuid.replace("-", "").toLowerCase(Locale.ROOT);
+					if (targetUuid.equals(pUuid)) {
 						ParsedItem pi = new ParsedItem();
 						pi.displayName = pet.displayName;
 						pi.itemStack = pet.itemStack;
@@ -1091,16 +1069,25 @@ public class GearTabRenderer {
 					}
 				}
 			}
-			var active = data.pets.pets.get(0);
+			if (data.pets.activePet != null) {
+				ParsedItem pi = new ParsedItem();
+				pi.displayName = data.pets.activePet.displayName;
+				pi.itemStack = data.pets.activePet.itemStack;
+				pi.rarity = data.pets.activePet.rarity;
+				pi.rarityColor = data.pets.activePet.getRarityColor();
+				return pi;
+			}
+			var first = data.pets.pets.get(0);
 			ParsedItem pi = new ParsedItem();
-			pi.displayName = active.displayName;
-			pi.itemStack = active.itemStack;
-			pi.rarity = active.rarity;
-			pi.rarityColor = active.getRarityColor();
+			pi.displayName = first.displayName;
+			pi.itemStack = first.itemStack;
+			pi.rarity = first.rarity;
+			pi.rarityColor = first.getRarityColor();
 			return pi;
 		}
 		return ParsedItem.EMPTY;
 	}
+
 
 	public static class AccessoryAnalysis {
 		public int totalMp = 0;

@@ -147,10 +147,14 @@ public class PvApi {
 					List<SkyBlockProfileData> list = parseProfiles(root, uuid);
 					if (!list.isEmpty()) {
 						System.out.println("[ProfileViewer/PvApi] Successfully loaded " + list.size() + " profiles from SkyBlock PV API.");
-						// Fetch Garden and Museum in parallel for each profile
+						// Fetch Garden and Museum in parallel for all profiles and wait for completion
+						List<CompletableFuture<Void>> futures = new ArrayList<>();
 						for (SkyBlockProfileData p : list) {
-							fetchAdditionalPvData(p, token, uuid);
+							futures.add(fetchAdditionalPvDataAsync(p, token, uuid));
 						}
+						try {
+							CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+						} catch (Exception ignored) {}
 						return list;
 					} else {
 						System.out.println("[ProfileViewer/PvApi] Parsed 0 profiles from response: " + response.body());
@@ -165,54 +169,54 @@ public class PvApi {
 		return null;
 	}
 
-	private static void fetchAdditionalPvData(SkyBlockProfileData profile, String token, UUID uuid) {
-		if (profile == null || profile.profileId.isEmpty()) return;
-		try {
-			// 1. Garden API: /garden/<profile_id>
-			String gardenUrl = PV_API_BASE + "/garden/" + profile.profileId;
-			HttpRequest gReq = HttpRequest.newBuilder()
-					.uri(URI.create(gardenUrl))
-					.timeout(Duration.ofSeconds(6))
-					.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
-					.header("Authorization", token)
-					.header("X-Intent", "profile-viewer")
-					.GET()
-					.build();
+	private static CompletableFuture<Void> fetchAdditionalPvDataAsync(SkyBlockProfileData profile, String token, UUID uuid) {
+		if (profile == null || profile.profileId.isEmpty()) return CompletableFuture.completedFuture(null);
 
-			client.sendAsync(gReq, HttpResponse.BodyHandlers.ofString()).thenAccept(res -> {
-				if (res.statusCode() == 200 && res.body() != null) {
-					try {
-						JsonObject gRoot = JsonParser.parseString(res.body()).getAsJsonObject();
-						if (gRoot.has("garden") && gRoot.get("garden").isJsonObject()) {
-							profile.member.garden = silence.simsool.profileviewer.api.data.GardenData.fromJson(gRoot.getAsJsonObject("garden"));
-						}
-					} catch (Exception ignored) {}
-				}
-			});
+		// 1. Garden API: /garden/<profile_id>
+		String gardenUrl = PV_API_BASE + "/garden/" + profile.profileId;
+		HttpRequest gReq = HttpRequest.newBuilder()
+				.uri(URI.create(gardenUrl))
+				.timeout(Duration.ofSeconds(6))
+				.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
+				.header("Authorization", token)
+				.header("X-Intent", "profile-viewer")
+				.GET()
+				.build();
 
-			// 2. Museum API: /museum/<profile_id>
-			String museumUrl = PV_API_BASE + "/museum/" + profile.profileId;
-			HttpRequest mReq = HttpRequest.newBuilder()
-					.uri(URI.create(museumUrl))
-					.timeout(Duration.ofSeconds(6))
-					.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
-					.header("Authorization", token)
-					.header("X-Intent", "profile-viewer")
-					.GET()
-					.build();
+		CompletableFuture<Void> gFuture = client.sendAsync(gReq, HttpResponse.BodyHandlers.ofString()).thenAccept(res -> {
+			if (res.statusCode() == 200 && res.body() != null) {
+				try {
+					JsonObject gRoot = JsonParser.parseString(res.body()).getAsJsonObject();
+					JsonObject gObj = (gRoot.has("garden") && gRoot.get("garden").isJsonObject()) ? gRoot.getAsJsonObject("garden") : gRoot;
+					profile.member.garden = silence.simsool.profileviewer.api.data.GardenData.fromJson(gObj);
+				} catch (Exception ignored) {}
+			}
+		}).exceptionally(e -> null);
 
-			client.sendAsync(mReq, HttpResponse.BodyHandlers.ofString()).thenAccept(res -> {
-				if (res.statusCode() == 200 && res.body() != null) {
-					try {
-						JsonObject mRoot = JsonParser.parseString(res.body()).getAsJsonObject();
-						if (mRoot.has("members") && mRoot.get("members").isJsonObject()) {
-							profile.member.museum = silence.simsool.profileviewer.api.data.MuseumData.fromJson(mRoot.getAsJsonObject("members"), uuid);
-						}
-					} catch (Exception ignored) {}
-				}
-			});
-		} catch (Exception ignored) {}
+		// 2. Museum API: /museum/<profile_id>
+		String museumUrl = PV_API_BASE + "/museum/" + profile.profileId;
+		HttpRequest mReq = HttpRequest.newBuilder()
+				.uri(URI.create(museumUrl))
+				.timeout(Duration.ofSeconds(6))
+				.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
+				.header("Authorization", token)
+				.header("X-Intent", "profile-viewer")
+				.GET()
+				.build();
+
+		CompletableFuture<Void> mFuture = client.sendAsync(mReq, HttpResponse.BodyHandlers.ofString()).thenAccept(res -> {
+			if (res.statusCode() == 200 && res.body() != null) {
+				try {
+					JsonObject mRoot = JsonParser.parseString(res.body()).getAsJsonObject();
+					JsonObject mObj = (mRoot.has("members") && mRoot.get("members").isJsonObject()) ? mRoot.getAsJsonObject("members") : mRoot;
+					profile.member.museum = silence.simsool.profileviewer.api.data.MuseumData.fromJson(mObj, uuid);
+				} catch (Exception ignored) {}
+			}
+		}).exceptionally(e -> null);
+
+		return CompletableFuture.allOf(gFuture, mFuture);
 	}
+
 
 	private static List<SkyBlockProfileData> fetchFromSlothpixel(UUID uuid) {
 		try {

@@ -14,17 +14,28 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.general.utils.useful.UDisplay;
-import silence.simsool.lucent.ui.utils.URender;
 import silence.simsool.lucent.general.utils.useful.UMouse;
 import silence.simsool.lucent.general.utils.useful.UScreen;
-import silence.simsool.lucent.ui.utils.UIColors;
+import silence.simsool.lucent.ui.utils.URender;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGPIPRenderer;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.PvApi;
 import silence.simsool.profileviewer.api.data.SkyBlockProfileData;
 import silence.simsool.profileviewer.api.nbt.ParsedItem;
-import silence.simsool.profileviewer.ui.tabs.*;
+import silence.simsool.profileviewer.ui.tabs.ChocolateFactoryTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.CollectionsTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.DungeonsTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.FishingTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.ForagingTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.GardenTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.GearTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.MiningTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.MuseumTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.OverviewTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.PetsTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.RiftTabRenderer;
+import silence.simsool.profileviewer.ui.tabs.SlayerTabRenderer;
 
 public class ProfileViewerScreen extends Screen {
 
@@ -249,7 +260,7 @@ public class ProfileViewerScreen extends Screen {
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(totalScale * itemScale, totalScale * itemScale);
 
-		if (!loading && currentTab == PVTab.OVERVIEW) {
+		if (!loading && (currentTab == PVTab.OVERVIEW || currentTab == PVTab.SLAYER)) {
 			for (OverviewTabRenderer.OverviewSlotInfo slot : OverviewTabRenderer.visibleItemSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				float customScale = slot.size / 32f;
@@ -301,7 +312,7 @@ public class ProfileViewerScreen extends Screen {
 				if (slot.pet != null && slot.pet.itemStack != null && !slot.pet.itemStack.isEmpty()) {
 					float slotSize = slot.size;
 					float itemVisualSize = 32f;
-					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+					float customScale = slot.isDetailSlot ? 1.35f : Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
 					float offX = (slotSize - itemVisualSize * customScale) / 2f;
 					float offY = (slotSize - itemVisualSize * customScale) / 2f;
 
@@ -310,7 +321,9 @@ public class ProfileViewerScreen extends Screen {
 					graphics.pose().scale(customScale, customScale);
 					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.pet.itemStack, 0, 0);
 					graphics.itemDecorations(this.font, slot.pet.itemStack, 0, 0);
+
 					graphics.pose().popMatrix();
+
 
 					float slotScreenX = slot.x * totalScale;
 					float slotScreenY = slot.y * totalScale;
@@ -319,59 +332,11 @@ public class ProfileViewerScreen extends Screen {
 						hoveredStack = slot.pet.itemStack;
 					}
 				}
-			}
-		} else if (currentTab == PVTab.MINING) {
-			for (MiningTabRenderer.TreeSlotInfo slot : MiningTabRenderer.visibleTreeSlots) {
-				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
-				if (slot.stack != null && !slot.stack.isEmpty()) {
-					float slotSize = slot.size;
-					float itemVisualSize = 32f;
-					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
-					float offX = (slotSize - itemVisualSize * customScale) / 2f;
-					float offY = (slotSize - itemVisualSize * customScale) / 2f;
 
-					graphics.pose().pushMatrix();
-					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
-					graphics.pose().scale(customScale, customScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
-					graphics.itemDecorations(this.font, slot.stack, 0, 0);
-					graphics.pose().popMatrix();
-
-					float slotScreenX = slot.x * totalScale;
-					float slotScreenY = slot.y * totalScale;
-					float slotScreenSize = slot.size * totalScale;
-					if (mouseX >= slotScreenX && mouseX < slotScreenX + slotScreenSize && mouseY >= slotScreenY && mouseY < slotScreenY + slotScreenSize) {
-						hoveredStack = slot.stack;
-					}
-				}
 			}
 		} else if (currentTab == PVTab.FISHING) {
+
 			for (FishingTabRenderer.TrophySlotInfo slot : FishingTabRenderer.visibleTrophySlots) {
-				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
-				if (slot.stack != null && !slot.stack.isEmpty()) {
-					float slotSize = slot.size;
-					float itemVisualSize = 32f;
-					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
-					float offX = (slotSize - itemVisualSize * customScale) / 2f;
-					float offY = (slotSize - itemVisualSize * customScale) / 2f;
-
-					graphics.pose().pushMatrix();
-					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
-					graphics.pose().scale(customScale, customScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
-					graphics.itemDecorations(this.font, slot.stack, 0, 0);
-					graphics.pose().popMatrix();
-
-					float slotScreenX = slot.x * totalScale;
-					float slotScreenY = slot.y * totalScale;
-					float slotScreenSize = slot.size * totalScale;
-					if (mouseX >= slotScreenX && mouseX < slotScreenX + slotScreenSize && mouseY >= slotScreenY && mouseY < slotScreenY + slotScreenSize) {
-						hoveredStack = slot.stack;
-					}
-				}
-			}
-		} else if (currentTab == PVTab.MUSEUM) {
-			for (MuseumTabRenderer.MuseumSlotInfo slot : MuseumTabRenderer.visibleMuseumSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.stack != null && !slot.stack.isEmpty()) {
 					float slotSize = slot.size;
@@ -397,7 +362,53 @@ public class ProfileViewerScreen extends Screen {
 			}
 		}
 
+
+		// Render Global Item Slots (Unified for all tabs: Farming, ChocolateFactory, Collections, Rift, Slayer, etc.)
+		float dropX1 = winX + SIDEBAR_W + 24f + NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f) + 16f;
+		float dropX2 = dropX1 + 145f;
+		float dropY1 = winY + 27f - 4f;
+		float dropY2 = dropY1 + 28f + (profileDropdownOpen ? (profiles.size() * 28f + 6f) : 0f);
+
+		for (RenderHelper.ItemSlotInfo slot : RenderHelper.globalItemSlots) {
+			if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
+			if (profileDropdownOpen && slot.x + slot.size >= dropX1 && slot.x <= dropX2 && slot.y + slot.size >= dropY1 && slot.y <= dropY2) continue;
+
+			if (slot.stack != null && !slot.stack.isEmpty()) {
+				float slotSize = slot.size;
+				float itemVisualSize = 32f;
+				float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
+				float offX = (slotSize - itemVisualSize * customScale) / 2f;
+				float offY = (slotSize - itemVisualSize * customScale) / 2f;
+
+				graphics.pose().pushMatrix();
+				graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
+				graphics.pose().scale(customScale, customScale);
+				silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
+				graphics.itemDecorations(this.font, slot.stack, 0, 0);
+
+				if (slot.customText != null && !slot.customText.isEmpty()) {
+					int strW = this.font.width(slot.customText);
+					int tx = (int) (16 - strW);
+					int ty = (int) (16 - 7);
+					silence.simsool.lucent.general.utils.render.DrawContextUtils.text(graphics, slot.customText, tx, ty, slot.customTextColor, true);
+				}
+
+
+
+				graphics.pose().popMatrix();
+
+				float slotScreenX = slot.x * totalScale;
+				float slotScreenY = slot.y * totalScale;
+				float slotScreenSize = slot.size * totalScale;
+				if (slot.showTooltip && mouseX >= slotScreenX && mouseX < slotScreenX + slotScreenSize && mouseY >= slotScreenY && mouseY < slotScreenY + slotScreenSize) {
+					hoveredStack = slot.stack;
+				}
+
+			}
+		}
+
 		graphics.pose().popMatrix();
+
 
 		// Draw 3D Player Mannequin in Overview Tab
 		if (currentTab == PVTab.OVERVIEW && OverviewTabRenderer.playerBounds.visible) {
@@ -583,7 +594,8 @@ public class ProfileViewerScreen extends Screen {
 		PetsTabRenderer.visiblePetSlots.clear();
 		MiningTabRenderer.visibleTreeSlots.clear();
 		FishingTabRenderer.visibleTrophySlots.clear();
-		MuseumTabRenderer.visibleMuseumSlots.clear();
+		RenderHelper.clearGlobalSlots();
+
 
 		switch (currentTab) {
 			case OVERVIEW -> renderedH = OverviewTabRenderer.render(username, currentProfile.member, playerStatus, contentX, startY, contentW, mx, my, delta);
@@ -592,13 +604,15 @@ public class ProfileViewerScreen extends Screen {
 			case DUNGEONS -> renderedH = DungeonsTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case SLAYER -> renderedH = SlayerTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case MINING -> renderedH = MiningTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
-			case FARMING -> renderedH = FarmingTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
+			case FORAGING -> renderedH = ForagingTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
+			case GARDEN -> renderedH = GardenTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case FISHING -> renderedH = FishingTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case MUSEUM -> renderedH = MuseumTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case RIFT -> renderedH = RiftTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case COLLECTIONS -> renderedH = CollectionsTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 			case CHOCOLATE_FACTORY -> renderedH = ChocolateFactoryTabRenderer.render(currentProfile.member, contentX, startY, contentW, mx, my, delta);
 		}
+
 
 		maxScroll = Math.max(0, renderedH - contentH);
 
@@ -640,40 +654,40 @@ public class ProfileViewerScreen extends Screen {
 		}
 	}
 
-	private void renderItemTooltip(float mx, float my) {
-		ParsedItem item = GearTabRenderer.hoveredItem;
-		if (item == null || item.isEmpty()) return;
-
-		float tx = GearTabRenderer.hoveredItemX;
-		float ty = GearTabRenderer.hoveredItemY;
-
-		float maxLoreW = RenderHelper.getColoredTextWidth(item.displayName, 14f);
-		for (String l : item.lore) {
-			float lw = RenderHelper.getColoredTextWidth(l, 11f);
-			if (lw > maxLoreW) maxLoreW = lw;
-		}
-
-		float tipW = Math.min(380f, maxLoreW + 24f);
-		float tipH = 26f + (item.lore.size() * 15f) + 12f;
-
-		float gs = NVGRenderer.getStandardGuiScale();
-		float maxW = UDisplay.getWidth() / gs;
-		float maxH = UDisplay.getHeight() / gs;
-
-		if (tx + tipW > maxW - 10) tx = maxW - tipW - 10;
-		if (ty + tipH > maxH - 10) ty = maxH - tipH - 10;
-
-		NVGRenderer.rect(tx, ty, tipW, tipH, 0xF812131A, 8f);
-		NVGRenderer.outlineRect(tx, ty, tipW, tipH, 1.2f, item.rarityColor, 8f);
-
-		RenderHelper.drawColoredText(item.displayName, tx + 10f, ty + 8f, 14f, item.rarityColor);
-
-		float ly = ty + 26f;
-		for (String line : item.lore) {
-			RenderHelper.drawColoredText(line, tx + 10f, ly, 11f, UIColors.TEXT_SECONDARY);
-			ly += 15f;
-		}
-	}
+//	private void renderItemTooltip(float mx, float my) {
+//		ParsedItem item = GearTabRenderer.hoveredItem;
+//		if (item == null || item.isEmpty()) return;
+//
+//		float tx = GearTabRenderer.hoveredItemX;
+//		float ty = GearTabRenderer.hoveredItemY;
+//
+//		float maxLoreW = RenderHelper.getColoredTextWidth(item.displayName, 14f);
+//		for (String l : item.lore) {
+//			float lw = RenderHelper.getColoredTextWidth(l, 11f);
+//			if (lw > maxLoreW) maxLoreW = lw;
+//		}
+//
+//		float tipW = Math.min(380f, maxLoreW + 24f);
+//		float tipH = 26f + (item.lore.size() * 15f) + 12f;
+//
+//		float gs = NVGRenderer.getStandardGuiScale();
+//		float maxW = UDisplay.getWidth() / gs;
+//		float maxH = UDisplay.getHeight() / gs;
+//
+//		if (tx + tipW > maxW - 10) tx = maxW - tipW - 10;
+//		if (ty + tipH > maxH - 10) ty = maxH - tipH - 10;
+//
+//		NVGRenderer.rect(tx, ty, tipW, tipH, 0xF812131A, 8f);
+//		NVGRenderer.outlineRect(tx, ty, tipW, tipH, 1.2f, item.rarityColor, 8f);
+//
+//		RenderHelper.drawColoredText(item.displayName, tx + 10f, ty + 8f, 14f, item.rarityColor);
+//
+//		float ly = ty + 26f;
+//		for (String line : item.lore) {
+//			RenderHelper.drawColoredText(line, tx + 10f, ly, 11f, UIColors.TEXT_SECONDARY);
+//			ly += 15f;
+//		}
+//	}
 
 	@Override
 	public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
@@ -704,12 +718,29 @@ public class ProfileViewerScreen extends Screen {
 				if (MiningTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
 					return true;
 				}
+			} else if (currentTab == PVTab.FORAGING) {
+				if (ForagingTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
+					return true;
+				}
+			} else if (currentTab == PVTab.GARDEN) {
+				if (GardenTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
+					return true;
+				}
 			} else if (currentTab == PVTab.FISHING) {
+
 				if (FishingTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
 					return true;
 				}
 			} else if (currentTab == PVTab.MUSEUM) {
 				if (MuseumTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
+					return true;
+				}
+			} else if (currentTab == PVTab.COLLECTIONS) {
+				if (CollectionsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
+					return true;
+				}
+			} else if (currentTab == PVTab.DUNGEONS) {
+				if (DungeonsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
 					return true;
 				}
 			}
@@ -809,11 +840,25 @@ public class ProfileViewerScreen extends Screen {
 					float progress = (my - trackY - thumbH / 2f) / (trackH - thumbH);
 					scrollOffset = Math.max(0, Math.min(maxScroll, progress * maxScroll));
 					return true;
+
 				}
 			}
+
+			// Subtab Click Delegations
+			float subStartY = contentY - (float) scrollOffset;
+			if (currentTab == PVTab.GEAR && GearTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.MINING && MiningTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.GARDEN && GardenTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.FORAGING && ForagingTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.DUNGEONS && DungeonsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.PETS && PetsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+
 		}
 
+
 		return super.mouseClicked(event, doubleClick);
+
 	}
 
 	@Override
@@ -864,6 +909,10 @@ public class ProfileViewerScreen extends Screen {
 			if (GearTabRenderer.charTyped((char) event.codepoint(), 0)) {
 				return true;
 			}
+		} else if (currentTab == PVTab.MUSEUM) {
+			if (MuseumTabRenderer.charTyped((char) event.codepoint(), 0)) {
+				return true;
+			}
 		}
 		return super.charTyped(event);
 	}
@@ -871,7 +920,18 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+		if (currentTab == PVTab.PETS && PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			return true;
+		}
+		if (currentTab == PVTab.GEAR && GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			return true;
+		}
+		if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			return true;
+		}
+
 		if (searchFocused) {
+
 			if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
 				String target = searchInput.trim();
 				if (!target.isEmpty()) {

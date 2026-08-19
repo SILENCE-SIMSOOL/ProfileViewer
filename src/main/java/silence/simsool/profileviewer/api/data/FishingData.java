@@ -13,6 +13,11 @@ public class FishingData {
 	public int goldTrophy = 0;
 	public int diamondTrophy = 0;
 
+	// Items Fished stats
+	public int itemsFishedTotal = 0;
+	public int treasuresCaught = 0;
+	public int largeTreasuresCaught = 0;
+
 	// Sea Creatures Kills
 	public int seaCreaturesKilled = 0;
 	public Map<String, Integer> seaCreatureKills = new LinkedHashMap<>();
@@ -74,28 +79,42 @@ public class FishingData {
 			}
 		}
 
-		// Sea creature kills from stats / player_stats / bestiary / kills
-		JsonObject killsObj = null;
-		if (json.has("player_stats") && json.get("player_stats").isJsonObject() && json.getAsJsonObject("player_stats").has("kills")) {
-			killsObj = json.getAsJsonObject("player_stats").getAsJsonObject("kills");
-		} else if (json.has("stats") && json.get("stats").isJsonObject() && json.getAsJsonObject("stats").has("kills")) {
-			killsObj = json.getAsJsonObject("stats").getAsJsonObject("kills");
-		} else if (json.has("kills") && json.get("kills").isJsonObject()) {
-			killsObj = json.getAsJsonObject("kills");
-		}
+		// Items fished
+		JsonObject stats = json.has("player_stats") && json.get("player_stats").isJsonObject()
+				? json.getAsJsonObject("player_stats")
+				: (json.has("stats") && json.get("stats").isJsonObject() ? json.getAsJsonObject("stats") : null);
 
-		if (killsObj != null) {
-			int scTotal = 0;
-			for (Map.Entry<String, JsonElement> e : killsObj.entrySet()) {
-				if (e.getKey().startsWith("sea_creature_") || e.getKey().startsWith("sc_") || isSeaCreature(e.getKey())) {
-					if (e.getValue().isJsonPrimitive()) {
-						int k = e.getValue().getAsInt();
-						d.seaCreatureKills.put(formatScName(e.getKey()), k);
-						scTotal += k;
+		if (stats != null) {
+			if (stats.has("items_fished") && stats.get("items_fished").isJsonObject()) {
+				JsonObject ifObj = stats.getAsJsonObject("items_fished");
+				if (ifObj.has("total") && ifObj.get("total").isJsonPrimitive()) d.itemsFishedTotal = ifObj.get("total").getAsInt();
+				if (ifObj.has("treasure") && ifObj.get("treasure").isJsonPrimitive()) d.treasuresCaught = ifObj.get("treasure").getAsInt();
+				if (ifObj.has("large_treasure") && ifObj.get("large_treasure").isJsonPrimitive()) d.largeTreasuresCaught = ifObj.get("large_treasure").getAsInt();
+			} else if (stats.has("items_fished") && stats.get("items_fished").isJsonPrimitive()) {
+				d.itemsFishedTotal = stats.get("items_fished").getAsInt();
+			}
+
+			if (stats.has("kills") && stats.get("kills").isJsonObject()) {
+				JsonObject killsObj = stats.getAsJsonObject("kills");
+				int scTotal = 0;
+				for (Map.Entry<String, JsonElement> e : killsObj.entrySet()) {
+					if (e.getKey().startsWith("sea_creature_") || e.getKey().startsWith("sc_") || isSeaCreature(e.getKey())) {
+						if (e.getValue().isJsonPrimitive()) {
+							int k = e.getValue().getAsInt();
+							d.seaCreatureKills.put(formatScName(e.getKey()), k);
+							scTotal += k;
+						}
 					}
 				}
+				d.seaCreaturesKilled = scTotal;
 			}
-			d.seaCreaturesKilled = scTotal;
+		}
+
+		if (json.has("player_data") && json.get("player_data").isJsonObject()) {
+			JsonObject pd = json.getAsJsonObject("player_data");
+			if (pd.has("fishing_treasure_caught") && pd.get("fishing_treasure_caught").isJsonPrimitive()) {
+				d.treasuresCaught = pd.get("fishing_treasure_caught").getAsInt();
+			}
 		}
 
 		return d;
@@ -109,15 +128,15 @@ public class FishingData {
 				k.contains("yeti") || k.contains("reindrake") || k.contains("lord_jawbus") || k.contains("thunder");
 	}
 
-	private static String formatScName(String key) {
-		String cleaned = key.replace("kills_", "").replace("sea_creature_", "").replace("_", " ");
-		String[] words = cleaned.split(" ");
+	private static String formatScName(String raw) {
+		String clean = raw.replace("sea_creature_", "").replace("sc_", "").replace("_", " ");
 		StringBuilder sb = new StringBuilder();
-		for (String w : words) {
-			if (!w.isEmpty()) {
-				sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)).append(" ");
+		for (String word : clean.split(" ")) {
+			if (!word.isEmpty()) {
+				if (sb.length() > 0) sb.append(" ");
+				sb.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
 			}
 		}
-		return sb.toString().trim();
+		return sb.toString();
 	}
 }

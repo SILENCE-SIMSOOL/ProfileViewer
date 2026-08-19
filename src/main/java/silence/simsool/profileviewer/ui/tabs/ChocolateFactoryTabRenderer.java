@@ -1,11 +1,20 @@
 package silence.simsool.profileviewer.ui.tabs;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.data.CfData;
 import silence.simsool.profileviewer.api.data.MemberData;
+import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class ChocolateFactoryTabRenderer {
@@ -63,27 +72,29 @@ public class ChocolateFactoryTabRenderer {
 		NVGRenderer.text(cf.rabbits.size() + " " + L10n.translate("pv.cf.unique_rabbits"), tx3, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 19f);
 		NVGRenderer.text(L10n.translate("pv.cf.since_prestige") + ": " + RenderHelper.formatNumber(cf.chocolateSincePrestige), tx3, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
-		curY += cardH + 24f;
+		curY += cardH + 20f;
 
-		// Section: Factory Upgrades
+		// Section: Factory Upgrades (4 Cards with Actual Item Slots)
 		NVGRenderer.text("\uE5D5", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
 		NVGRenderer.text(L10n.translate("pv.cf.factory_upgrades"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 24f;
 
-		float uColW = (width - 24f) / 3f;
-		float uCardH = 68f;
+		float uColW = (width - 3 * 10f) / 4f;
+		float uCardH = 74f;
+		float uSlotS = 36f;
 
-		RenderHelper.drawModernCard(startX, curY, uColW, uCardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.cf.click_upgrades"), startX + 14f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-		NVGRenderer.text(L10n.translate("pv.ui.level") + " " + cf.clickUpgrades, startX + 14f, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 17f);
+		// Upgrade 1: Cookie (Click Upgrade)
+		renderUpgradeCard(startX, curY, uColW, uCardH, uSlotS, createCookieUpgradeStack(cf.clickUpgrades + 1), "Click Upgrade", "Lv. " + (cf.clickUpgrades + 1), 0xFF38BDF8, mouseX, mouseY);
 
-		RenderHelper.drawModernCard(c2X, curY, uColW, uCardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.cf.multiplier_upgrades"), c2X + 14f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-		NVGRenderer.text(L10n.translate("pv.ui.level") + " " + cf.chocolateMultiplierUpgrades, c2X + 14f, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 17f);
+		// Upgrade 2: Clock (Time Tower)
+		renderUpgradeCard(startX + uColW + 10f, curY, uColW, uCardH, uSlotS, createClockUpgradeStack(cf), "Time Tower", "Active", 0xFF10B981, mouseX, mouseY);
 
-		RenderHelper.drawModernCard(c3X, curY, uColW, uCardH, 10f, false);
-		NVGRenderer.text(L10n.translate("pv.cf.rarity_upgrades"), c3X + 14f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-		NVGRenderer.text(L10n.translate("pv.ui.level") + " " + cf.rabbitRarityUpgrades, c3X + 14f, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF472B6, 17f);
+		// Upgrade 3: Rabbit Foot (Rabbit Shrine)
+		renderUpgradeCard(startX + 2 * (uColW + 10f), curY, uColW, uCardH, uSlotS, createShrineUpgradeStack(cf.rabbitRarityUpgrades), "Rabbit Shrine", "Lv. " + cf.rabbitRarityUpgrades, 0xFFF472B6, mouseX, mouseY);
+
+		// Upgrade 4: Coach Jackrabbit
+		renderUpgradeCard(startX + 3 * (uColW + 10f), curY, uColW, uCardH, uSlotS, createJackrabbitUpgradeStack(cf.chocolateMultiplierUpgrades), "Jackrabbit", "Lv. " + cf.chocolateMultiplierUpgrades, 0xFFFBBF24, mouseX, mouseY);
+
 
 		curY += uCardH + 24f;
 
@@ -94,19 +105,30 @@ public class ChocolateFactoryTabRenderer {
 			curY += 24f;
 
 			float eColW = (width - 16f) / 2f;
-			float eH = 52f;
+			float eH = 56f;
 			int idx = 0;
 
 			for (CfData.RabbitEmployee emp : cf.employees) {
 				float ex = startX + (idx % 2) * (eColW + 16f);
 				float ey = curY + (idx / 2) * (eH + 10f);
 
-				RenderHelper.drawModernCard(ex, ey, eColW, eH, 10f, false);
+				boolean hov = mouseX >= ex && mouseX <= ex + eColW && mouseY >= ey && mouseY <= ey + eH;
+				RenderHelper.drawModernCard(ex, ey, eColW, eH, 10f, hov);
+
+				float esS = 36f;
+				float esX = ex + 10f;
+				float esY = ey + 10f;
+				boolean hovS = mouseX >= esX && mouseX <= esX + esS && mouseY >= esY && mouseY <= esY + esS;
+				RenderHelper.drawItemSlotBg(esX, esY, esS, hovS, 0x33FFFFFF, 0x5511131E, 6f);
+
+				ItemStack empStack = createEmployeeStack(emp);
+				RenderHelper.registerItemSlot(esX, esY, esS, empStack);
+
 				String empName = formatRabbitName(emp.id);
-				NVGRenderer.text(empName, ex + 14f, ey + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+				NVGRenderer.text(empName, esX + esS + 12f, ey + 18f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
 				String lvlStr = "Lv. " + emp.level;
 				float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
-				NVGRenderer.text(lvlStr, ex + eColW - 14f - lw, ey + 16f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, 14f);
+				NVGRenderer.text(lvlStr, ex + eColW - 14f - lw, ey + 18f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, 14f);
 
 				idx++;
 			}
@@ -115,6 +137,71 @@ public class ChocolateFactoryTabRenderer {
 
 		return curY - startY;
 	}
+
+	private static void renderUpgradeCard(float x, float y, float w, float h, float slotS, ItemStack stack, String name, String levelStr, int lvlCol, float mx, float my) {
+		boolean hov = mx >= x && mx <= x + w && my >= y && my <= y + h;
+		RenderHelper.drawModernCard(x, y, w, h, 10f, hov);
+
+		float sx = x + 10f;
+		float sy = y + (h - slotS) / 2f;
+		boolean hovS = mx >= sx && mx <= sx + slotS && my >= sy && my <= sy + slotS;
+		RenderHelper.drawItemSlotBg(sx, sy, slotS, hovS, 0x33FFFFFF, 0x5511131E, 6f);
+		RenderHelper.registerItemSlot(sx, sy, slotS, stack);
+
+		float tx = sx + slotS + 10f;
+		NVGRenderer.text(name, tx, y + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text(levelStr, tx, y + 38f, Fonts.PRETENDARD_SEMIBOLD, lvlCol, 15f);
+	}
+
+	private static ItemStack createCookieUpgradeStack(int level) {
+		ItemStack stack = new ItemStack(Items.COOKIE);
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§6Click Upgrade " + level));
+		List<Component> lore = new ArrayList<>();
+		lore.add(Component.literal("§7Increases chocolate per click."));
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
+	private static ItemStack createClockUpgradeStack(CfData cf) {
+		ItemStack stack = new ItemStack(Items.CLOCK);
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§aTime Tower"));
+		List<Component> lore = new ArrayList<>();
+		lore.add(Component.literal("§7Boosts chocolate production."));
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
+	private static ItemStack createShrineUpgradeStack(int level) {
+		ItemStack stack = new ItemStack(Items.RABBIT_FOOT);
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§dRabbit Shrine " + level));
+		List<Component> lore = new ArrayList<>();
+		lore.add(Component.literal("§7Increases chance of rare rabbits in Hoppity's Hunt."));
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
+	private static ItemStack createJackrabbitUpgradeStack(int level) {
+		ItemStack stack = ItemRepo.getItemStack("COACH_JACKRABBIT");
+		if (stack.isEmpty()) stack = new ItemStack(Items.PLAYER_HEAD);
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§eCoach Jackrabbit " + level));
+		List<Component> lore = new ArrayList<>();
+		lore.add(Component.literal("§7Increases chocolate per second."));
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
+	private static ItemStack createEmployeeStack(CfData.RabbitEmployee emp) {
+		ItemStack stack = ItemRepo.getItemStack(emp.id.toUpperCase());
+		if (stack.isEmpty()) {
+			stack = (emp.level > 0) ? new ItemStack(Items.PLAYER_HEAD) : new ItemStack(Items.GUNPOWDER);
+		}
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§a" + formatRabbitName(emp.id) + " (Lv. " + emp.level + ")"));
+		List<Component> lore = new ArrayList<>();
+		lore.add(Component.literal("§7Employee Level: §e" + emp.level));
+		stack.set(DataComponents.LORE, new ItemLore(lore));
+		return stack;
+	}
+
 
 	private static String formatRabbitName(String id) {
 		String cleaned = id.replace("rabbit_", "").replace("_", " ");

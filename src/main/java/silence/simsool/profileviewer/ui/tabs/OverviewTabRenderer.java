@@ -6,9 +6,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.resources.Identifier;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
@@ -430,22 +431,22 @@ public class OverviewTabRenderer {
 		}
 	}
 
-	private static ItemStack getSkillItemStack(String skillName) {
-		if (skillName == null) return new ItemStack(Items.PAPER);
-		return switch (skillName.toLowerCase(Locale.ROOT)) {
-			case "combat" -> new ItemStack(Items.DIAMOND_SWORD);
-			case "farming" -> new ItemStack(Items.WHEAT);
-			case "foraging" -> new ItemStack(Items.OAK_SAPLING);
-			case "fishing" -> new ItemStack(Items.FISHING_ROD);
-			case "alchemy" -> new ItemStack(Items.POTION);
-			case "enchanting" -> new ItemStack(Items.ENCHANTING_TABLE);
-			case "runecrafting" -> new ItemStack(Items.MAGMA_CREAM);
-			case "taming" -> new ItemStack(Items.EGG);
-			case "mining" -> new ItemStack(Items.DIAMOND_PICKAXE);
-			case "social" -> new ItemStack(Items.EMERALD);
-			default -> new ItemStack(Items.BOOK);
-		};
-	}
+//	private static ItemStack getSkillItemStack(String skillName) {
+//		if (skillName == null) return new ItemStack(Items.PAPER);
+//		return switch (skillName.toLowerCase(Locale.ROOT)) {
+//			case "combat" -> new ItemStack(Items.DIAMOND_SWORD);
+//			case "farming" -> new ItemStack(Items.WHEAT);
+//			case "foraging" -> new ItemStack(Items.OAK_SAPLING);
+//			case "fishing" -> new ItemStack(Items.FISHING_ROD);
+//			case "alchemy" -> new ItemStack(Items.POTION);
+//			case "enchanting" -> new ItemStack(Items.ENCHANTING_TABLE);
+//			case "runecrafting" -> new ItemStack(Items.MAGMA_CREAM);
+//			case "taming" -> new ItemStack(Items.EGG);
+//			case "mining" -> new ItemStack(Items.DIAMOND_PICKAXE);
+//			case "social" -> new ItemStack(Items.EMERALD);
+//			default -> new ItemStack(Items.BOOK);
+//		};
+//	}
 
 	private static Identifier getSlayerTexture(String slayerKey) {
 		if (slayerKey == null) return Identifier.tryParse("profileviewer:textures/icon/slayer/revenant.png");
@@ -460,21 +461,21 @@ public class OverviewTabRenderer {
 		};
 	}
 
-	private static ItemStack getSlayerItemStack(String slayerKey) {
-		ItemStack repoStack = ItemRepo.getItemStack(slayerKey != null ? slayerKey.toUpperCase(Locale.ROOT) : "");
-		if (repoStack != null && !repoStack.isEmpty()) return repoStack;
-
-		if (slayerKey == null) return new ItemStack(Items.ZOMBIE_HEAD);
-		return switch (slayerKey.toLowerCase(Locale.ROOT)) {
-			case "zombie" -> new ItemStack(Items.ZOMBIE_HEAD);
-			case "spider" -> new ItemStack(Items.SPIDER_EYE);
-			case "wolf" -> new ItemStack(Items.BONE);
-			case "enderman" -> new ItemStack(Items.ENDER_EYE);
-			case "blaze" -> new ItemStack(Items.BLAZE_ROD);
-			case "vampire" -> new ItemStack(Items.WITHER_SKELETON_SKULL);
-			default -> new ItemStack(Items.PLAYER_HEAD);
-		};
-	}
+//	private static ItemStack getSlayerItemStack(String slayerKey) {
+//		ItemStack repoStack = ItemRepo.getItemStack(slayerKey != null ? slayerKey.toUpperCase(Locale.ROOT) : "");
+//		if (repoStack != null && !repoStack.isEmpty()) return repoStack;
+//
+//		if (slayerKey == null) return new ItemStack(Items.ZOMBIE_HEAD);
+//		return switch (slayerKey.toLowerCase(Locale.ROOT)) {
+//			case "zombie" -> new ItemStack(Items.ZOMBIE_HEAD);
+//			case "spider" -> new ItemStack(Items.SPIDER_EYE);
+//			case "wolf" -> new ItemStack(Items.BONE);
+//			case "enderman" -> new ItemStack(Items.ENDER_EYE);
+//			case "blaze" -> new ItemStack(Items.BLAZE_ROD);
+//			case "vampire" -> new ItemStack(Items.WITHER_SKELETON_SKULL);
+//			default -> new ItemStack(Items.PLAYER_HEAD);
+//		};
+//	}
 
 	private static ItemStack getEssenceItemStack(String essenceKey) {
 		if (essenceKey == null) return new ItemStack(Items.OAK_SAPLING);
