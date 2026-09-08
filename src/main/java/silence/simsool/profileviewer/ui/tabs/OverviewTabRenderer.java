@@ -182,7 +182,7 @@ public class OverviewTabRenderer {
 		if (isOnline) {
 			rightTxt = status != null && status.location != null && !status.location.isEmpty() ? status.location : "Active";
 		} else {
-			rightTxt = lastLogin > 0 ? formatTimeAgo(lastLogin) : "Last seen 2d ago";
+			rightTxt = lastLogin > 0 ? formatTimeAgo(lastLogin) : "Offline";
 		}
 		float rw = NVGRenderer.textWidth(rightTxt, Fonts.PRETENDARD_MEDIUM, fs);
 		NVGRenderer.text(rightTxt, x + w - rw - 16f, cy - 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, fs);
@@ -207,14 +207,14 @@ public class OverviewTabRenderer {
 		curY += lineH;
 
 		// 2. Playtime
-		String ptStr = data.playtimeHours > 0 ? String.format(Locale.ROOT, "%.1fh", data.playtimeHours) : "648.7h";
+		String ptStr = data.playtimeHours > 0 ? String.format(Locale.ROOT, "%.1fh", data.playtimeHours) : (data.firstJoin > 0 ? "0h" : "N/A");
 		drawInfoRow("Playtime", ptStr, padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 		curY += lineH;
 
 		// 3. K/D
 		String kdStr = (data.totalKills > 0 || data.totalDeaths > 0)
 				? RenderHelper.formatCoins(data.totalKills) + " / " + RenderHelper.formatCoins(data.totalDeaths)
-				: "648.7K / 4.8K";
+				: "0 / 0";
 		drawInfoRow("K/D", kdStr, padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 		curY += lineH;
 
@@ -229,7 +229,7 @@ public class OverviewTabRenderer {
 		curY += lineH;
 
 		// 6. Bank
-		drawInfoRow("Bank", data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "1.21B", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
+		drawInfoRow("Bank", data.networth.bank > 0 ? RenderHelper.formatCoins(data.networth.bank) : "0", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 		curY += lineH;
 
 		// 7. Fairy Souls
@@ -237,7 +237,7 @@ public class OverviewTabRenderer {
 		curY += lineH;
 
 		// 8. Networth
-		drawInfoRow("Networth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "48.58B", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
+		drawInfoRow("Networth", data.networth.total > 0 ? RenderHelper.formatCoins(data.networth.total) : "0", padX, curY, padW, fs, RenderHelper.FONT_SECONDARY);
 	}
 
 	private static void drawInfoRow(String label, String value, float x, float y, float w, float fs, int valColor) {
@@ -506,7 +506,9 @@ public class OverviewTabRenderer {
 		if (days > 0) return "Last seen " + days + "d ago";
 		long hours = diff / (1000L * 60 * 60);
 		if (hours > 0) return "Last seen " + hours + "h ago";
-		return "Last seen 2d ago";
+		long minutes = diff / (1000L * 60);
+		if (minutes > 0) return "Last seen " + minutes + "m ago";
+		return "Just now";
 	}
 
 	private static String capitalize(String str) {

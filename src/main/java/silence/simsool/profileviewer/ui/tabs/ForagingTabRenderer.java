@@ -101,26 +101,29 @@ public class ForagingTabRenderer {
 		NVGRenderer.text("Foraging Level", startX + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		NVGRenderer.text("Lv. " + forLvl, startX + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
-		// Forest Whispers
+		// Heart of the Forest Level
+		int hotfLvl = (data != null && data.mining != null) ? data.mining.hotfLevel : 0;
 		float s2X = startX + statW + 10f;
 		RenderHelper.drawModernCard(s2X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE3E8", s2X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF00AAAA, 18f);
-		NVGRenderer.text("Forest Whispers", s2X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text("0 / 0", s2X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF00AAAA, 16f);
+		NVGRenderer.text("\uE8EF", s2X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF059669, 18f);
+		NVGRenderer.text("HotF Level", s2X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text("Lv. " + hotfLvl, s2X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF059669, 16f);
 
-		// Desert Whispers
+		// HotF Experience
+		double hotfExp = (data != null && data.mining != null) ? data.mining.hotfExperience : 0;
 		float s3X = s2X + statW + 10f;
 		RenderHelper.drawModernCard(s3X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE3E8", s3X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 18f);
-		NVGRenderer.text("Desert Whispers", s3X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text("0 / 0", s3X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f);
+		NVGRenderer.text("\uE838", s3X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 18f);
+		NVGRenderer.text("HotF Experience", s3X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text(RenderHelper.formatNumber((long) hotfExp), s3X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f);
 
-		// Tree Gifts Claimed
+		// Wood Essence
+		long woodEssence = (data != null && data.essence != null) ? data.essence.getOrDefault("foraging", 0L) : 0L;
 		float s4X = s3X + statW + 10f;
 		RenderHelper.drawModernCard(s4X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE8F6", s4X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFEC4899, 18f);
-		NVGRenderer.text("Tree Gifts", s4X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text("0 / 30", s4X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFEC4899, 16f);
+		NVGRenderer.text("\uE520", s4X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		NVGRenderer.text("Wood Essence", s4X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		NVGRenderer.text(RenderHelper.formatNumber(woodEssence), s4X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
 		curY += statH + 14f;
 

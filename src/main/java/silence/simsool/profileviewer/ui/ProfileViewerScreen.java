@@ -72,8 +72,6 @@ public class ProfileViewerScreen extends Screen {
 	private UUID lastMannequinUuid = null;
 	private static final java.util.concurrent.atomic.AtomicInteger NEXT_ENTITY_ID = new java.util.concurrent.atomic.AtomicInteger(100000);
 
-	private net.minecraft.client.gui.components.EditBox searchField;
-
 	public ProfileViewerScreen(String username, UUID uuid) {
 		super(Component.literal("Profile Viewer"));
 		this.username = username;
@@ -84,13 +82,6 @@ public class ProfileViewerScreen extends Screen {
 	protected void init() {
 		super.init();
 		updateLayout();
-
-		searchField = new net.minecraft.client.gui.components.EditBox(font, 0, 0, 160, 28, Component.literal("Search"));
-		searchField.setMaxLength(16);
-		searchField.setBordered(false);
-		searchField.visible = false;
-		addWidget(searchField);
-
 		loadData(false);
 	}
 
@@ -334,32 +325,6 @@ public class ProfileViewerScreen extends Screen {
 				}
 
 			}
-		} else if (currentTab == PVTab.FISHING) {
-
-			for (FishingTabRenderer.TrophySlotInfo slot : FishingTabRenderer.visibleTrophySlots) {
-				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
-				if (slot.stack != null && !slot.stack.isEmpty()) {
-					float slotSize = slot.size;
-					float itemVisualSize = 32f;
-					float customScale = Math.min(1.0f, (slotSize - 4f) / itemVisualSize);
-					float offX = (slotSize - itemVisualSize * customScale) / 2f;
-					float offY = (slotSize - itemVisualSize * customScale) / 2f;
-
-					graphics.pose().pushMatrix();
-					graphics.pose().translate((slot.x + offX) / itemScale, (slot.y + offY) / itemScale);
-					graphics.pose().scale(customScale, customScale);
-					silence.simsool.lucent.general.utils.render.ItemRenderer.drawItemStack(graphics, slot.stack, 0, 0);
-					graphics.itemDecorations(this.font, slot.stack, 0, 0);
-					graphics.pose().popMatrix();
-
-					float slotScreenX = slot.x * totalScale;
-					float slotScreenY = slot.y * totalScale;
-					float slotScreenSize = slot.size * totalScale;
-					if (mouseX >= slotScreenX && mouseX < slotScreenX + slotScreenSize && mouseY >= slotScreenY && mouseY < slotScreenY + slotScreenSize) {
-						hoveredStack = slot.stack;
-					}
-				}
-			}
 		}
 
 
@@ -592,8 +557,6 @@ public class ProfileViewerScreen extends Screen {
 		OverviewTabRenderer.playerBounds.visible = false;
 		GearTabRenderer.visibleSlots.clear();
 		PetsTabRenderer.visiblePetSlots.clear();
-		MiningTabRenderer.visibleTreeSlots.clear();
-		FishingTabRenderer.visibleTrophySlots.clear();
 		RenderHelper.clearGlobalSlots();
 
 
@@ -696,55 +659,6 @@ public class ProfileViewerScreen extends Screen {
 		int btn = event.button();
 
 		if (btn == 0) {
-			float startY = (float) (contentY - scrollOffset);
-
-			if (currentTab == PVTab.GEAR) {
-				if (GearTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.COLLECTIONS) {
-				if (CollectionsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.DUNGEONS) {
-				if (DungeonsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.PETS) {
-				if (PetsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.MINING) {
-				if (MiningTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.FORAGING) {
-				if (ForagingTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.GARDEN) {
-				if (GardenTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.FISHING) {
-
-				if (FishingTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.MUSEUM) {
-				if (MuseumTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.COLLECTIONS) {
-				if (CollectionsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			} else if (currentTab == PVTab.DUNGEONS) {
-				if (DungeonsTabRenderer.mouseClicked(mx, my, contentX, startY, contentW)) {
-					return true;
-				}
-			}
-
 			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 			float pX = winX + SIDEBAR_W + 24f + userW + 16f;
 			float pW = 145f;
@@ -847,12 +761,14 @@ public class ProfileViewerScreen extends Screen {
 			// Subtab Click Delegations
 			float subStartY = contentY - (float) scrollOffset;
 			if (currentTab == PVTab.GEAR && GearTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
-			if (currentTab == PVTab.MINING && MiningTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
-			if (currentTab == PVTab.GARDEN && GardenTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
-			if (currentTab == PVTab.FORAGING && ForagingTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
-			if (currentTab == PVTab.DUNGEONS && DungeonsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
 			if (currentTab == PVTab.PETS && PetsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.DUNGEONS && DungeonsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.MINING && MiningTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.FORAGING && ForagingTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.GARDEN && GardenTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.FISHING && FishingTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
 			if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
+			if (currentTab == PVTab.COLLECTIONS && CollectionsTabRenderer.mouseClicked(mx, my, contentX, subStartY, contentW)) return true;
 
 		}
 
@@ -976,16 +892,6 @@ public class ProfileViewerScreen extends Screen {
 				return true;
 			}
 			return true;
-		}
-
-		if (currentTab == PVTab.PETS) {
-			if (PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
-				return true;
-			}
-		} else if (currentTab == PVTab.GEAR) {
-			if (GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
-				return true;
-			}
 		}
 		if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
 			UScreen.setScreen(null);

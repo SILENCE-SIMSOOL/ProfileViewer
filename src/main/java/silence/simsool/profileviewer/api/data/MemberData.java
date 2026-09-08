@@ -134,11 +134,7 @@ public class MemberData {
 		if (dataObj.has("skills") && dataObj.get("skills").isJsonObject()) {
 			m.skills = SkillsData.fromSkyCrypt(dataObj.getAsJsonObject("skills"));
 		}
-		if (dataObj.has("dungeons") && dataObj.get("dungeons").isJsonObject()) {
-			try { m.dungeons = DungeonData.fromJson(dataObj); } catch (Exception ignored) {}
-		} else {
-			try { m.dungeons = DungeonData.fromJson(dataObj); } catch (Exception ignored) {}
-		}
+		try { m.dungeons = DungeonData.fromJson(dataObj); } catch (Exception ignored) {}
 		if (dataObj.has("slayer") && dataObj.get("slayer").isJsonObject()) {
 			m.slayer = SlayerData.fromJson(dataObj.getAsJsonObject("slayer"));
 		}

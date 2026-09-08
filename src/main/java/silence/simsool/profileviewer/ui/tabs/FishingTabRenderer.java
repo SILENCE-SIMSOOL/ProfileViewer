@@ -210,7 +210,6 @@ public class FishingTabRenderer {
 
 				String badge = (hasFish && rowCount > 0) ? String.valueOf(rowCount) : null;
 				RenderHelper.registerItemSlot(sx, sy, tfSlotSize, stack, badge, 0xFFFFFFFF);
-				visibleTrophySlots.add(new TrophySlotInfo(sx, sy, tfSlotSize, stack));
 			}
 		}
 

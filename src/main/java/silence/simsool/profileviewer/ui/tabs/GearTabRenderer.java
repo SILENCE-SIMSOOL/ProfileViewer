@@ -44,7 +44,7 @@ public class GearTabRenderer {
 		LOADOUT("pv.gear.subtab.loadout", "Loadout", "\uE8EF"),
 		ENDERCHEST("pv.gear.subtab.enderchest", "Ender Chest", "\uE8F9"),
 		BACKPACKS("pv.gear.subtab.backpacks", "Backpacks", "\uE8B0"),
-		ACCESSORIES("pv.gear.subtab.accessories", "Accessary", "\uEA5F");
+		ACCESSORIES("pv.gear.subtab.accessories", "Accessories", "\uEA5F");
 
 		public final String translationKey;
 		public final String defaultName;

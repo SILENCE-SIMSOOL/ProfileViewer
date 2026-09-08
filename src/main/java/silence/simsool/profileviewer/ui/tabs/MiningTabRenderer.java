@@ -249,7 +249,6 @@ public class MiningTabRenderer {
 			int textColor = isSelAb ? 0xFF34D399 : 0xFFFFFFFF;
 
 			RenderHelper.registerItemSlot(sx, sy, slotSize, stack, customText, textColor);
-			visibleTreeSlots.add(new TreeSlotInfo(sx, sy, slotSize, node, level, stack));
 		}
 
 		curY += treeCardH + 16f;
