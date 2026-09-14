@@ -96,6 +96,12 @@ public class RiftTabRenderer {
 		}
 
 		curY += 2 * (tcH + 10f) + 20f;
+		if (r.inventory.available) {
+			curY += GearTabRenderer.renderStorage("Rift Inventory", r.inventory.inventory, startX, curY, width, mouseX, mouseY);
+			curY += GearTabRenderer.renderStorage("Rift Armor", r.inventory.armor, startX, curY, width, mouseX, mouseY);
+			curY += GearTabRenderer.renderStorage("Rift Equipment", r.inventory.equipment, startX, curY, width, mouseX, mouseY);
+			curY += GearTabRenderer.renderStorage("Rift Ender Chest", r.inventory.enderchest, startX, curY, width, mouseX, mouseY);
+		}
 		return curY - startY;
 	}
 

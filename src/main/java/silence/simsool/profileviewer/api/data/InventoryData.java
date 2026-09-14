@@ -1,6 +1,7 @@
 package silence.simsool.profileviewer.api.data;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,10 @@ import silence.simsool.profileviewer.api.nbt.ParsedItem;
 
 public class InventoryData {
 
+	public boolean available;
+	public List<ParsedItem> personalVault = new ArrayList<>();
+	public List<ParsedItem> candyBag = new ArrayList<>();
+	public List<ParsedItem> carnivalMaskBag = new ArrayList<>();
 	public List<ParsedItem> armor = new ArrayList<>();
 	public List<ParsedItem> equipment = new ArrayList<>();
 	public List<ParsedItem> inventory = new ArrayList<>();
@@ -102,6 +107,11 @@ public class InventoryData {
 		JsonObject invObj = member.has("inventory") && member.get("inventory").isJsonObject() ? member.getAsJsonObject("inventory") : null;
 		JsonObject sharedInv = member.has("shared_inventory") && member.get("shared_inventory").isJsonObject() ? member.getAsJsonObject("shared_inventory") : null;
 
+		data.available = invObj != null || member.has("inv_contents");
+		data.personalVault = parseNbtFromAnywhere(member, invObj, sharedInv, "personal_vault_contents");
+		data.candyBag = parseNbtFromAnywhere(member, invObj, sharedInv, "candy_inventory_contents");
+		data.carnivalMaskBag = parseNbtFromAnywhere(member, invObj, sharedInv, "carnival_mask_inventory_contents");
+
 		// 1. Armor & Equipment
 		data.armor = parseNbtFromAnywhere(member, invObj, sharedInv, "inv_armor");
 		data.equipment = parseNbtFromAnywhere(member, invObj, sharedInv, "equipment_contents");
@@ -141,7 +151,7 @@ public class InventoryData {
 		// 5. Backpacks
 		JsonObject bp = findJsonObject(member, invObj, sharedInv, "backpack_contents");
 		if (bp != null) {
-			for (Map.Entry<String, JsonElement> entry : bp.entrySet()) {
+			for (Map.Entry<String, JsonElement> entry : bp.entrySet().stream().sorted(Comparator.comparingInt(entry -> Integer.parseInt(entry.getKey()))).toList()) {
 				if (entry.getValue().isJsonObject() && entry.getValue().getAsJsonObject().has("data")) {
 					List<ParsedItem> bpItems = NbtItemParser.parseBase64Nbt(entry.getValue().getAsJsonObject().get("data").getAsString());
 					if (!bpItems.isEmpty()) {
@@ -153,20 +163,10 @@ public class InventoryData {
 
 		// 6. Bags (Talisman, Potion, Fishing, Quiver)
 		JsonObject bag = findJsonObject(member, invObj, sharedInv, "bag_contents");
-		if (bag != null) {
-			if (bag.has("talisman_bag") && bag.get("talisman_bag").isJsonObject()) {
-				data.accessoryBag = NbtItemParser.parseBase64Nbt(bag.getAsJsonObject("talisman_bag").get("data").getAsString());
-			}
-			if (bag.has("potion_bag") && bag.get("potion_bag").isJsonObject()) {
-				data.potionBag = NbtItemParser.parseBase64Nbt(bag.getAsJsonObject("potion_bag").get("data").getAsString());
-			}
-			if (bag.has("fishing_bag") && bag.get("fishing_bag").isJsonObject()) {
-				data.fishingBag = NbtItemParser.parseBase64Nbt(bag.getAsJsonObject("fishing_bag").get("data").getAsString());
-			}
-			if (bag.has("quiver") && bag.get("quiver").isJsonObject()) {
-				data.quiver = NbtItemParser.parseBase64Nbt(bag.getAsJsonObject("quiver").get("data").getAsString());
-			}
-		}
+		data.accessoryBag = parseNbtFromAnywhere(bag, null, null, "talisman_bag");
+		data.potionBag = parseNbtFromAnywhere(bag, null, null, "potion_bag");
+		data.fishingBag = parseNbtFromAnywhere(bag, null, null, "fishing_bag");
+		data.quiver = parseNbtFromAnywhere(bag, null, null, "quiver");
 
 		// 7. Sacks
 		JsonObject sc = findJsonObject(member, invObj, sharedInv, "sacks_counts");
@@ -313,13 +313,13 @@ public class InventoryData {
 	}
 
 	private static List<ParsedItem> parseNbtFromAnywhere(JsonObject m, JsonObject inv, JsonObject shared, String key) {
-		if (inv != null && inv.has(key) && inv.get(key).isJsonObject() && inv.getAsJsonObject(key).has("data")) {
+		if (inv != null && inv.has(key) && inv.get(key).isJsonObject() && inv.getAsJsonObject(key).has("data") && inv.getAsJsonObject(key).get("data").isJsonPrimitive()) {
 			return NbtItemParser.parseBase64Nbt(inv.getAsJsonObject(key).get("data").getAsString());
 		}
-		if (m != null && m.has(key) && m.get(key).isJsonObject() && m.getAsJsonObject(key).has("data")) {
+		if (m != null && m.has(key) && m.get(key).isJsonObject() && m.getAsJsonObject(key).has("data") && m.getAsJsonObject(key).get("data").isJsonPrimitive()) {
 			return NbtItemParser.parseBase64Nbt(m.getAsJsonObject(key).get("data").getAsString());
 		}
-		if (shared != null && shared.has(key) && shared.get(key).isJsonObject() && shared.getAsJsonObject(key).has("data")) {
+		if (shared != null && shared.has(key) && shared.get(key).isJsonObject() && shared.getAsJsonObject(key).has("data") && shared.getAsJsonObject(key).get("data").isJsonPrimitive()) {
 			return NbtItemParser.parseBase64Nbt(shared.getAsJsonObject(key).get("data").getAsString());
 		}
 		return new ArrayList<>();

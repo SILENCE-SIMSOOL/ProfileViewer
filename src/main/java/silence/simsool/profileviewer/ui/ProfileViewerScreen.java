@@ -21,6 +21,7 @@ import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGPIPRenderer;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.PvApi;
+import silence.simsool.profileviewer.api.PlayerDbApi;
 import silence.simsool.profileviewer.api.data.SkyBlockProfileData;
 import silence.simsool.profileviewer.api.nbt.ParsedItem;
 import silence.simsool.profileviewer.ui.tabs.ChocolateFactoryTabRenderer;
@@ -47,6 +48,8 @@ public class ProfileViewerScreen extends Screen {
 	private PVTab currentTab = PVTab.OVERVIEW;
 
 	private boolean loading = true;
+	private boolean initialized;
+	private long requestGeneration;
 	private String errorMessage = "";
 
 	private static final int WIN_W = 1200;
@@ -82,7 +85,10 @@ public class ProfileViewerScreen extends Screen {
 	protected void init() {
 		super.init();
 		updateLayout();
-		loadData(false);
+		if (!initialized) {
+			initialized = true;
+			loadData(false);
+		}
 	}
 
 	private void updateLayout() {
@@ -109,52 +115,65 @@ public class ProfileViewerScreen extends Screen {
 		contentH = WIN_H - TOPBAR_H - 20f;
 	}
 
-	private void loadData(boolean forceRefresh) {
-		loading = true;
-		errorMessage = "";
+	private void clearContentState() {
+		scrollOffset = 0;
+		maxScroll = 0;
+		isDraggingScrollbar = false;
+		profileDropdownOpen = false;
 		OverviewTabRenderer.visibleItemSlots.clear();
 		OverviewTabRenderer.playerBounds.visible = false;
-		GearTabRenderer.selectedLoadoutId = 1;
-		PvApi.fetchPlayerStatusAsync(uuid).thenAccept(st -> this.playerStatus = st);
-		PvApi.fetchProfilesAsync(uuid, forceRefresh).thenAccept(list -> {
+		GearTabRenderer.visibleSlots.clear();
+		PetsTabRenderer.visiblePetSlots.clear();
+		RenderHelper.clearGlobalSlots();
+	}
+
+	private void loadData(boolean forceRefresh) {
+		long generation = ++requestGeneration;
+		String selectedId = currentProfile == null ? "" : currentProfile.profileId;
+		loading = true;
+		errorMessage = "";
+		clearContentState();
+		PvApi.fetchPlayerStatusAsync(uuid, forceRefresh).thenAccept(status -> mc.execute(() -> {
+			if (generation == requestGeneration) playerStatus = status;
+		}));
+		PvApi.fetchProfilesAsync(uuid, forceRefresh).whenComplete((list, error) -> mc.execute(() -> {
+			if (generation != requestGeneration) return;
 			loading = false;
-			if (list == null || list.isEmpty()) {
-				errorMessage = L10n.translate("pv.ui.not_found");
+			if (error != null) {
+				errorMessage = String.format(L10n.translate("pv.ui.request_failed"), failureMessage(error));
 				return;
 			}
-			this.profiles = list;
-			if (this.currentProfile == null || forceRefresh) {
-				this.currentProfile = list.get(0);
-			}
-		}).exceptionally(e -> {
-			loading = false;
-			errorMessage = String.format(L10n.translate("pv.ui.request_failed"), e.getMessage());
-			return null;
-		});
+			profiles = list;
+			currentProfile = list.stream().filter(profile -> profile.profileId.equals(selectedId)).findFirst().orElse(list.isEmpty() ? null : list.get(0));
+			if (currentProfile == null) errorMessage = L10n.translate("pv.ui.not_found");
+		}));
+	}
+
+	private static String failureMessage(Throwable error) {
+		while (error.getCause() != null) error = error.getCause();
+		return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
 	}
 
 	private void performSearch(String target) {
+		long generation = ++requestGeneration;
 		loading = true;
 		errorMessage = "";
-		OverviewTabRenderer.visibleItemSlots.clear();
-		OverviewTabRenderer.playerBounds.visible = false;
-		silence.simsool.profileviewer.api.PlayerDbApi.resolveGameProfile(target).thenAccept(profile -> {
-			if (profile == null) {
+		clearContentState();
+		PlayerDbApi.resolveGameProfile(target).whenComplete((profile, error) -> mc.execute(() -> {
+			if (generation != requestGeneration) return;
+			if (error != null || profile == null) {
 				loading = false;
-				errorMessage = L10n.translate("pv.ui.not_found");
+				errorMessage = error == null ? L10n.translate("pv.ui.not_found") : String.format(L10n.translate("pv.ui.request_failed"), failureMessage(error));
 				return;
 			}
-			this.username = profile.name();
-			this.uuid = profile.id();
-			this.currentProfile = null;
-			this.profiles = java.util.Collections.emptyList();
-			this.mannequin = null;
-			loadData(true);
-		}).exceptionally(e -> {
-			loading = false;
-			errorMessage = String.format(L10n.translate("pv.ui.request_failed"), e.getMessage());
-			return null;
-		});
+			username = profile.name();
+			uuid = profile.id();
+			currentProfile = null;
+			profiles = new ArrayList<>();
+			playerStatus = null;
+			mannequin = null;
+			loadData(false);
+		}));
 	}
 
 	private void updateMannequin() {
@@ -531,6 +550,11 @@ public class ProfileViewerScreen extends Screen {
 
 
 	private void renderContent(float mx, float my, float delta) {
+		OverviewTabRenderer.visibleItemSlots.clear();
+		OverviewTabRenderer.playerBounds.visible = false;
+		GearTabRenderer.visibleSlots.clear();
+		PetsTabRenderer.visiblePetSlots.clear();
+		RenderHelper.clearGlobalSlots();
 		if (loading) {
 			String loadTxt = "Loading Profile Data...";
 			float fs = 24f;
@@ -547,6 +571,11 @@ public class ProfileViewerScreen extends Screen {
 		}
 
 		if (currentProfile == null) return;
+		String extraError = currentTab == PVTab.GARDEN ? currentProfile.gardenError : currentTab == PVTab.MUSEUM ? currentProfile.museumError : "";
+		if (!extraError.isEmpty()) {
+			NVGRenderer.text(extraError, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_MEDIUM, 0xFFFFAA55, RenderHelper.FS_BODY);
+			return;
+		}
 
 		NVGRenderer.pushScissor(contentX, contentY, contentW, contentH);
 
@@ -578,6 +607,7 @@ public class ProfileViewerScreen extends Screen {
 
 
 		maxScroll = Math.max(0, renderedH - contentH);
+		scrollOffset = Math.min(scrollOffset, maxScroll);
 
 		NVGRenderer.popScissor();
 
@@ -671,8 +701,7 @@ public class ProfileViewerScreen extends Screen {
 					float iy = pY + pH + 3f + i * itemH;
 					if (mx >= pX && mx <= pX + pW && my >= iy && my <= iy + itemH) {
 						currentProfile = profiles.get(i);
-						profileDropdownOpen = false;
-						scrollOffset = 0;
+						clearContentState();
 						return true;
 					}
 				}
@@ -681,7 +710,7 @@ public class ProfileViewerScreen extends Screen {
 			}
 
 			if (mx >= pX && mx <= pX + pW && my >= pY && my <= pY + pH) {
-				profileDropdownOpen = !profileDropdownOpen;
+				profileDropdownOpen = !loading && !profiles.isEmpty() && !profileDropdownOpen;
 				return true;
 			}
 
@@ -707,7 +736,7 @@ public class ProfileViewerScreen extends Screen {
 			}
 
 			if (mx >= refX && mx <= refX + btnSize && my >= winY + 23f && my <= winY + 23f + btnSize) {
-				loadData(true);
+				if (!loading) loadData(true);
 				return true;
 			}
 
@@ -734,7 +763,7 @@ public class ProfileViewerScreen extends Screen {
 			for (PVTab tab : PVTab.values()) {
 				if (mx >= sx && mx <= sx + tabW && my >= sy && my <= sy + tabH) {
 					currentTab = tab;
-					scrollOffset = 0;
+					clearContentState();
 					OverviewTabRenderer.visibleItemSlots.clear();
 					OverviewTabRenderer.playerBounds.visible = false;
 					GearTabRenderer.visibleSlots.clear();
@@ -757,6 +786,8 @@ public class ProfileViewerScreen extends Screen {
 
 				}
 			}
+
+			if (loading || !errorMessage.isEmpty() || mx < contentX || mx > contentX + contentW || my < contentY || my > contentY + contentH) return true;
 
 			// Subtab Click Delegations
 			float subStartY = contentY - (float) scrollOffset;
@@ -799,7 +830,9 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean mouseScrolled(double mx, double my, double hAmount, double vAmount) {
-		if (maxScroll > 0) {
+		if (!loading && errorMessage.isEmpty() && !profileDropdownOpen && maxScroll > 0
+			&& UMouse.getNvgScaledX(uiScale) >= contentX && UMouse.getNvgScaledX(uiScale) <= contentX + contentW
+			&& UMouse.getNvgScaledY(uiScale) >= contentY && UMouse.getNvgScaledY(uiScale) <= contentY + contentH) {
 			scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - vAmount * 30.0));
 			return true;
 		}
@@ -810,13 +843,15 @@ public class ProfileViewerScreen extends Screen {
 	public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
 		if (searchFocused) {
 			char c = (char) event.codepoint();
-			if (Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == ' ') {
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
 				if (searchInput.length() < 16) {
 					searchInput += c;
 				}
 				return true;
 			}
+			return true;
 		}
+		if (loading || !errorMessage.isEmpty()) return super.charTyped(event);
 		if (currentTab == PVTab.PETS) {
 			if (PetsTabRenderer.charTyped((char) event.codepoint(), 0)) {
 				return true;
@@ -836,15 +871,6 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-		if (currentTab == PVTab.PETS && PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
-			return true;
-		}
-		if (currentTab == PVTab.GEAR && GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
-			return true;
-		}
-		if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
-			return true;
-		}
 
 		if (searchFocused) {
 
@@ -872,7 +898,7 @@ public class ProfileViewerScreen extends Screen {
 				String clip = mc.keyboardHandler.getClipboard();
 				if (clip != null && !clip.isEmpty()) {
 					for (char ch : clip.toCharArray()) {
-						if ((Character.isLetterOrDigit(ch) || ch == '_') && searchInput.length() < 16) {
+						if (((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') && searchInput.length() < 16) {
 							searchInput += ch;
 						}
 					}
@@ -893,13 +919,37 @@ public class ProfileViewerScreen extends Screen {
 			}
 			return true;
 		}
+		if (!loading && errorMessage.isEmpty()) {
+			if (currentTab == PVTab.PETS && PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+				return true;
+			}
+			if (currentTab == PVTab.GEAR && GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+				return true;
+			}
+			if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+				return true;
+			}
+		}
+
 		if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+			if (profileDropdownOpen) {
+				profileDropdownOpen = false;
+				return true;
+			}
 			UScreen.setScreen(null);
 			return true;
 		}
 		return super.keyPressed(event);
 	}
 
+
+	@Override
+	public void removed() {
+		requestGeneration++;
+		initialized = false;
+		clearContentState();
+		super.removed();
+	}
 
 	@Override
 	public boolean isPauseScreen() {

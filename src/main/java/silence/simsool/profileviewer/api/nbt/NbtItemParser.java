@@ -78,6 +78,7 @@ public class NbtItemParser {
 		if (tag.contains("Count")) item.count = tag.getByte("Count").orElse((byte) 1);
 
 		String skullTexture = "";
+		String skullOwnerName = "";
 		Integer dyedColor = null;
 
 		if (tag.contains("tag")) {
@@ -104,6 +105,7 @@ public class NbtItemParser {
 			if (subTag.contains("ExtraAttributes")) {
 				CompoundTag ea = subTag.getCompound("ExtraAttributes").orElse(new CompoundTag());
 				if (ea.contains("id")) item.skyblockId = ea.getString("id").orElse("");
+				item.upgradeScore = calculateUpgradeScore(ea);
 				if (ea.contains("skin")) {
 					String skinVal = ea.getString("skin").orElse("");
 					if (!skinVal.isEmpty()) {
@@ -153,13 +155,7 @@ public class NbtItemParser {
 							}
 						}
 					}
-					if (skullTexture.isEmpty()) {
-						String ownerName = subTag.getString("SkullOwner").orElse("");
-						if (!ownerName.isEmpty()) {
-							item.itemStack = new ItemStack(Items.PLAYER_HEAD, Math.max(1, item.count));
-							item.itemStack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(new GameProfile(UUID.randomUUID(), ownerName)));
-						}
-					}
+					if (skullTexture.isEmpty()) skullOwnerName = subTag.getString("SkullOwner").orElse("");
 				} catch (Exception ignored) {}
 			}
 
@@ -167,17 +163,15 @@ public class NbtItemParser {
 		}
 
 		// Resolve ItemStack
-		if (item.itemStack.isEmpty()) {
-			if (item.skyblockId != null && !item.skyblockId.isEmpty()) {
-				item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
-			}
-			if (item.itemStack.isEmpty()) {
-				if (!skullTexture.isEmpty()) {
-					item.itemStack = createSkull(skullTexture, item.count);
-				} else {
-					item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
-				}
-			}
+		if (item.itemStack.isEmpty() && !skullTexture.isEmpty()) {
+			item.itemStack = createSkull(skullTexture, item.count);
+		}
+		if (item.itemStack.isEmpty() || item.itemStack.getItem() == Items.PLAYER_HEAD && !item.itemStack.has(DataComponents.PROFILE)) {
+			item.itemStack = resolveItemStack(numId, item.mcId, item.skyblockId, damage, item.count);
+		}
+		if (item.itemStack.isEmpty() && !skullOwnerName.isEmpty()) {
+			item.itemStack = new ItemStack(Items.PLAYER_HEAD, Math.max(1, item.count));
+			item.itemStack.set(DataComponents.PROFILE, ResolvableProfile.createUnresolved(skullOwnerName));
 		}
 
 		if (item.displayName.isEmpty()) {
@@ -213,6 +207,31 @@ public class NbtItemParser {
 		}
 
 		return item;
+	}
+
+	private static int calculateUpgradeScore(CompoundTag attributes) {
+		int score = 0;
+		if (attributes.getInt("rarity_upgrades").orElse(0) > 0) score++;
+		if (!attributes.getString("modifier").orElse("").isEmpty()) score++;
+		for (String key : List.of("drill_part_fuel_tank", "drill_part_engine", "drill_part_upgrade_module", "fishing_hook", "fishing_line", "fishing_sinker")) {
+			if (attributes.contains(key)) score++;
+		}
+		score += scoreLevels(attributes.getCompound("enchantments").orElse(null), 4, true);
+		score += scoreLevels(attributes.getCompound("attributes").orElse(null), 7, false);
+		CompoundTag gems = attributes.getCompound("gems").orElse(null);
+		if (gems != null) score += Math.min(6, gems.keySet().size());
+		return score;
+	}
+
+	private static int scoreLevels(CompoundTag values, int threshold, boolean countUltimate) {
+		if (values == null) return 0;
+		int score = 0;
+		for (String key : values.keySet()) {
+			int level = values.getInt(key).orElse(0);
+			if (countUltimate && key.startsWith("ultimate_")) score += level;
+			else if (level > threshold) score += level - threshold;
+		}
+		return score;
 	}
 
 	public static String fixBase64Padding(String base64) {
@@ -317,7 +336,7 @@ public class NbtItemParser {
 			if (id.contains("GOLD")) return new ItemStack(Items.GOLDEN_HELMET, count);
 			if (id.contains("CHAIN")) return new ItemStack(Items.CHAINMAIL_HELMET, count);
 			if (id.contains("DIAMOND") || id.contains("NECRON") || id.contains("STORM") || id.contains("MAXOR") || id.contains("GOLDOR") || id.contains("DIVAN")) return new ItemStack(Items.DIAMOND_HELMET, count);
-			return new ItemStack(Items.PLAYER_HEAD, count);
+			return ItemStack.EMPTY;
 		}
 		if (id.contains("CHESTPLATE") || id.contains("TUNIC") || id.contains("CLOAK")) {
 			if (id.contains("LEATHER") || id.contains("CLOAK")) return new ItemStack(Items.LEATHER_CHESTPLATE, count);

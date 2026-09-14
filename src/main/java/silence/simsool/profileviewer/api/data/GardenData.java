@@ -96,6 +96,12 @@ public class GardenData {
 			d.completedVisitors = sum;
 		}
 
+		if (gd.has("commission_data") && gd.get("commission_data").isJsonObject()) {
+			JsonObject commissions = gd.getAsJsonObject("commission_data");
+			if (commissions.has("total_completed")) d.completedVisitors = commissions.get("total_completed").getAsInt();
+			if (commissions.has("unique_npcs_served")) d.uniqueVisitors = commissions.get("unique_npcs_served").getAsInt();
+		}
+
 		// Composter Data
 		if (gd.has("composter_data") && gd.get("composter_data").isJsonObject()) {
 			JsonObject comp = gd.getAsJsonObject("composter_data");

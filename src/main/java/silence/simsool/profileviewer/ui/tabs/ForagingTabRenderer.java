@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -13,8 +14,7 @@ import silence.simsool.lucent.ui.utils.nvg.Fonts;
 import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.data.HotfTreeData;
 import silence.simsool.profileviewer.api.data.MemberData;
-import silence.simsool.profileviewer.api.data.PetData;
-import silence.simsool.profileviewer.api.nbt.ParsedItem;
+import silence.simsool.profileviewer.api.data.MiningData;
 import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
@@ -41,10 +41,16 @@ public class ForagingTabRenderer {
 	}
 
 	public static ForagingSubTab activeSubTab = ForagingSubTab.MAIN;
+	public static int activeLoadoutSlot = 1;
+	private static MiningData lastMiningData;
 
 	public static float render(MemberData data, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
 		RenderHelper.clearGlobalSlots();
 		float curY = startY;
+		if (data != null && data.mining != lastMiningData) {
+			activeLoadoutSlot = Math.max(1, Math.min(5, data.mining.selectedForagingPreset));
+			lastMiningData = data.mining;
+		}
 
 		// 1. Sub-tab Navigation Bar
 		curY += renderSubTabs(startX, curY, width, mouseX, mouseY);
@@ -127,60 +133,6 @@ public class ForagingTabRenderer {
 
 		curY += statH + 14f;
 
-		// --- Row 2: Foraging Gear (Armor, Axes/Tools, Foraging Pets) ---
-		float gearCardH = 220f;
-		RenderHelper.drawModernCard(startX, curY, width, gearCardH, 12f, false);
-
-		NVGRenderer.text("\uE8C9", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
-		NVGRenderer.text("Foraging Gear & Loadout", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-
-		float slotSize = 36f;
-		float slotGap = 6f;
-		float leftPad = 24f;
-		float gearGridY = curY + 48f;
-
-		// 1. Foraging Armor (4 slots: Helmet down to Boots)
-		List<ItemStack> armorStacks = getForagingArmorStacks(data);
-		for (int r = 0; r < 4; r++) {
-			float sx = startX + leftPad;
-			float sy = gearGridY + r * (slotSize + slotGap);
-			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
-			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 6f);
-
-			ItemStack st = (r < armorStacks.size()) ? armorStacks.get(armorStacks.size() - 1 - r) : ItemStack.EMPTY;
-			RenderHelper.registerItemSlot(sx, sy, slotSize, st);
-		}
-
-		// 2. Foraging Tools (Axes, Treecapitator, etc.)
-		List<ItemStack> toolStacks = getForagingToolStacks(data);
-		for (int r = 0; r < 4; r++) {
-			float sx = startX + leftPad + slotSize + slotGap + 6f;
-			float sy = gearGridY + r * (slotSize + slotGap);
-			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
-			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 6f);
-
-			ItemStack st = (r < toolStacks.size()) ? toolStacks.get(r) : ItemStack.EMPTY;
-			RenderHelper.registerItemSlot(sx, sy, slotSize, st);
-		}
-
-		// 3. Foraging Pets (Monkey, Ocelot, Giraffe, etc.)
-		List<PetData.PetItem> foragingPets = getForagingPets(data);
-		float petColX = startX + leftPad + (slotSize + slotGap) * 2 + 18f;
-		for (int r = 0; r < 4; r++) {
-			float sx = petColX;
-			float sy = gearGridY + r * (slotSize + slotGap);
-			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
-			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 6f);
-
-			if (r < foragingPets.size()) {
-				PetData.PetItem p = foragingPets.get(r);
-				RenderHelper.registerItemSlot(sx, sy, slotSize, p.itemStack, String.valueOf(p.level), p.getRarityColor());
-			} else {
-				RenderHelper.registerItemSlot(sx, sy, slotSize, ItemStack.EMPTY);
-			}
-		}
-
-		curY += gearCardH + 16f;
 		return curY - y0;
 	}
 
@@ -191,7 +143,7 @@ public class ForagingTabRenderer {
 		float y0 = curY;
 		float slotSize = 36f;
 		float slotGap = 8f;
-		float treeCardH = 440f;
+		float treeCardH = 496f;
 
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
 
@@ -199,9 +151,12 @@ public class ForagingTabRenderer {
 		NVGRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
 		NVGRenderer.text("Heart of the Forest (HOTF)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
-		int hotfLevel = 6; // Default active tier level
+		int hotfLevel = data != null ? data.mining.hotfLevel : 0;
+		Map<String, Integer> activeNodes = data != null ? data.mining.foragingPresetNodes.getOrDefault(activeLoadoutSlot, data.mining.foragingNodes) : Map.of();
+		String activeAbility = data != null ? data.mining.foragingPresetAbilities.getOrDefault(activeLoadoutSlot, data.mining.selectedForagingAbility) : "";
+		renderLoadoutSlots(startX, curY + 42f, width, mx, my);
 		float gridStartX = startX + (width - (slotSize * 8 + slotGap * 8 + 14f)) / 2f;
-		float gridStartY = curY + 50f;
+		float gridStartY = curY + 106f;
 
 		// 1. Tier indicator column (Tier 8 down to Tier 1, Left column)
 		for (int r = 0; r < 8; r++) {
@@ -248,17 +203,8 @@ public class ForagingTabRenderer {
 				float nx = nodeGridStartX + c * (slotSize + slotGap);
 				float ny = gridStartY + r * (slotSize + slotGap);
 
-				boolean isSelected = "hotf_t2_4".equals(node.id); // Axe Toss selected
-				int nodeLvl = switch (node.id) {
-					case "center_of_the_forest" -> 41;
-					case "hotf_t2_3" -> 12;
-					case "hotf_t2_2" -> 37;
-					case "hotf_t2_4" -> 1;
-					case "hotf_t3_3" -> 3;
-					case "hotf_t5_3" -> 4;
-					case "hotf_t4_0", "hotf_t4_1", "hotf_t4_2", "hotf_t4_3", "hotf_t5_1" -> 50;
-					default -> 0;
-				};
+				boolean isSelected = node.id.equals(activeAbility) || activeAbility.endsWith(node.id);
+				int nodeLvl = activeNodes.getOrDefault(node.id, 0);
 
 				boolean isMaxed = (nodeLvl >= node.maxLevel);
 				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
@@ -278,52 +224,19 @@ public class ForagingTabRenderer {
 		return curY - y0;
 	}
 
-	// =========================================================================
-	// Gear Helper Methods
-	// =========================================================================
-	private static List<ItemStack> getForagingArmorStacks(MemberData data) {
-		List<ItemStack> res = new ArrayList<>();
-		if (data != null && data.inventory != null && data.inventory.armor != null) {
-			for (ParsedItem pi : data.inventory.armor) {
-				if (pi != null && !pi.isEmpty()) res.add(pi.itemStack);
-			}
+	private static void renderLoadoutSlots(float startX, float y, float width, float mx, float my) {
+		float size = 40f;
+		float gap = 8f;
+		float x = startX + (width - (size * 5f + gap * 4f)) / 2f;
+		for (int slot = 1; slot <= 5; slot++) {
+			float sx = x + (slot - 1) * (size + gap);
+			boolean selected = slot == activeLoadoutSlot;
+			boolean hover = mx >= sx && mx <= sx + size && my >= y && my <= y + size;
+			RenderHelper.drawItemSlotBg(sx, y, size, hover, selected ? 0xFF34D399 : 0x33FFFFFF, selected ? 0xFF173D31 : 0x5514151E, 6f);
+			ItemStack icon = ItemRepo.getItemStack("HEART_OF_THE_FOREST");
+			if (icon.isEmpty()) icon = new ItemStack(Items.OAK_SAPLING);
+			RenderHelper.registerItemSlot(sx, y, size, icon, String.valueOf(slot), selected ? 0xFF6EE7B7 : 0xFFFFFFFF);
 		}
-		return res;
-	}
-
-	private static List<ItemStack> getForagingToolStacks(MemberData data) {
-		List<ItemStack> res = new ArrayList<>();
-		if (data != null && data.inventory != null && data.inventory.inventory != null) {
-			for (ParsedItem pi : data.inventory.inventory) {
-				if (pi != null && !pi.isEmpty()) {
-					String id = pi.skyblockId.toUpperCase();
-					if (id.contains("AXE") || id.contains("TREECAPITATOR") || id.contains("CHOPPER") || id.contains("CHAINSAW")) {
-						res.add(pi.itemStack);
-						if (res.size() >= 4) break;
-					}
-				}
-			}
-		}
-		return res;
-	}
-
-	private static List<PetData.PetItem> getForagingPets(MemberData data) {
-		List<PetData.PetItem> res = new ArrayList<>();
-		if (data != null && data.pets != null && data.pets.pets != null) {
-			for (PetData.PetItem p : data.pets.pets) {
-				String type = p.type.toUpperCase();
-				if (type.contains("MONKEY") || type.contains("OCELOT") || type.contains("GIRAFFE") || type.contains("SILVERFISH")) {
-					res.add(p);
-					if (res.size() >= 4) break;
-				}
-			}
-			if (res.isEmpty() && !data.pets.pets.isEmpty()) {
-				for (int i = 0; i < Math.min(4, data.pets.pets.size()); i++) {
-					res.add(data.pets.pets.get(i));
-				}
-			}
-		}
-		return res;
 	}
 
 
@@ -338,6 +251,19 @@ public class ForagingTabRenderer {
 				return true;
 			}
 			subTabX += stW + 8f;
+		}
+		if (activeSubTab == ForagingSubTab.HOTF) {
+			float size = 40f;
+			float gap = 8f;
+			float y = startY + subTabH + 16f + 42f;
+			float x = startX + (width - (size * 5f + gap * 4f)) / 2f;
+			for (int slot = 1; slot <= 5; slot++) {
+				float sx = x + (slot - 1) * (size + gap);
+				if (mx >= sx && mx <= sx + size && my >= y && my <= y + size) {
+					activeLoadoutSlot = slot;
+					return true;
+				}
+			}
 		}
 		return false;
 	}

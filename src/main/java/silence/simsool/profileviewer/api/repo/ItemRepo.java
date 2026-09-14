@@ -46,7 +46,6 @@ public final class ItemRepo {
 	}
 
 	private static final Map<String, RepoItem> ITEMS = new HashMap<>();
-	private static volatile boolean initialized = false;
 
 	static {
 		loadInitial();
@@ -65,7 +64,6 @@ public final class ItemRepo {
 				JsonElement root = GSON.fromJson(cached, JsonElement.class);
 				if (root != null) {
 					parseRepoJson(root);
-					initialized = true;
 					return;
 				}
 			}
@@ -76,7 +74,6 @@ public final class ItemRepo {
 				JsonElement root = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonElement.class);
 				if (root != null) {
 					parseRepoJson(root);
-					initialized = true;
 				}
 			}
 		} catch (Exception e) {
@@ -97,7 +94,6 @@ public final class ItemRepo {
 					JsonElement root = GSON.fromJson(resp.body(), JsonElement.class);
 					if (root != null) {
 						parseRepoJson(root);
-						initialized = true;
 						try {
 							Path cacheDir = FabricLoader.getInstance().getConfigDir().resolve("profileviewer").resolve("repo");
 							Files.createDirectories(cacheDir);

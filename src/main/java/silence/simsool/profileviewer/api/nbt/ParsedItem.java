@@ -15,6 +15,7 @@ public class ParsedItem {
 	public int rarityColor = 0xFFFFFFFF;
 	public boolean hasGlint = false;
 	public double estimatedValue = 0;
+	public int upgradeScore = 0;
 	public ItemStack itemStack = ItemStack.EMPTY;
 
 	public static final ParsedItem EMPTY = new ParsedItem();
@@ -37,4 +38,4 @@ public class ParsedItem {
 		}
 		return stack;
 	}
-}
+}

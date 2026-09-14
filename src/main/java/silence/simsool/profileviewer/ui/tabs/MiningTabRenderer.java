@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
@@ -11,8 +12,8 @@ import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.HotmTreeData;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.MiningData;
-import silence.simsool.profileviewer.api.data.PetData;
 import silence.simsool.profileviewer.api.nbt.ParsedItem;
+import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class MiningTabRenderer {
@@ -56,6 +57,7 @@ public class MiningTabRenderer {
 
 	public static MiningSubTab activeSubTab = MiningSubTab.MAIN;
 	public static int activeLoadoutSlot = 1;
+	private static MiningData lastMiningData;
 	public static final List<TreeSlotInfo> visibleTreeSlots = new ArrayList<>();
 	public static TreeSlotInfo hoveredTreeSlot = null;
 
@@ -63,6 +65,10 @@ public class MiningTabRenderer {
 		RenderHelper.clearGlobalSlots();
 		float curY = startY;
 		MiningData m = (data != null) ? data.mining : new MiningData();
+		if (lastMiningData != m) {
+			activeLoadoutSlot = Math.max(1, Math.min(5, m.selectedMiningPreset));
+			lastMiningData = m;
+		}
 		visibleTreeSlots.clear();
 		hoveredTreeSlot = null;
 
@@ -187,18 +193,16 @@ public class MiningTabRenderer {
 			RenderHelper.registerItemSlot(gCol3X, sy, slotSize, st);
 		}
 
-		// Col 4: Mining Pets
-		List<PetData.PetItem> miningPets = getMiningPets(data);
+		// Col 4: Chisel and Suspicious Scrap, matching the original mining gear screen
+		ItemStack chisel = GearFinder.findBestItem(data, GearFinder.MINING_CHISELS);
+		ItemStack scrap = ItemRepo.getItemStack("SUSPICIOUS_SCRAP");
+		long scrapCount = GearFinder.countItems(data, GearFinder.MINING_SCRAP);
 		for (int r = 0; r < 4; r++) {
 			float sy = gTopY + r * (slotSize + slotGap);
 			boolean hov = mx >= gCol4X && mx <= gCol4X + slotSize && my >= sy && my <= sy + slotSize;
 			RenderHelper.drawItemSlotBg(gCol4X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
-			if (r < miningPets.size()) {
-				PetData.PetItem p = miningPets.get(r);
-				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, p.itemStack, String.valueOf(p.level), p.getRarityColor());
-			} else {
-				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, ItemStack.EMPTY);
-			}
+			if (r == 0) RenderHelper.registerItemSlot(gCol4X, sy, slotSize, chisel);
+			else if (r == 1 && !scrap.isEmpty()) RenderHelper.registerItemSlot(gCol4X, sy, slotSize, scrap, RenderHelper.formatNumber(scrapCount), 0xFFFFFFFF);
 		}
 
 		curY += topH + 16f;
@@ -217,14 +221,17 @@ public class MiningTabRenderer {
 
 		float treeW = cols * slotSize + (cols - 1) * slotGap;
 		float treeH = rows * slotSize + (rows - 1) * slotGap;
-		float treeCardH = treeH + 60f;
+		float treeCardH = treeH + 116f;
 
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
 		NVGRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
 		NVGRenderer.text("Heart of the Mountain (HOTM)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
+		renderLoadoutSlots(m, startX, curY + 42f, width, mx, my);
 		float startTreeX = startX + (width - treeW) / 2f;
-		float startTreeY = curY + 45f;
+		float startTreeY = curY + 101f;
+		Map<String, Integer> activeNodes = m.presetNodes.getOrDefault(activeLoadoutSlot, m.nodes);
+		String activeAbility = m.presetAbilities.getOrDefault(activeLoadoutSlot, m.selectedAbility);
 
 		for (HotmTreeData.HotmNode node : HotmTreeData.ALL_NODES) {
 			if (node.type == HotmTreeData.NodeType.TIER || node.type == HotmTreeData.NodeType.SPACER) continue;
@@ -236,13 +243,13 @@ public class MiningTabRenderer {
 			float sx = startTreeX + c * (slotSize + slotGap);
 			float sy = startTreeY + r * (slotSize + slotGap);
 
-			int level = node.getNodeLevel(m.nodes);
-			boolean isSelAb = (node.type == HotmTreeData.NodeType.ABILITY && node.matchesAbility(m.selectedAbility));
+			int level = node.getNodeLevel(activeNodes);
+			boolean isSelAb = (node.type == HotmTreeData.NodeType.ABILITY && node.matchesAbility(activeAbility));
 			boolean hov = mx >= sx && mx <= sx + slotSize && my >= sy && my <= sy + slotSize;
 
 			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, isSelAb ? 0xFF34D399 : 0x33FFFFFF, isSelAb ? 0xFF1E382B : 0x5514151E, 5f);
 
-			ItemStack stack = node.createParsedItem(level, !node.matchesAbility(m.selectedAbility) && node.type == HotmTreeData.NodeType.ABILITY, m.selectedAbility, m.hotmLevel).toItemStack();
+			ItemStack stack = node.createParsedItem(level, !node.matchesAbility(activeAbility) && node.type == HotmTreeData.NodeType.ABILITY, activeAbility, m.hotmLevel).toItemStack();
 			boolean isMaxed = (level >= node.maxLevel);
 
 			String customText = (level > 0 && !isMaxed && node.type != HotmTreeData.NodeType.ABILITY && node.type != HotmTreeData.NodeType.UNLEVELABLE) ? String.valueOf(level) : null;
@@ -255,6 +262,21 @@ public class MiningTabRenderer {
 		return curY - y0;
 	}
 
+	private static void renderLoadoutSlots(MiningData m, float startX, float y, float width, float mx, float my) {
+		float size = 40f;
+		float gap = 8f;
+		float x = startX + (width - (size * 5f + gap * 4f)) / 2f;
+		for (int slot = 1; slot <= 5; slot++) {
+			float sx = x + (slot - 1) * (size + gap);
+			boolean selected = slot == activeLoadoutSlot;
+			boolean hover = mx >= sx && mx <= sx + size && my >= y && my <= y + size;
+			RenderHelper.drawItemSlotBg(sx, y, size, hover, selected ? 0xFF38BDF8 : 0x33FFFFFF, selected ? 0xFF123047 : 0x5514151E, 6f);
+			ItemStack icon = ItemRepo.getItemStack("HEART_OF_THE_MOUNTAIN");
+			if (icon.isEmpty()) icon = new ItemStack(net.minecraft.world.item.Items.EMERALD);
+			RenderHelper.registerItemSlot(sx, y, size, icon, String.valueOf(slot), selected ? 0xFF7DD3FC : 0xFFFFFFFF);
+		}
+	}
+
 	private static float renderGlaciteView(MiningData m, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		RenderHelper.drawModernCard(startX, curY, width, 200f, 12f, false);
@@ -265,39 +287,11 @@ public class MiningTabRenderer {
 
 	private static List<ItemStack> getMiningDrills(MemberData data) {
 		List<ItemStack> res = new ArrayList<>();
-		List<ParsedItem> all = GearFinder.getAllPlayerItems(data);
-		for (ParsedItem pi : all) {
-			if (pi != null && !pi.isEmpty()) {
-				String id = pi.skyblockId.toUpperCase();
-				if (id.contains("DRILL") || id.contains("PICKAXE") || id.contains("STONK") || id.contains("PICKONIMBUS")) {
-					res.add(pi.itemStack);
-					if (res.size() >= 4) break;
-				}
-			}
-		}
+		for (ParsedItem item : GearFinder.findBestItems(data, GearFinder.MINING_PICKAXES, 4)) res.add(item.itemStack);
 		while (res.size() < 4) {
 			res.add(ItemStack.EMPTY);
 		}
 
-		return res;
-	}
-
-	private static List<PetData.PetItem> getMiningPets(MemberData data) {
-		List<PetData.PetItem> res = new ArrayList<>();
-		if (data != null && data.pets != null && data.pets.pets != null) {
-			for (PetData.PetItem p : data.pets.pets) {
-				String type = p.type.toUpperCase();
-				if (type.contains("SCATHA") || type.contains("BAL") || type.contains("ARMADILLO") || type.contains("SILVERFISH") || type.contains("MITHRIL") || type.contains("GLACITE")) {
-					res.add(p);
-					if (res.size() >= 4) break;
-				}
-			}
-			if (res.isEmpty() && !data.pets.pets.isEmpty()) {
-				for (int i = 0; i < Math.min(4, data.pets.pets.size()); i++) {
-					res.add(data.pets.pets.get(i));
-				}
-			}
-		}
 		return res;
 	}
 
@@ -311,6 +305,19 @@ public class MiningTabRenderer {
 				return true;
 			}
 			subTabX += stW + 8f;
+		}
+		if (activeSubTab == MiningSubTab.HOTM_TREE) {
+			float size = 40f;
+			float gap = 8f;
+			float y = startY + subTabH + 16f + 42f;
+			float x = startX + (width - (size * 5f + gap * 4f)) / 2f;
+			for (int slot = 1; slot <= 5; slot++) {
+				float sx = x + (slot - 1) * (size + gap);
+				if (mx >= sx && mx <= sx + size && my >= y && my <= y + size) {
+					activeLoadoutSlot = slot;
+					return true;
+				}
+			}
 		}
 		return false;
 	}

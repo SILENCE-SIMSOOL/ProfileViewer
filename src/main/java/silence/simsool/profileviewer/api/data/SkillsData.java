@@ -66,7 +66,7 @@ public class SkillsData {
 
 			calculateSkill(info, xp);
 			if (!key.equals("carpentry") && !key.equals("runecrafting") && !key.equals("social")) {
-				sumLevels += info.level + info.progress;
+				sumLevels += info.level + (info.level < info.maxLevel ? info.progress : 0);
 				count++;
 			}
 		}

@@ -10,7 +10,7 @@ public class PlayerStatus {
 		ERROR
 	}
 
-	public Status status = Status.OFFLINE;
+	public Status status = Status.ERROR;
 	public String location = "";
 	public String gameType = "";
 	public String map = "";
@@ -24,13 +24,13 @@ public class PlayerStatus {
 				JsonObject session = json.getAsJsonObject("session");
 				boolean online = session.has("online") && session.get("online").getAsBoolean();
 				s.status = online ? Status.ONLINE : Status.OFFLINE;
-				if (session.has("mode")) s.location = session.get("mode").getAsString();
-				if (session.has("gameType")) s.gameType = session.get("gameType").getAsString();
-				if (session.has("map")) s.map = session.get("map").getAsString();
+				if (session.has("mode") && !session.get("mode").isJsonNull()) s.location = session.get("mode").getAsString();
+				if (session.has("gameType") && !session.get("gameType").isJsonNull()) s.gameType = session.get("gameType").getAsString();
+				if (session.has("map") && !session.get("map").isJsonNull()) s.map = session.get("map").getAsString();
 				return s;
 			}
 		}
-		s.status = Status.OFFLINE;
+		s.status = Status.ERROR;
 		return s;
 	}
 

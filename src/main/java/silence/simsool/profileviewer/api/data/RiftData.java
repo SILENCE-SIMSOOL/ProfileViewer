@@ -10,6 +10,8 @@ import com.google.gson.JsonObject;
 public class RiftData {
 
 	public int motes = 0;
+	public int lifetimeMotes;
+	public InventoryData inventory = new InventoryData();
 	public int timecharms = 0;
 	public int enigmaSouls = 0;
 	public int porhtalProgress = 0;
@@ -38,14 +40,15 @@ public class RiftData {
 			JsonObject ps = member.getAsJsonObject("player_stats");
 			if (ps.has("rift") && ps.get("rift").isJsonObject()) {
 				JsonObject pr = ps.getAsJsonObject("rift");
-				if (d.motes == 0 && pr.has("lifetime_motes_earned")) {
-					d.motes = pr.get("lifetime_motes_earned").getAsInt();
+				if (pr.has("lifetime_motes_earned")) {
+					d.lifetimeMotes = pr.get("lifetime_motes_earned").getAsInt();
 				}
 			}
 		}
 
 		if (member.has("rift") && member.get("rift").isJsonObject()) {
 			JsonObject r = member.getAsJsonObject("rift");
+			d.inventory = InventoryData.fromJson(r);
 			if (r.has("motes") && r.get("motes").isJsonPrimitive()) d.motes = r.get("motes").getAsInt();
 			if (r.has("motes_purse") && r.get("motes_purse").isJsonPrimitive()) d.motes = r.get("motes_purse").getAsInt();
 			if (r.has("enigma") && r.get("enigma").isJsonObject()) {

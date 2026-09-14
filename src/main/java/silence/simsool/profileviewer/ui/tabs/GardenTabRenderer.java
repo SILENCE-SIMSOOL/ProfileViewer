@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +15,6 @@ import silence.simsool.profileviewer.api.data.GardenData;
 import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.PetData;
-import silence.simsool.profileviewer.api.nbt.ParsedItem;
 import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
@@ -112,7 +112,7 @@ public class GardenTabRenderer {
 		RenderHelper.drawModernCard(c1X, curY, gearW, cardH, 10f, false);
 		NVGRenderer.text("Gear", c1X + (gearW - NVGRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
-		float slotSize = 28f;
+		float slotSize = 30f;
 		float slotGap = 4f;
 		float gTopY = curY + 36f;
 		float col1X = c1X + 10f;
@@ -227,7 +227,7 @@ public class GardenTabRenderer {
 			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
 
 			ItemStack chipStack = ItemRepo.getItemStack(chipSbIds[i]);
-			if (chipStack.isEmpty()) chipStack = new ItemStack(Items.PLAYER_HEAD);
+			if (chipStack.isEmpty()) chipStack = new ItemStack(Items.COMPARATOR);
 
 			int lvl = chipLevels[i];
 			int badgeCol = (lvl == 0) ? 0xFFEF4444 : (lvl <= 10 ? 0xFF38BDF8 : (lvl <= 15 ? 0xFFA855F7 : 0xFFF97316));
@@ -257,7 +257,7 @@ public class GardenTabRenderer {
 		RenderHelper.drawStatRow("Garden Level", String.valueOf(g.gardenLevel), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFF10B981);
 		infoY += rowH;
 		int totalContests = g.goldMedals + g.silverMedals + g.bronzeMedals;
-		RenderHelper.drawStatRow("Contests Participated", String.valueOf(totalContests > 0 ? totalContests : 333), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Contests Participated", String.valueOf(totalContests), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
 		infoY += rowH;
 		String medalsDisplay = g.goldMedals + " Gold / " + g.silverMedals + " Silver / " + g.bronzeMedals + " Bronze";
 		RenderHelper.drawStatRow("Medals", medalsDisplay, c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
@@ -299,40 +299,35 @@ public class GardenTabRenderer {
 	private static List<PetData.PetItem> getFarmingPets(MemberData data) {
 		List<PetData.PetItem> res = new ArrayList<>();
 		if (data != null && data.pets != null && data.pets.pets != null) {
-			for (PetData.PetItem p : data.pets.pets) {
-				String type = p.type.toUpperCase();
-				if (type.contains("ELEPHANT") || type.contains("MOOSHROOM") || type.contains("RABBIT") || type.contains("BEE") || type.contains("PIG") || type.contains("CHICKEN")) {
-					res.add(p);
-					if (res.size() >= 4) break;
-				}
-			}
-			if (res.isEmpty() && !data.pets.pets.isEmpty()) {
-				for (int i = 0; i < Math.min(4, data.pets.pets.size()); i++) {
-					res.add(data.pets.pets.get(i));
-				}
+			java.util.Set<String> seen = new java.util.HashSet<>();
+			for (PetData.PetItem pet : data.pets.pets.stream()
+				.filter(p -> GearFinder.FARMING_PETS.contains(p.type.toUpperCase()))
+				.sorted(java.util.Comparator.comparingInt((PetData.PetItem p) -> petRarity(p.rarity)).thenComparing(java.util.Comparator.comparingDouble((PetData.PetItem p) -> p.exp).reversed()))
+				.toList()) {
+				if (seen.add(pet.type) && res.size() < 4) res.add(pet);
 			}
 		}
 		return res;
 	}
 
+	private static int petRarity(String rarity) {
+		return switch (rarity.toUpperCase()) {
+			case "UNCOMMON" -> 1;
+			case "RARE" -> 2;
+			case "EPIC" -> 3;
+			case "LEGENDARY" -> 4;
+			case "MYTHIC" -> 5;
+			case "DIVINE" -> 6;
+			default -> 0;
+		};
+	}
+
 	private static ItemStack getFarmingVacuumStack(MemberData data) {
-		List<ParsedItem> all = GearFinder.getAllPlayerItems(data);
-		for (ParsedItem pi : all) {
-			if (pi != null && !pi.isEmpty() && pi.skyblockId.toUpperCase().contains("VACUUM")) {
-				return pi.itemStack;
-			}
-		}
-		return ItemStack.EMPTY;
+		return GearFinder.findBestItem(data, GearFinder.FARMING_VACUUMS);
 	}
 
 	private static ItemStack getWateringCanStack(MemberData data) {
-		List<ParsedItem> all = GearFinder.getAllPlayerItems(data);
-		for (ParsedItem pi : all) {
-			if (pi != null && !pi.isEmpty() && (pi.skyblockId.toUpperCase().contains("WATERING_CAN") || pi.skyblockId.toUpperCase().contains("HOE") || pi.skyblockId.toUpperCase().contains("DICER"))) {
-				return pi.itemStack;
-			}
-		}
-		return ItemStack.EMPTY;
+		return GearFinder.findBestItem(data, GearFinder.FARMING_WATERING_CANS);
 	}
 
 	private static String formatCropName(String raw) {

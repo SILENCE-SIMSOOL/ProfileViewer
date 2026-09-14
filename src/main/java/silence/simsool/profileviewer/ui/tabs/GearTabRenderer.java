@@ -44,7 +44,9 @@ public class GearTabRenderer {
 		LOADOUT("pv.gear.subtab.loadout", "Loadout", "\uE8EF"),
 		ENDERCHEST("pv.gear.subtab.enderchest", "Ender Chest", "\uE8F9"),
 		BACKPACKS("pv.gear.subtab.backpacks", "Backpacks", "\uE8B0"),
-		ACCESSORIES("pv.gear.subtab.accessories", "Accessories", "\uEA5F");
+		ACCESSORIES("pv.gear.subtab.accessories", "Accessories", "\uEA5F"),
+		BAGS("pv.gear.subtab.bags", "Bags & Vault", "\uE8B0"),
+		SACKS("pv.gear.subtab.sacks", "Sacks", "\uE8F9");
 
 		public final String translationKey;
 		public final String defaultName;
@@ -87,7 +89,7 @@ public class GearTabRenderer {
 		visibleSlots.clear();
 		loadoutButtons.clear();
 
-		if (data == null || data.inventory == null) {
+		if (data == null || data.inventory == null || !data.inventory.available) {
 			RenderHelper.drawModernCard(startX, curY, width, 80f, 10f, false);
 			NVGRenderer.text("\uE000", startX + 24, curY + 30, Fonts.MATERIAL_ICONS_ROUND, 0xFFFFAA00, 24f);
 			NVGRenderer.text(L10n.translate("pv.gear.api_disabled_title"), startX + 60, curY + 28, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
@@ -104,6 +106,10 @@ public class GearTabRenderer {
 			float iconW = 18f;
 			float textW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_SEMIBOLD, 14f);
 			float stW = iconW + textW + 24f;
+			if (subTabX + stW > startX + width && subTabX > startX) {
+				subTabX = startX;
+				curY += subTabH + 8f;
+			}
 			boolean active = (st == activeSubTab);
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + stW && mouseY >= curY && mouseY <= curY + subTabH;
 
@@ -129,6 +135,7 @@ public class GearTabRenderer {
 
 		// Accessory Searchbox in subtab bar on right side
 		if (activeSubTab == GearSubTab.ACCESSORIES) {
+			curY += subTabH + 8f;
 			float sw = 180f;
 			float sx = startX + width - sw;
 			searchBox.setPosition((int) sx, (int) (curY + 3f));
@@ -145,6 +152,8 @@ public class GearTabRenderer {
 			case ENDERCHEST -> curY += renderEnderChestView(data, startX, curY, width, mouseX, mouseY);
 			case BACKPACKS -> curY += renderBackpacksView(data, startX, curY, width, mouseX, mouseY);
 			case ACCESSORIES -> curY += renderAccessoriesView(data, startX, curY, width, mouseX, mouseY);
+			case BAGS -> curY += renderBags(data.inventory, startX, curY, width, mouseX, mouseY);
+			case SACKS -> curY += renderSacks(data.inventory, startX, curY, width);
 		}
 
 		return curY - startY;
@@ -559,59 +568,93 @@ public class GearTabRenderer {
 	// 4. ENDER CHEST VIEW
 
 	// =========================================================================
-	private static float renderEnderChestView(MemberData data, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		if (data.inventory.enderchest.isEmpty()) {
-			RenderHelper.drawModernCard(startX, curY, width, 60f, 10f, false);
-			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), startX + 16, curY + 22, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, 14f);
-			return 70f;
+	private static float renderEnderChestView(MemberData data, float x, float y, float width, float mx, float my) {
+		List<ParsedItem> items = data.inventory.enderchest;
+		List<List<ParsedItem>> pages = new ArrayList<>();
+		for (int offset = 0; offset < Math.max(1, items.size()); offset += 45) {
+			pages.add(items.subList(Math.min(offset, items.size()), Math.min(offset + 45, items.size())));
 		}
+		return renderStoragePairs("Ender Chest", pages, x, y, width, mx, my);
+	}
 
-		float colGap = 14f;
-		float pageW = (width - colGap) / 2f;
-		float padX = 12f;
-		float slotGap = 4f;
-		float slotSize = (pageW - 2 * padX - 8 * slotGap) / 9f;
-		float cardH = 6 * slotSize + 5 * slotGap + 44f;
-
-		int total = data.inventory.enderchest.size();
-		int pages = (total + 53) / 54;
-
-		for (int p = 0; p < pages; p += 2) {
-			float rowY = curY;
-
-			float leftX = startX;
-			RenderHelper.drawModernCard(leftX, rowY, pageW, cardH, 10f, false);
-			NVGRenderer.text("Ender Chest #" + (p + 1), leftX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-			for (int r = 0; r < 6; r++) {
-				for (int c = 0; c < 9; c++) {
-					int idx = p * 54 + r * 9 + c;
-					float sx = leftX + padX + c * (slotSize + slotGap);
-					float sy = rowY + 32f + r * (slotSize + slotGap);
-					ParsedItem item = (idx < total) ? data.inventory.enderchest.get(idx) : ParsedItem.EMPTY;
-					drawSlot(sx, sy, slotSize, item, mx, my, false);
-				}
+	public static float renderStorage(String title, List<ParsedItem> items, float x, float y, float width, float mx, float my) {
+		float slotSize = Math.min(42f, (width - 32f - 8 * 5f) / 9f);
+		int rows = Math.max(1, (items.size() + 8) / 9);
+		float height = 44f + rows * (slotSize + 5f);
+		RenderHelper.drawModernCard(x, y, width, height, 10f, false);
+		NVGRenderer.text(title, x + 16f, y + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		if (items.isEmpty()) {
+			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 42f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
+		} else {
+			for (int i = 0; i < items.size(); i++) {
+				float sx = x + 16f + (i % 9) * (slotSize + 5f);
+				float sy = y + 36f + (i / 9) * (slotSize + 5f);
+				boolean hover = mx >= sx && mx < sx + slotSize && my >= sy && my < sy + slotSize;
+				RenderHelper.drawItemSlotBg(sx, sy, slotSize, hover, 0x22FFFFFF, 0x5511131E, 6f);
+				ParsedItem item = items.get(i);
+				if (item != null && !item.isEmpty()) RenderHelper.registerItemSlot(sx, sy, slotSize, item.itemStack);
 			}
-
-			if (p + 1 < pages) {
-				float rightX = startX + pageW + colGap;
-				RenderHelper.drawModernCard(rightX, rowY, pageW, cardH, 10f, false);
-				NVGRenderer.text("Ender Chest #" + (p + 2), rightX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-				for (int r = 0; r < 6; r++) {
-					for (int c = 0; c < 9; c++) {
-						int idx = (p + 1) * 54 + r * 9 + c;
-						float sx = rightX + padX + c * (slotSize + slotGap);
-						float sy = rowY + 32f + r * (slotSize + slotGap);
-						ParsedItem item = (idx < total) ? data.inventory.enderchest.get(idx) : ParsedItem.EMPTY;
-						drawSlot(sx, sy, slotSize, item, mx, my, false);
-					}
-				}
-			}
-
-			curY += cardH + 14f;
 		}
+		return height + 14f;
+	}
 
-		return curY - y0;
+	private static float renderBags(InventoryData data, float x, float y, float width, float mx, float my) {
+		List<List<ParsedItem>> bags = List.of(data.potionBag, data.fishingBag, data.quiver, data.personalVault, data.candyBag, data.carnivalMaskBag);
+		List<String> names = List.of("Potion Bag", "Fishing Bag", "Quiver", "Personal Vault", "Candy Bag", "Carnival Mask Bag");
+		return renderNamedStoragePairs(names, bags, x, y, width, mx, my);
+	}
+
+	private static float renderStoragePairs(String prefix, List<List<ParsedItem>> pages, float x, float y, float width, float mx, float my) {
+		List<String> names = new ArrayList<>();
+		for (int i = 0; i < pages.size(); i++) names.add(prefix + " #" + (i + 1));
+		return renderNamedStoragePairs(names, pages, x, y, width, mx, my);
+	}
+
+	private static float renderNamedStoragePairs(List<String> names, List<List<ParsedItem>> pages, float x, float y, float width, float mx, float my) {
+		float start = y;
+		float gap = 14f;
+		float pageW = (width - gap) / 2f;
+		for (int i = 0; i < pages.size(); i += 2) {
+			float leftH = storageHeight(pages.get(i), pageW);
+			renderStorage(names.get(i), pages.get(i), x, y, pageW, mx, my);
+			float rowH = leftH;
+			if (i + 1 < pages.size()) {
+				float rightH = storageHeight(pages.get(i + 1), pageW);
+				renderStorage(names.get(i + 1), pages.get(i + 1), x + pageW + gap, y, pageW, mx, my);
+				rowH = Math.max(leftH, rightH);
+			}
+			y += rowH + 14f;
+		}
+		return y - start;
+	}
+
+	private static float storageHeight(List<ParsedItem> items, float width) {
+		float slotSize = Math.min(42f, (width - 32f - 8 * 5f) / 9f);
+		return 44f + Math.max(1, (items.size() + 8) / 9) * (slotSize + 5f);
+	}
+
+	private static float renderSacks(InventoryData data, float x, float y, float width) {
+		float start = y;
+		if (data.sacks.isEmpty()) {
+			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+			return 50f;
+		}
+		var entries = data.sacks.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
+		float gap = 10f;
+		float cardW = (width - gap) / 2f;
+		for (int i = 0; i < entries.size(); i++) {
+			var entry = entries.get(i);
+			float sx = x + (i % 2) * (cardW + gap);
+			float sy = y + (i / 2) * 42f;
+			RenderHelper.drawModernCard(sx, sy, cardW, 34f, 7f, false);
+			String name = entry.getKey().replace('_', ' ');
+			NVGRenderer.text(name, sx + 12f, sy + 9f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
+			String amount = RenderHelper.formatNumber(entry.getValue());
+			float amountW = NVGRenderer.textWidth(amount, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			NVGRenderer.text(amount, sx + cardW - 12f - amountW, sy + 9f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+		}
+		y += ((entries.size() + 1) / 2) * 42f;
+		return y - start;
 	}
 
 	// =========================================================================
@@ -861,6 +904,10 @@ public class GearTabRenderer {
 			float iconW = 18f;
 			float textW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f);
 			float stW = iconW + textW + 24f;
+			if (subTabX + stW > startX + width && subTabX > startX) {
+				subTabX = startX;
+				startY += subTabH + 8f;
+			}
 			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
 				activeSubTab = st;
 				return true;

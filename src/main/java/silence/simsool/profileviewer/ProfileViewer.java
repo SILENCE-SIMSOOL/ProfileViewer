@@ -11,6 +11,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import silence.simsool.lucent.general.utils.LucentUtils;
 import silence.simsool.lucent.general.utils.useful.UChat;
@@ -35,6 +36,12 @@ public class ProfileViewer implements ClientModInitializer {
 				GLFW.GLFW_KEY_UNKNOWN,
 				KEYBINDING_CATEGORY
 		));
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (OPEN_PV_KEY.consumeClick()) {
+				if (client.player != null && UScreen.isScreenClose()) openProfileViewer(client.player.getGameProfile().name(), client.player.getGameProfile().id());
+			}
+		});
 
 		PvAuth.authenticateAsync();
 		silence.simsool.profileviewer.api.repo.PetRepo.init();
@@ -67,13 +74,17 @@ public class ProfileViewer implements ClientModInitializer {
 
 	public static void resolveAndOpen(String input) {
 		UChat.chat("&7[&bProfileViewer&7] &f" + input + "&7님의 프로필을 불러오는 중...");
-		PlayerDbApi.resolveGameProfile(input).thenAccept(profile -> {
+		PlayerDbApi.resolveGameProfile(input).whenComplete((profile, error) -> mc.execute(() -> {
+			if (error != null) {
+				UChat.chat("&c[ProfileViewer] Player lookup failed. Please retry.");
+				return;
+			}
 			if (profile == null) {
 				UChat.chat("&c[ProfileViewer] 플레이어 '" + input + "'를 찾을 수 없습니다.");
 				return;
 			}
 			UScreen.setScreenMC(new ProfileViewerScreen(profile.name(), profile.id()));
-		});
+		}));
 	}
 
 	public static void openProfileViewer(String username, UUID uuid) {

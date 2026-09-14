@@ -99,3 +99,20 @@ publishing {
 		}
 	}
 }
+
+sourceSets {
+	regression {
+		compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+		runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+	}
+}
+
+tasks.register('profileRegression', JavaExec) {
+	dependsOn regressionClasses
+	classpath = sourceSets.regression.runtimeClasspath
+	mainClass = 'silence.simsool.profileviewer.api.ProfileDataRegression'
+}
+
+tasks.named('check') {
+	dependsOn 'profileRegression'
+}

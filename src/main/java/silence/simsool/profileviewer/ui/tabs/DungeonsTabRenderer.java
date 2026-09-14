@@ -203,9 +203,9 @@ public class DungeonsTabRenderer {
 		curY += 24f;
 
 		float tblW = width;
-		float rowH = 36f;
+		float rowH = 58f;
 		float pillW = 230f;
-		float pillH = 26f;
+		float pillH = 44f;
 		float mPillX = startX + tblW - 14f - pillW;
 		float nPillX = mPillX - 12f - pillW;
 
@@ -253,14 +253,15 @@ public class DungeonsTabRenderer {
 			// Run Count
 			String normRuns = hasNorm ? RenderHelper.formatNumber(norm.completions) + " runs" : "0 runs";
 			int runCol = hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_MUTED;
-			NVGRenderer.text(normRuns, nPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, runCol, 13f);
+			NVGRenderer.text(normRuns, nPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, runCol, 14.5f);
 
 			// S+ Stopwatch Time
 			String normSplus = norm.fastestTimeSplusMs > 0 ? norm.getFastestSPlusFormatted() : (norm.fastestTimeMs > 0 ? norm.getFastestTimeFormatted() : "-");
 			float nTimeW = NVGRenderer.textWidth(normSplus, Fonts.PRETENDARD_MEDIUM, 12.5f);
 			float nTimeX = nPillX + pillW - 12f - nTimeW;
-			NVGRenderer.text("\uE425", nTimeX - 15f, pillY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_DISABLED, 13.5f);
-			NVGRenderer.text(normSplus, nTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 12.5f);
+			NVGRenderer.text("\uE425", nTimeX - 15f, pillY + 7f, Fonts.MATERIAL_ICONS_ROUND, hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_DISABLED, 14f);
+			NVGRenderer.text(normSplus, nTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
+			NVGRenderer.text("Best score  " + (norm.bestScore > 0 ? norm.bestScore : "-"), nPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 			// --- Right: Master Mode Runs Ruby Capsule ---
 			boolean hasMast = mast.completions > 0;
@@ -277,14 +278,15 @@ public class DungeonsTabRenderer {
 			// Master Run Count
 			String mastRuns = hasMast ? RenderHelper.formatNumber(mast.completions) + " runs" : "0 runs";
 			int mRunCol = hasMast ? 0xFFFF5555 : RenderHelper.FONT_MUTED;
-			NVGRenderer.text(mastRuns, mPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, mRunCol, 13f);
+			NVGRenderer.text(mastRuns, mPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, mRunCol, 14.5f);
 
 			// Master S+ Stopwatch Time
 			String mastSplus = mast.fastestTimeSplusMs > 0 ? mast.getFastestSPlusFormatted() : (mast.fastestTimeMs > 0 ? mast.getFastestTimeFormatted() : "-");
 			float mTimeW = NVGRenderer.textWidth(mastSplus, Fonts.PRETENDARD_MEDIUM, 12.5f);
 			float mTimeX = mPillX + pillW - 12f - mTimeW;
-			NVGRenderer.text("\uE425", mTimeX - 15f, pillY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, hasMast ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 13.5f);
-			NVGRenderer.text(mastSplus, mTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 12.5f);
+			NVGRenderer.text("\uE425", mTimeX - 15f, pillY + 7f, Fonts.MATERIAL_ICONS_ROUND, hasMast ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 14f);
+			NVGRenderer.text(mastSplus, mTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
+			NVGRenderer.text("Best score  " + (mast.bestScore > 0 ? mast.bestScore : "-"), mPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 			curY += rowH + 4f;
 		}

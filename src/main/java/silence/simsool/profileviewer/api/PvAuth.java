@@ -8,6 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class PvAuth {
@@ -18,15 +19,14 @@ public class PvAuth {
 			.connectTimeout(Duration.ofSeconds(10))
 			.build();
 
-	private static String token = null;
-	private static boolean authenticating = false;
+	private static volatile String token = null;
+	private static CompletableFuture<String> authentication;
 
-	public static CompletableFuture<String> authenticateAsync() {
+	public static synchronized CompletableFuture<String> authenticateAsync() {
 		if (token != null) return CompletableFuture.completedFuture(token);
-		if (authenticating) return CompletableFuture.supplyAsync(() -> token);
+		if (authentication != null && !authentication.isDone()) return authentication;
 
-		authenticating = true;
-		return CompletableFuture.supplyAsync(() -> {
+		authentication = CompletableFuture.supplyAsync(() -> {
 			try {
 				if (mc.getUser() == null) {
 					System.out.println("[ProfileViewer/PvAuth] Minecraft User is null, skipping auth.");
@@ -54,12 +54,15 @@ public class PvAuth {
 				// Allow Mojang session server replication delay
 				try {
 					Thread.sleep(350);
-				} catch (InterruptedException ignored) {}
+				} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					return null;
+				}
 
 				HttpRequest request = HttpRequest.newBuilder()
 						.uri(URI.create(API_URL))
 						.timeout(Duration.ofSeconds(10))
-						.header("User-Agent", "SkyBlockPV/1.2.0/1.21.4")
+						.header("User-Agent", "ProfileViewer/1.0.0/26.2")
 						.header("x-minecraft-username", username)
 						.header("x-minecraft-server", serverId)
 						.GET()
@@ -71,7 +74,10 @@ public class PvAuth {
 				if (response.statusCode() == 401) {
 					try {
 						Thread.sleep(600);
-					} catch (InterruptedException ignored) {}
+					} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					return null;
+				}
 					response = client.send(request, HttpResponse.BodyHandlers.ofString());
 				}
 
@@ -84,18 +90,21 @@ public class PvAuth {
 				}
 			} catch (Exception e) {
 				System.out.println("[ProfileViewer/PvAuth] Authentication failed: " + e.getMessage());
-			} finally {
-				authenticating = false;
 			}
 			return null;
 		});
+		return authentication;
 	}
 
 	public static String getToken() {
 		return token;
 	}
 
-	public static void invalidateToken() {
+	public static synchronized void invalidateToken(String rejectedToken) {
+		if (Objects.equals(token, rejectedToken)) token = null;
+	}
+
+	public static synchronized void invalidateToken() {
 		token = null;
 	}
 }

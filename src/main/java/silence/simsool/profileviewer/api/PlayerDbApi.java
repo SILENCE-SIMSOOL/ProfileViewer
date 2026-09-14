@@ -6,6 +6,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +24,9 @@ public class PlayerDbApi {
 	private static final Map<String, GameProfile> cache = new ConcurrentHashMap<>();
 
 	public static CompletableFuture<GameProfile> resolveGameProfile(String query) {
-		String key = query.toLowerCase().trim();
+		if (query == null) return CompletableFuture.completedFuture(null);
+		String key = query.toLowerCase(Locale.ROOT).trim();
+		if (!key.matches("[a-z0-9_]{1,16}|[a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")) return CompletableFuture.completedFuture(null);
 		if (cache.containsKey(key)) {
 			return CompletableFuture.completedFuture(cache.get(key));
 		}
@@ -48,18 +51,19 @@ public class PlayerDbApi {
 						UUID uuid = UUID.fromString(idStr);
 						GameProfile profile = new GameProfile(uuid, name);
 						cache.put(key, profile);
-						cache.put(name.toLowerCase(), profile);
+						cache.put(name.toLowerCase(Locale.ROOT), profile);
 						cache.put(uuid.toString().toLowerCase(), profile);
 						return profile;
 					}
+				} else if (response.statusCode() != 404 && response.statusCode() != 400) {
+					throw new IllegalStateException("Player lookup HTTP " + response.statusCode());
 				}
-			} catch (Exception ignored) {}
-
-			try {
-				UUID uuid = UUID.fromString(query);
-				GameProfile profile = new GameProfile(uuid, query);
-				return profile;
-			} catch (Exception ignored) {}
+			} catch (InterruptedException interrupted) {
+				Thread.currentThread().interrupt();
+				throw new IllegalStateException("Player lookup interrupted", interrupted);
+			} catch (Exception error) {
+				throw new IllegalStateException("Player lookup failed", error);
+			}
 
 			return null;
 		});

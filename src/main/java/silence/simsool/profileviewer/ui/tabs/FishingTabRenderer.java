@@ -12,12 +12,18 @@ import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
 import silence.simsool.profileviewer.api.data.FishingData;
 import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.MemberData;
-import silence.simsool.profileviewer.api.data.PetData;
 import silence.simsool.profileviewer.api.nbt.ParsedItem;
 import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class FishingTabRenderer {
+	private static String getHighestTrophyTier(FishingData data) {
+		if (data.diamondTrophy > 0) return "Diamond";
+		if (data.goldTrophy > 0) return "Gold";
+		if (data.silverTrophy > 0) return "Silver";
+		if (data.bronzeTrophy > 0) return "Bronze";
+		return "None";
+	}
 
 	public static class TrophySlotInfo {
 		public float x, y, size;
@@ -58,9 +64,9 @@ public class FishingTabRenderer {
 		float infoY = curY + 34f;
 		float rowH = 22f;
 
-		RenderHelper.drawStatRow("Last Catch", "Blobfish BRONZE", c1X + 12f, infoY, infoW - 24f, 13f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Trophy Fish", RenderHelper.formatNumber(f.bronzeTrophy + f.silverTrophy + f.goldTrophy + f.diamondTrophy), c1X + 12f, infoY, infoW - 24f, 13f, 0xFFFBBF24);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Trophy Rank", "Adept", c1X + 12f, infoY, infoW - 24f, 13f, RenderHelper.FONT_MUTED);
+		RenderHelper.drawStatRow("Highest Tier", getHighestTrophyTier(f), c1X + 12f, infoY, infoW - 24f, 13f, RenderHelper.FONT_MUTED);
 		infoY += rowH;
 		RenderHelper.drawStatRow("Drake Piper", "1/1", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
 		infoY += rowH;
@@ -78,18 +84,18 @@ public class FishingTabRenderer {
 		NVGRenderer.text("Stats", c2X + (statsW - NVGRenderer.textWidth("Stats", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float statsY = curY + 34f;
-		RenderHelper.drawStatRow("Festival sharks killed", "683 / 5,000", c2X + 12f, statsY, statsW - 24f, 13f, 0xFFEF4444);
+		RenderHelper.drawStatRow("Treasures caught", RenderHelper.formatNumber(f.treasuresCaught), c2X + 12f, statsY, statsW - 24f, 13f, 0xFFEF4444);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Sea creatures killed", RenderHelper.formatNumber(f.seaCreaturesKilled > 0 ? f.seaCreaturesKilled : 1369), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Sea creatures killed", RenderHelper.formatNumber(f.seaCreaturesKilled), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Total Catches", RenderHelper.formatNumber(f.totalCatches > 0 ? f.totalCatches : 1861), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Total Catches", RenderHelper.formatNumber(f.totalCatches), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Normal Catches", RenderHelper.formatNumber(f.itemsFishedTotal > 0 ? f.itemsFishedTotal : 976), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Normal Catches", RenderHelper.formatNumber(f.itemsFishedTotal), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Treasures Found", RenderHelper.formatNumber(f.treasuresCaught > 0 ? f.treasuresCaught : 118), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Treasures Found", RenderHelper.formatNumber(f.treasuresCaught), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
 		int trophyTotal = f.bronzeTrophy + f.silverTrophy + f.goldTrophy + f.diamondTrophy;
-		RenderHelper.drawStatRow("Trophy Fishes Caught", RenderHelper.formatNumber(trophyTotal > 0 ? trophyTotal : 857), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Trophy Fishes Caught", RenderHelper.formatNumber(trophyTotal), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 
 		// ---------------------------------------------------------------------
 		// Card 3: Gear (4 Armor + 4 Equipment + 4 Rods + 4 Pets)
@@ -98,7 +104,7 @@ public class FishingTabRenderer {
 		RenderHelper.drawModernCard(c3X, curY, gearW, topCardH, 10f, false);
 		NVGRenderer.text("Gear", c3X + (gearW - NVGRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
-		float slotSize = 28f;
+		float slotSize = 30f;
 		float slotGap = 4f;
 		float gTopY = curY + 34f;
 		float gCol1X = c3X + (gearW - (4 * slotSize + 3 * slotGap)) / 2f;
@@ -136,18 +142,17 @@ public class FishingTabRenderer {
 			RenderHelper.registerItemSlot(gCol3X, sy, slotSize, st);
 		}
 
-		// 4. Fishing Pets
-		List<PetData.PetItem> fishingPets = getFishingPets(data);
+		// 4. Trophy Armor
+		List<ItemStack> trophyArmor = GearFinder.findArmorSet(data,
+			filterPart(GearFinder.FISHING_TROPHY_ARMOR, "HELMET"),
+			filterPart(GearFinder.FISHING_TROPHY_ARMOR, "CHESTPLATE"),
+			filterPart(GearFinder.FISHING_TROPHY_ARMOR, "LEGGINGS"),
+			filterPart(GearFinder.FISHING_TROPHY_ARMOR, "BOOTS"));
 		for (int r = 0; r < 4; r++) {
 			float sy = gTopY + r * (slotSize + slotGap);
 			boolean hov = mouseX >= gCol4X && mouseX <= gCol4X + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
 			RenderHelper.drawItemSlotBg(gCol4X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
-			if (r < fishingPets.size()) {
-				PetData.PetItem p = fishingPets.get(r);
-				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, p.itemStack, String.valueOf(p.level), p.getRarityColor());
-			} else {
-				RenderHelper.registerItemSlot(gCol4X, sy, slotSize, ItemStack.EMPTY);
-			}
+			RenderHelper.registerItemSlot(gCol4X, sy, slotSize, trophyArmor.get(r));
 		}
 
 		curY += topCardH + 16f;
@@ -175,7 +180,7 @@ public class FishingTabRenderer {
 				float sx = tfStartX + c * (tfSlotSize + tfSlotGap);
 				float sy = tfStartY + r * (tfSlotSize + tfSlotGap);
 
-				int[] counts = f.trophyFishCounts.getOrDefault(fishName, new int[]{31, 11, 1, 0});
+				int[] counts = f.trophyFishCounts.getOrDefault(fishName, new int[4]);
 				int bronze = counts[0], silver = counts[1], gold = counts[2], diamond = counts[3];
 				int total = bronze + silver + gold + diamond;
 
@@ -190,7 +195,7 @@ public class FishingTabRenderer {
 					String sbId = fishName.toUpperCase().replace(" ", "_");
 					stack = ItemRepo.getItemStack(sbId);
 					if (stack.isEmpty()) stack = ItemRepo.getItemStack(sbId + "_" + tierNames[r]);
-					if (stack.isEmpty()) stack = new ItemStack(Items.PLAYER_HEAD);
+					if (stack.isEmpty()) stack = new ItemStack(Items.COD);
 				} else {
 					stack = ItemRepo.getItemStack("GRAY_DYE");
 					if (stack.isEmpty()) stack = new ItemStack(Items.GUNPOWDER);
@@ -219,16 +224,7 @@ public class FishingTabRenderer {
 
 	private static List<ItemStack> getFishingRodStacks(MemberData data) {
 		List<ItemStack> res = new ArrayList<>();
-		List<ParsedItem> all = GearFinder.getAllPlayerItems(data);
-		for (ParsedItem pi : all) {
-			if (pi != null && !pi.isEmpty()) {
-				String id = pi.skyblockId.toUpperCase();
-				if (id.contains("ROD") || id.contains("FISHING")) {
-					res.add(pi.itemStack);
-					if (res.size() >= 4) break;
-				}
-			}
-		}
+		for (ParsedItem item : GearFinder.findBestItems(data, GearFinder.FISHING_RODS, 4)) res.add(item.itemStack);
 		while (res.size() < 4) {
 			res.add(ItemStack.EMPTY);
 		}
@@ -236,23 +232,8 @@ public class FishingTabRenderer {
 		return res;
 	}
 
-	private static List<PetData.PetItem> getFishingPets(MemberData data) {
-		List<PetData.PetItem> res = new ArrayList<>();
-		if (data != null && data.pets != null && data.pets.pets != null) {
-			for (PetData.PetItem p : data.pets.pets) {
-				String type = p.type.toUpperCase();
-				if (type.contains("DOLPHIN") || type.contains("SQUID") || type.contains("FLYING_FISH") || type.contains("MEGALODON") || type.contains("BABY_YETI") || type.contains("AMMONITE")) {
-					res.add(p);
-					if (res.size() >= 4) break;
-				}
-			}
-			if (res.isEmpty() && !data.pets.pets.isEmpty()) {
-				for (int i = 0; i < Math.min(4, data.pets.pets.size()); i++) {
-					res.add(data.pets.pets.get(i));
-				}
-			}
-		}
-		return res;
+	private static java.util.Set<String> filterPart(java.util.Set<String> ids, String suffix) {
+		return ids.stream().filter(id -> id.endsWith(suffix)).collect(java.util.stream.Collectors.toSet());
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {

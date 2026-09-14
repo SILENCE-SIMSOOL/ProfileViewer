@@ -49,7 +49,6 @@ public final class PetRepo {
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{(?<key>[a-zA-Z0-9_]+)}");
 
 	private static final Map<String, PetEntry> PETS = new HashMap<>();
-	private static volatile boolean initialized = false;
 
 	public static class PetEntry {
 		public String id;
@@ -82,7 +81,6 @@ public final class PetRepo {
 				JsonObject obj = GSON.fromJson(cached, JsonObject.class);
 				if (obj != null) {
 					parseRepoJson(obj);
-					initialized = true;
 					return;
 				}
 			}
@@ -94,7 +92,6 @@ public final class PetRepo {
 				JsonObject obj = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
 				if (obj != null) {
 					parseRepoJson(obj);
-					initialized = true;
 				}
 			}
 		} catch (Exception e) {
@@ -115,7 +112,6 @@ public final class PetRepo {
 					JsonObject obj = GSON.fromJson(resp.body(), JsonObject.class);
 					if (obj != null) {
 						parseRepoJson(obj);
-						initialized = true;
 						try {
 							Path cacheDir = FabricLoader.getInstance().getConfigDir().resolve("profileviewer").resolve("repo");
 							Files.createDirectories(cacheDir);

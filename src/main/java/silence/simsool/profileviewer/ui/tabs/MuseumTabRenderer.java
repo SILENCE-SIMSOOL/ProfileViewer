@@ -1,8 +1,14 @@
 package silence.simsool.profileviewer.ui.tabs;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -21,9 +27,13 @@ public class MuseumTabRenderer {
 
 	public enum MuseumCategory {
 		ALL("All", "\uEA40"),
-		WEAPONS("Weapons", "\uE8EF"),
-		ARMOR("Armor", "\uE8C9"),
-		RARITIES("Rarities", "\uE838"),
+		COMBAT("Combat", "\uE8EF"),
+		DUNGEONEERING("Dungeons", "\uE3AF"),
+		FARMING("Farming", "\uE8B8"),
+		FISHING("Fishing", "\uE8F6"),
+		FORAGING("Foraging", "\uE520"),
+		HUNTING("Hunting", "\uE566"),
+		MINING("Mining", "\uE3E8"),
 		SPECIAL("Special", "\uE87D");
 
 		public final String label;
@@ -73,72 +83,17 @@ public class MuseumTabRenderer {
 	private static final List<MuseumCatalogItem> CATALOG = new ArrayList<>();
 
 	static {
-		// 1. WEAPONS
-		String[] weapons = {
-			"ROGUE_SWORD", "UNDEAD_SWORD", "END_SWORD", "SPIDER_SWORD", "SILVER_FANG", "CLEAVER", "FLAMING_SWORD",
-			"PRISMARINE_BLADE", "NIGHT_EDGE", "TACTICIANS_SWORD", "REAPER_FALCHION", "VOIDEDGE_KATANA", "SOUL_STEALER_KATANA",
-			"VORPAL_KATANA", "ATOMSPLIT_KATANA", "HYPERION", "VALKYRIE", "SCYLLA", "ASTRAEA", "TERMINATOR", "JUJU_SHORTBOW",
-			"SPIRIT_BOW", "RUNAANS_BOW", "MOSQUITO_BOW", "MAGMA_BOW", "DRAGON_SHORTBOW", "ASPECT_OF_THE_DRAGONS",
-			"ASPECT_OF_THE_END", "ASPECT_OF_THE_VOID", "LEAPING_SWORD", "SILK_EDGE_SWORD", "PIGMAN_SWORD", "YETI_SWORD",
-			"MIDAS_STAFF", "MIDAS_SWORD", "DARK_CLAYMORE", "GIANTS_SWORD", "FEL_SWORD", "LIVID_DAGGER", "SHADOW_FURY",
-			"BOUQUET_OF_LIES", "FLOWER_OF_TRUTH", "POISON_DAGGER", "FIRE_DAGGER", "DEATH_RIPPER_DAGGER", "ICE_SPRAY_WAND",
-			"BONERANG", "SCORPION_BOW", "VENOMSLICER", "FIRE_VEIL_WAND", "AURORA_STAFF", "GLACIAL_SCYTHE", "FROZEN_SCYTHE",
-			"STARRED_SHADOW_FURY", "RECLUSE_FANG", "SCORPION_FOIL", "EDIBLE_MACE", "REAPER_AXE", "DAEDALUS_AXE"
-		};
-		for (String id : weapons) {
-			String name = formatItemName(id);
-			String parent = id.contains("KATANA") ? "VOIDEDGE_KATANA" : (id.contains("VALKYRIE") || id.contains("SCYLLA") || id.contains("ASTRAEA") ? "HYPERION" : null);
-			CATALOG.add(new MuseumCatalogItem(id, name, parent, MuseumCategory.WEAPONS));
-		}
-
-		// 2. ARMOR
-		String[] armors = {
-			"NECRON_HELMET", "NECRON_CHESTPLATE", "NECRON_LEGGINGS", "NECRON_BOOTS", "STORM_HELMET", "STORM_CHESTPLATE",
-			"STORM_LEGGINGS", "STORM_BOOTS", "MAXOR_HELMET", "MAXOR_CHESTPLATE", "MAXOR_LEGGINGS", "MAXOR_BOOTS",
-			"GOLDOR_HELMET", "GOLDOR_CHESTPLATE", "GOLDOR_LEGGINGS", "GOLDOR_BOOTS", "SUPERIOR_DRAGON_HELMET",
-			"SUPERIOR_DRAGON_CHESTPLATE", "SUPERIOR_DRAGON_LEGGINGS", "SUPERIOR_DRAGON_BOOTS", "STRONG_DRAGON_HELMET",
-			"STRONG_DRAGON_CHESTPLATE", "STRONG_DRAGON_LEGGINGS", "STRONG_DRAGON_BOOTS", "WISE_DRAGON_HELMET",
-			"WISE_DRAGON_CHESTPLATE", "WISE_DRAGON_LEGGINGS", "WISE_DRAGON_BOOTS", "YOUNG_DRAGON_HELMET",
-			"YOUNG_DRAGON_CHESTPLATE", "YOUNG_DRAGON_LEGGINGS", "YOUNG_DRAGON_BOOTS", "UNSTABLE_DRAGON_HELMET",
-			"UNSTABLE_DRAGON_CHESTPLATE", "UNSTABLE_DRAGON_LEGGINGS", "UNSTABLE_DRAGON_BOOTS", "PROTECTOR_DRAGON_HELMET",
-			"PROTECTOR_DRAGON_CHESTPLATE", "PROTECTOR_DRAGON_LEGGINGS", "PROTECTOR_DRAGON_BOOTS", "OLD_DRAGON_HELMET",
-			"OLD_DRAGON_CHESTPLATE", "OLD_DRAGON_LEGGINGS", "OLD_DRAGON_BOOTS", "HOLY_DRAGON_HELMET",
-			"HOLY_DRAGON_CHESTPLATE", "HOLY_DRAGON_LEGGINGS", "HOLY_DRAGON_BOOTS", "FROZEN_BLAZE_HELMET",
-			"FROZEN_BLAZE_CHESTPLATE", "FROZEN_BLAZE_LEGGINGS", "FROZEN_BLAZE_BOOTS", "SHADOW_ASSASSIN_HELMET",
-			"SHADOW_ASSASSIN_CHESTPLATE", "SHADOW_ASSASSIN_LEGGINGS", "SHADOW_ASSASSIN_BOOTS", "SORROW_HELMET",
-			"SORROW_CHESTPLATE", "SORROW_LEGGINGS", "SORROW_BOOTS", "DIVAN_HELMET", "DIVAN_CHESTPLATE",
-			"DIVAN_LEGGINGS", "DIVAN_BOOTS", "FERMENTO_HELMET", "FERMENTO_CHESTPLATE", "FERMENTO_LEGGINGS",
-			"FERMENTO_BOOTS", "SQUASH_HELMET", "SQUASH_CHESTPLATE", "SQUASH_LEGGINGS", "SQUASH_BOOTS",
-			"CROUPIER_HELMET", "CROUPIER_CHESTPLATE", "CROUPIER_LEGGINGS", "CROUPIER_BOOTS", "MELON_HELMET",
-			"MELON_CHESTPLATE", "MELON_LEGGINGS", "MELON_BOOTS", "PUMPKIN_HELMET", "PUMPKIN_CHESTPLATE",
-			"PUMPKIN_LEGGINGS", "PUMPKIN_BOOTS", "FINAL_DESTINATION_HELMET", "FINAL_DESTINATION_CHESTPLATE",
-			"FINAL_DESTINATION_LEGGINGS", "FINAL_DESTINATION_BOOTS", "TARANTULA_HELMET", "REAPER_MASK", "WARDEN_HELMET"
-		};
-		for (String id : armors) {
-			String name = formatItemName(id);
-			CATALOG.add(new MuseumCatalogItem(id, name, null, MuseumCategory.ARMOR));
-		}
-
-		// 3. RARITIES
-		String[] rarities = {
-			"EXPERIENCE_ARTIFACT", "ENDER_RELIC", "SEAL_OF_THE_FAMILY", "CAMPFIRE_TALISMAN_21", "HEGEMONY_ARTIFACT",
-			"PIGGY_BANK", "PERSONAL_DELETOR_7000", "PERSONAL_COMPACTOR_7000", "ANCIENT_CLOAK", "DANTE_TALISMAN",
-			"BAT_ARTIFACT", "WITHER_ARTIFACT", "SHARK_SCALE_TALISMAN", "DEVOUR_RING", "ZOMBIE_ARTIFACT", "SPIDER_ARTIFACT"
-		};
-		for (String id : rarities) {
-			String name = formatItemName(id);
-			CATALOG.add(new MuseumCatalogItem(id, name, null, MuseumCategory.RARITIES));
-		}
-
-		// 4. SPECIAL
-		String[] specials = {
-			"CREATIVE_MIND", "GAME_BREAKER", "QUALITY_MAP", "SPACE_HELMET", "POTATO_TALISMAN", "CRAB_HAT",
-			"DANTE_BEST", "JERRY_STAFF", "FLYING_PIG"
-		};
-		for (String id : specials) {
-			String name = formatItemName(id);
-			CATALOG.add(new MuseumCatalogItem(id, name, null, MuseumCategory.SPECIAL));
-		}
+		try (var stream = MuseumTabRenderer.class.getResourceAsStream("/assets/profileviewer/data/museum_catalog.json")) {
+			if (stream != null) {
+				JsonArray array = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonArray();
+				for (JsonElement element : array) {
+					JsonObject object = element.getAsJsonObject();
+					MuseumCategory category = MuseumCategory.valueOf(object.get("category").getAsString());
+					String parent = object.has("parent") && !object.get("parent").isJsonNull() ? object.get("parent").getAsString() : null;
+					CATALOG.add(new MuseumCatalogItem(object.get("id").getAsString(), object.get("name").getAsString(), parent, category));
+				}
+			}
+		} catch (Exception ignored) {}
 	}
 
 	public static float render(MemberData data, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
@@ -206,8 +161,8 @@ public class MuseumTabRenderer {
 		for (MuseumCatalogItem item : CATALOG) {
 			if (activeCategory != MuseumCategory.ALL && item.category != activeCategory) continue;
 
-			boolean isDonated = m.donatedItemsMap.containsKey(item.id);
-			boolean isParent = !isDonated && item.parentId != null && m.donatedItemsMap.containsKey(item.parentId);
+			boolean isDonated = isDonated(m, item.id);
+			boolean isParent = !isDonated && item.parentId != null && isDonated(m, item.parentId);
 			boolean isMissing = !isDonated && !isParent;
 
 			if (!q.isEmpty() && !item.name.toUpperCase(Locale.ROOT).contains(q) && !item.id.contains(q)) {
@@ -234,15 +189,15 @@ public class MuseumTabRenderer {
 			float sx = gridStartX + c * (slotSize + slotGap);
 			float sy = curY + 12f + r * (slotSize + slotGap);
 
-			boolean isDonated = m.donatedItemsMap.containsKey(cat.id);
-			boolean isParent = !isDonated && cat.parentId != null && m.donatedItemsMap.containsKey(cat.parentId);
+			boolean isDonated = isDonated(m, cat.id);
+			boolean isParent = !isDonated && cat.parentId != null && isDonated(m, cat.parentId);
 
 			boolean hov = mouseX >= sx && mouseX <= sx + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
 			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, isDonated ? 0x4438BDF8 : (isParent ? 0x4410B981 : 0x22FFFFFF), 0x5511131E, 4f);
 
 			ItemStack stack;
 			if (isDonated) {
-				List<ParsedItem> pList = m.donatedItemsMap.get(cat.id);
+				List<ParsedItem> pList = donatedStacks(m, cat.id);
 				stack = (pList != null && !pList.isEmpty()) ? pList.get(0).toItemStack() : ItemRepo.getItemStack(cat.id);
 				if (stack.isEmpty()) stack = new ItemStack(Items.DIAMOND_SWORD);
 			} else if (isParent) {
@@ -290,6 +245,17 @@ public class MuseumTabRenderer {
 
 		curY += gridH + 16f;
 		return curY - startY;
+	}
+
+	private static boolean isDonated(MuseumData data, String id) {
+		if (data.donatedItemsMap.containsKey(id)) return true;
+		return data.specialItems.stream().anyMatch(item -> id.equalsIgnoreCase(item.skyblockId));
+	}
+
+	private static List<ParsedItem> donatedStacks(MuseumData data, String id) {
+		List<ParsedItem> stacks = data.donatedItemsMap.get(id);
+		if (stacks != null) return stacks;
+		return data.specialItems.stream().filter(item -> id.equalsIgnoreCase(item.skyblockId)).toList();
 	}
 
 	private static String formatItemName(String id) {
