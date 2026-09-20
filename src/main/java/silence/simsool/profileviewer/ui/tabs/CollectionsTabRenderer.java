@@ -4,8 +4,8 @@ import java.util.List;
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.CollectionData;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.ui.RenderHelper;
@@ -43,19 +43,19 @@ public class CollectionsTabRenderer {
 		float subTabX = startX;
 		for (ColCategory cat : ColCategory.values()) {
 			String title = cat.getTitle();
-			float catW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
+			float catW = SkijaRenderer.textWidth(title, Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			boolean active = (cat == activeCategory);
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + catW && mouseY >= curY && mouseY <= curY + subTabH;
 
 			if (active) {
-				NVGRenderer.rect(subTabX, curY, catW, subTabH, 0xBF4F46E5, 8f);
+				SkijaRenderer.rect(subTabX, curY, catW, subTabH, 0xBF4F46E5, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(subTabX, curY, catW, subTabH, 0x1AFFFFFF, 8f);
+				SkijaRenderer.rect(subTabX, curY, catW, subTabH, 0x1AFFFFFF, 8f);
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			NVGRenderer.text(cat.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
-			NVGRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
+			SkijaRenderer.text(cat.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
+			SkijaRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
 
 			subTabX += catW + 8f;
 		}
@@ -82,7 +82,7 @@ public class CollectionsTabRenderer {
 	private static float renderCollectionItemsGrid(List<CollectionData.CollectionItem> items, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		if (items == null || items.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.col.no_data"), startX + 14f, curY + 20f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+			SkijaRenderer.text(L10n.translate("pv.col.no_data"), startX + 14f, curY + 20f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 			return 50f;
 		}
 
@@ -108,15 +108,15 @@ public class CollectionsTabRenderer {
 			RenderHelper.registerItemSlot(sx, sy, slotS, colStack);
 
 			float tx = sx + slotS + 12f;
-			NVGRenderer.text(item.name, tx, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
+			SkijaRenderer.text(item.name, tx, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
 
 			String status = item.isMax ? L10n.translate("pv.ui.max") : String.format(L10n.translate("pv.ui.tier") + " %d/%d (%.1f%%)", item.tier, item.maxTier, item.progress * 100f);
 			int statCol = item.isMax ? 0xFFFFAA00 : 0xFF38BDF8;
-			float sw = NVGRenderer.textWidth(status, Fonts.PRETENDARD_SEMIBOLD, 13f);
-			NVGRenderer.text(status, cx + cardW - 14f - sw, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, statCol, 13f);
+			float sw = SkijaRenderer.textWidth(status, Fonts.PRETENDARD_SEMIBOLD, 13f);
+			SkijaRenderer.text(status, cx + cardW - 14f - sw, cy + 12f, Fonts.PRETENDARD_SEMIBOLD, statCol, 13f);
 
 			String amtStr = RenderHelper.formatNumber(item.amount) + " " + L10n.translate("pv.col.collected");
-			NVGRenderer.text(amtStr, tx, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+			SkijaRenderer.text(amtStr, tx, cy + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 			if (item.isMax) {
 				RenderHelper.drawRainbowProgressBar(tx, cy + 50f, cx + cardW - 14f - tx, 5f, 1.0f);
@@ -160,40 +160,40 @@ public class CollectionsTabRenderer {
 		RenderHelper.drawModernCard(startX, curY, colW, cardH, 12f, false);
 		float ix1 = startX + 14f;
 		float iy = curY + (cardH - iconBoxSize) / 2f;
-		NVGRenderer.rect(ix1, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE88A", ix1 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 21f);
+		SkijaRenderer.rect(ix1, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF38BDF8, 32), iconBoxSize / 2f);
+		SkijaRenderer.text("\uE88A", ix1 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 21f);
 
 		float tx1 = ix1 + iconBoxSize + 12f;
-		NVGRenderer.text(L10n.translate("pv.col.unlocked_minions"), tx1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(col.unlockedMinions + " " + L10n.translate("pv.ui.unique"), tx1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 19f);
+		SkijaRenderer.text(L10n.translate("pv.col.unlocked_minions"), tx1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		SkijaRenderer.text(col.unlockedMinions + " " + L10n.translate("pv.ui.unique"), tx1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 19f);
 
 		// Minion Slots
 		float c2X = startX + colW + 12f;
 		RenderHelper.drawModernCard(c2X, curY, colW, cardH, 12f, false);
 		float ix2 = c2X + 14f;
-		NVGRenderer.rect(ix2, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF10B981, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE838", ix2 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
+		SkijaRenderer.rect(ix2, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFF10B981, 32), iconBoxSize / 2f);
+		SkijaRenderer.text("\uE838", ix2 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 21f);
 
 		float tx2 = ix2 + iconBoxSize + 12f;
-		NVGRenderer.text(L10n.translate("pv.col.minion_slots"), tx2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(col.minionSlots + " Slots", tx2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 19f);
+		SkijaRenderer.text(L10n.translate("pv.col.minion_slots"), tx2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		SkijaRenderer.text(col.minionSlots + " Slots", tx2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 19f);
 
 		// Crafted Minions
 		float c3X = c2X + colW + 12f;
 		RenderHelper.drawModernCard(c3X, curY, colW, cardH, 12f, false);
 		float ix3 = c3X + 14f;
-		NVGRenderer.rect(ix3, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFBBF24, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE8C9", ix3 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 21f);
+		SkijaRenderer.rect(ix3, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFBBF24, 32), iconBoxSize / 2f);
+		SkijaRenderer.text("\uE8C9", ix3 + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 21f);
 
 		float tx3 = ix3 + iconBoxSize + 12f;
-		NVGRenderer.text(L10n.translate("pv.col.crafted_generators"), tx3, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(col.craftedMinions.size() + " Crafted", tx3, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 19f);
+		SkijaRenderer.text(L10n.translate("pv.col.crafted_generators"), tx3, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		SkijaRenderer.text(col.craftedMinions.size() + " Crafted", tx3, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 19f);
 
 		curY += cardH + 24f;
 
 		if (!col.craftedMinions.isEmpty()) {
-			NVGRenderer.text("\uE8C9", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
-			NVGRenderer.text(L10n.translate("pv.col.crafted_minions_list") + " (" + col.craftedMinions.size() + ")", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+			SkijaRenderer.text("\uE8C9", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+			SkijaRenderer.text(L10n.translate("pv.col.crafted_minions_list") + " (" + col.craftedMinions.size() + ")", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
 			float mColW = (width - 3 * 10f) / 4f;
@@ -218,7 +218,7 @@ public class CollectionsTabRenderer {
 
 				String mName = minion.replace("_GENERATOR_", " ").replace("_", " ").toLowerCase();
 				mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);
-				NVGRenderer.text(mName, msX + msS + 8f, my_ + 17f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
+				SkijaRenderer.text(mName, msX + msS + 8f, my_ + 17f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
 
 				idx++;
 			}
@@ -247,7 +247,7 @@ public class CollectionsTabRenderer {
 		float subTabH = 32f;
 		float subTabX = startX;
 		for (ColCategory cat : ColCategory.values()) {
-			float catW = NVGRenderer.textWidth(cat.getTitle(), Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
+			float catW = SkijaRenderer.textWidth(cat.getTitle(), Fonts.PRETENDARD_MEDIUM, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + catW && my >= startY && my <= startY + subTabH) {
 				activeCategory = cat;
 				return true;

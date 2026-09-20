@@ -14,8 +14,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.MuseumData;
@@ -108,17 +108,17 @@ public class MuseumTabRenderer {
 
 		for (MuseumCategory cat : MuseumCategory.values()) {
 			boolean isSel = (cat == activeCategory);
-			float catW = NVGRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
+			float catW = SkijaRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
 			boolean hov = mouseX >= catX && mouseX <= catX + catW && mouseY >= curY && mouseY <= curY + catH;
 
 			int bgCol = isSel ? 0xFF6366F1 : (hov ? 0x336366F1 : 0x1AFFFFFF);
 			int textCol = isSel ? 0xFFFFFFFF : (hov ? 0xFFA5B4FC : RenderHelper.FONT_MUTED);
 
-			NVGRenderer.rect(catX, curY, catW, catH, bgCol, 6f);
-			if (isSel) NVGRenderer.outlineRect(catX, curY, catW, catH, 1.2f, 0xFF818CF8, 6f);
+			SkijaRenderer.rect(catX, curY, catW, catH, bgCol, 6f);
+			if (isSel) SkijaRenderer.outlineRect(catX, curY, catW, catH, 1.2f, 0xFF818CF8, 6f);
 
-			NVGRenderer.text(cat.icon, catX + 8f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 14f);
-			NVGRenderer.text(cat.label, catX + 26f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13f);
+			SkijaRenderer.text(cat.icon, catX + 8f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 14f);
+			SkijaRenderer.text(cat.label, catX + 26f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13f);
 
 			catX += catW + 6f;
 		}
@@ -133,16 +133,16 @@ public class MuseumTabRenderer {
 
 		// Filter Selector Button (Interactive Selector Modal)
 		boolean hovBtn = mouseX >= btnX && mouseX <= btnX + filterW && mouseY >= btnY && mouseY <= btnY + btnH;
-		NVGRenderer.rect(btnX, btnY, filterW, btnH, hovBtn ? 0xFF2A2D3D : 0xFF1C1E2A, 6f);
-		NVGRenderer.outlineRect(btnX, btnY, filterW, btnH, 1.2f, filterDropdownOpen ? 0xFF818CF8 : 0xFF4B5563, 6f);
+		SkijaRenderer.rect(btnX, btnY, filterW, btnH, hovBtn ? 0xFF2A2D3D : 0xFF1C1E2A, 6f);
+		SkijaRenderer.outlineRect(btnX, btnY, filterW, btnH, 1.2f, filterDropdownOpen ? 0xFF818CF8 : 0xFF4B5563, 6f);
 
-		NVGRenderer.text("\uE152", btnX + 8f, btnY + 5.5f, Fonts.MATERIAL_ICONS_ROUND, currentFilter.color, 14f);
+		SkijaRenderer.text("\uE152", btnX + 8f, btnY + 5.5f, Fonts.MATERIAL_ICONS_ROUND, currentFilter.color, 14f);
 		String filterText = currentFilter.label;
-		NVGRenderer.text(filterText, btnX + 26f, btnY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, currentFilter.color, 12f);
-		NVGRenderer.text(filterDropdownOpen ? "\uE316" : "\uE313", btnX + filterW - 16f, btnY + 6f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 14f);
+		SkijaRenderer.text(filterText, btnX + 26f, btnY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, currentFilter.color, 12f);
+		SkijaRenderer.text(filterDropdownOpen ? "\uE316" : "\uE313", btnX + filterW - 16f, btnY + 6f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 14f);
 
 		// Search Box on Far Right
-		NVGRenderer.text("\uE8B6", searchX - 20f, curY + 5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 16f);
+		SkijaRenderer.text("\uE8B6", searchX - 20f, curY + 5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 16f);
 		searchBox.setPosition((int) searchX, (int) curY);
 		searchBox.render(null, (int) mouseX, (int) mouseY, delta);
 
@@ -225,20 +225,20 @@ public class MuseumTabRenderer {
 			float itemH = 24f;
 			float dropH = MuseumFilter.values().length * itemH + 6f;
 
-			NVGRenderer.rect(btnX, dropY, filterW, dropH, 0xF8181A26, 6f);
-			NVGRenderer.outlineRect(btnX, dropY, filterW, dropH, 1.2f, 0xFF818CF8, 6f);
+			SkijaRenderer.rect(btnX, dropY, filterW, dropH, 0xF8181A26, 6f);
+			SkijaRenderer.outlineRect(btnX, dropY, filterW, dropH, 1.2f, 0xFF818CF8, 6f);
 
 			for (int idx = 0; idx < MuseumFilter.values().length; idx++) {
 				MuseumFilter mf = MuseumFilter.values()[idx];
 				float iy = dropY + 3f + idx * itemH;
 				boolean hov = mouseX >= btnX && mouseX <= btnX + filterW && mouseY >= iy && mouseY <= iy + itemH;
 
-				if (hov) NVGRenderer.rect(btnX + 3f, iy, filterW - 6f, itemH, 0x22FFFFFF, 4f);
+				if (hov) SkijaRenderer.rect(btnX + 3f, iy, filterW - 6f, itemH, 0x22FFFFFF, 4f);
 
 				boolean isCurrent = (mf == currentFilter);
-				NVGRenderer.text(mf.label, btnX + 10f, iy + 6f, Fonts.PRETENDARD_SEMIBOLD, isCurrent ? mf.color : RenderHelper.FONT_SECONDARY, 11.5f);
+				SkijaRenderer.text(mf.label, btnX + 10f, iy + 6f, Fonts.PRETENDARD_SEMIBOLD, isCurrent ? mf.color : RenderHelper.FONT_SECONDARY, 11.5f);
 				if (isCurrent) {
-					NVGRenderer.text("\uE876", btnX + filterW - 16f, iy + 6f, Fonts.MATERIAL_ICONS_ROUND, mf.color, 12f);
+					SkijaRenderer.text("\uE876", btnX + filterW - 16f, iy + 6f, Fonts.MATERIAL_ICONS_ROUND, mf.color, 12f);
 				}
 			}
 		}
@@ -300,7 +300,7 @@ public class MuseumTabRenderer {
 		float catX = startX;
 		float catH = 28f;
 		for (MuseumCategory cat : MuseumCategory.values()) {
-			float catW = NVGRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
+			float catW = SkijaRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
 			if (mx >= catX && mx <= catX + catW && my >= startY && my <= startY + catH) {
 				activeCategory = cat;
 				return true;

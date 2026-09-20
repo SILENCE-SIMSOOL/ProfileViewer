@@ -2,8 +2,8 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.SlayerData;
 import silence.simsool.profileviewer.ui.RenderHelper;
@@ -14,11 +14,11 @@ public class SlayerTabRenderer {
 		float curY = startY;
 
 		// Section Header: [Icon] Slayer Bosses (Total XP)
-		NVGRenderer.text("\uE3AF", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 20f);
-		NVGRenderer.text(L10n.translate("pv.slayer.bosses"), startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.text("\uE3AF", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 20f);
+		SkijaRenderer.text(L10n.translate("pv.slayer.bosses"), startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
 		String xpBadge = L10n.translate("pv.slayer.total_xp") + ": " + RenderHelper.formatNumber((long) data.slayer.totalSlayerXp);
-		float titleW = NVGRenderer.textWidth(L10n.translate("pv.slayer.bosses"), Fonts.PRETENDARD_SEMIBOLD, 17f);
+		float titleW = SkijaRenderer.textWidth(L10n.translate("pv.slayer.bosses"), Fonts.PRETENDARD_SEMIBOLD, 17f);
 		RenderHelper.drawBadge(xpBadge, startX + 36f + titleW, curY - 1f, 0x33A855F7, 0xFFA855F7);
 
 		curY += 34f;
@@ -45,8 +45,8 @@ public class SlayerTabRenderer {
 			if (boss.maxed) {
 				RenderHelper.drawRainbowBorder(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, 8f, 1.5f);
 			} else {
-				NVGRenderer.rect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, UIColors.withAlpha(bossCol, 32), 8f);
-				NVGRenderer.outlineRect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, 1f, UIColors.withAlpha(bossCol, 100), 8f);
+				SkijaRenderer.rect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, UIColors.withAlpha(bossCol, 32), 8f);
+				SkijaRenderer.outlineRect(ix - 3f, iy - 3f, iconSize + 6f, iconSize + 6f, 1f, UIColors.withAlpha(bossCol, 100), 8f);
 			}
 
 			net.minecraft.resources.Identifier bossTexture = getSlayerTexture(key);
@@ -54,14 +54,14 @@ public class SlayerTabRenderer {
 
 			// Name & Level Badge
 			float textX = ix + iconSize + 12f;
-			NVGRenderer.text(boss.name, textX, by + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+			SkijaRenderer.text(boss.name, textX, by + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 
 
 			String lvlStr = L10n.translate("pv.ui.level") + " " + boss.level + (boss.maxed ? " (" + L10n.translate("pv.ui.max") + ")" : "");
 			int lvlCol = boss.maxed ? 0xFFFFAA00 : 0xFF818CF8;
-			float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
-			NVGRenderer.text(lvlStr, bx + cardW - 16f - lvlW, by + 14f, Fonts.PRETENDARD_SEMIBOLD, lvlCol, 14f);
+			float lvlW = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			SkijaRenderer.text(lvlStr, bx + cardW - 16f - lvlW, by + 14f, Fonts.PRETENDARD_SEMIBOLD, lvlCol, 14f);
 
 			// Progress Bar
 			float barX = textX;
@@ -77,7 +77,7 @@ public class SlayerTabRenderer {
 			String xpText = boss.maxed
 					? RenderHelper.formatNumber((long) boss.totalXp) + " XP"
 					: RenderHelper.formatNumber((long) boss.currentLevelXp) + " / " + RenderHelper.formatNumber((long) boss.nextLevelXp) + " XP (" + (int)(boss.progress * 100) + "%)";
-			NVGRenderer.text(xpText, textX, by + 48f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 13f);
+			SkijaRenderer.text(xpText, textX, by + 48f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 13f);
 
 			// Tier Kills Row (T1..T5)
 			float killsY = by + 76f;
@@ -86,8 +86,8 @@ public class SlayerTabRenderer {
 				float kx = bx + 16f + t * kw;
 				String tLabel = "T" + (t + 1);
 				String kCount = RenderHelper.formatNumber(boss.tierKills[t]);
-				NVGRenderer.text(tLabel, kx, killsY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 12f);
-				NVGRenderer.text(kCount, kx, killsY + 14f, Fonts.PRETENDARD_SEMIBOLD, boss.tierKills[t] > 0 ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13f);
+				SkijaRenderer.text(tLabel, kx, killsY, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 12f);
+				SkijaRenderer.text(kCount, kx, killsY + 14f, Fonts.PRETENDARD_SEMIBOLD, boss.tierKills[t] > 0 ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13f);
 			}
 
 			idx++;
@@ -123,4 +123,4 @@ public class SlayerTabRenderer {
 		};
 	}
 }
-
+

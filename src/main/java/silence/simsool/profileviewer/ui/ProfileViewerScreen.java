@@ -17,9 +17,9 @@ import silence.simsool.lucent.general.utils.useful.UDisplay;
 import silence.simsool.lucent.general.utils.useful.UMouse;
 import silence.simsool.lucent.general.utils.useful.UScreen;
 import silence.simsool.lucent.ui.utils.URender;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGPIPRenderer;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.PvApi;
 import silence.simsool.profileviewer.api.PlayerDbApi;
 import silence.simsool.profileviewer.api.data.SkyBlockProfileData;
@@ -92,7 +92,7 @@ public class ProfileViewerScreen extends Screen {
 	}
 
 	private void updateLayout() {
-		float gs = NVGRenderer.getStandardGuiScale();
+		float gs = SkijaRenderer.getStandardGuiScale();
 		float sw = (float) UDisplay.getWidth() / gs;
 		float sh = (float) UDisplay.getHeight() / gs;
 
@@ -213,19 +213,19 @@ public class ProfileViewerScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		updateLayout();
 
-		float gs = NVGRenderer.getStandardGuiScale();
+		float gs = SkijaRenderer.getStandardGuiScale();
 
-		// 1. Draw NanoVG Base UI (Background, Cards, Sidebars, Tabs)
-		NVGPIPRenderer.draw(graphics, 0, 0, width, height, () -> {
-			float smx = UMouse.getNvgScaledX(uiScale);
-			float smy = UMouse.getNvgScaledY(uiScale);
+		// 1. Draw Skija Base UI (Background, Cards, Sidebars, Tabs)
+		SkijaRenderer.draw(graphics, 0, 0, width, height, () -> {
+			float smx = UMouse.getSkijaScaledX(uiScale);
+			float smy = UMouse.getSkijaScaledY(uiScale);
 
-			NVGRenderer.push();
-			NVGRenderer.scale(gs * uiScale, gs * uiScale);
+			SkijaRenderer.push();
+			SkijaRenderer.scale(gs * uiScale, gs * uiScale);
 
 			// Main Window Frame with Subtle Nebula Fog Background (Photo 3 Effect across entire window, 90% opacity = 0xE6)
-			NVGRenderer.pushScissor(winX, winY, WIN_W, WIN_H);
-			NVGRenderer.rect(winX, winY, WIN_W, WIN_H, 0xE60A0C13, 14f);
+			SkijaRenderer.pushScissor(winX, winY, WIN_W, WIN_H);
+			SkijaRenderer.rect(winX, winY, WIN_W, WIN_H, 0xE60A0C13, 14f);
 
 			// Gentle, subtle atmospheric fog clouds across sidebar and content
 			RenderHelper.drawAmbientGlow(winX + 160f, winY + 120f, 420f, 0x105850EC, 0x00000000); // Top-left indigo fog
@@ -233,15 +233,15 @@ public class ProfileViewerScreen extends Screen {
 			RenderHelper.drawAmbientGlow(winX + 980f, winY + 580f, 520f, 0x0E7C3AED, 0x00000000); // Bottom-right purple fog
 			RenderHelper.drawAmbientGlow(winX + 220f, winY + 620f, 400f, 0x0A0284C7, 0x00000000); // Bottom-left cyan fog
 			RenderHelper.drawAmbientGlow(winX + 600f, winY + 380f, 360f, 0x086366F1, 0x00000000); // Subtle center glow
-			NVGRenderer.popScissor();
+			SkijaRenderer.popScissor();
 
-			NVGRenderer.outlineRect(winX, winY, WIN_W, WIN_H, 1.2f, 0x22FFFFFF, 14f);
+			SkijaRenderer.outlineRect(winX, winY, WIN_W, WIN_H, 1.2f, 0x22FFFFFF, 14f);
 
-			NVGRenderer.rect(winX, winY, SIDEBAR_W, WIN_H, 0x55080910, 14f, 0, 0, 14f);
-			NVGRenderer.rect(winX + SIDEBAR_W, winY, 1f, WIN_H, 0x14FFFFFF);
+			SkijaRenderer.rect(winX, winY, SIDEBAR_W, WIN_H, 0x55080910, 14f, 0, 0, 14f);
+			SkijaRenderer.rect(winX + SIDEBAR_W, winY, 1f, WIN_H, 0x14FFFFFF);
 
 			// Topbar Separator
-			NVGRenderer.rect(winX + SIDEBAR_W, winY + TOPBAR_H, WIN_W - SIDEBAR_W, 1f, 0x14FFFFFF);
+			SkijaRenderer.rect(winX + SIDEBAR_W, winY + TOPBAR_H, WIN_W - SIDEBAR_W, 1f, 0x14FFFFFF);
 
 			// Topbar
 			renderTopBar(smx, smy);
@@ -257,11 +257,11 @@ public class ProfileViewerScreen extends Screen {
 				renderProfileDropdown(smx, smy);
 			}
 
-			NVGRenderer.pop();
+			SkijaRenderer.pop();
 		});
 
-		// 2. Draw 3D/2D Minecraft Item Textures in exact NanoVG Coordinate Space
-		float scaleRatio = (float) NVGRenderer.getStandardGuiScale() / (float) mc.getWindow().getGuiScale();
+		// 2. Draw 3D/2D Minecraft Item Textures in exact Skija Coordinate Space
+		float scaleRatio = (float) SkijaRenderer.getStandardGuiScale() / (float) mc.getWindow().getGuiScale();
 		float totalScale = scaleRatio * uiScale;
 		float itemScale = 2.0f;
 
@@ -348,7 +348,7 @@ public class ProfileViewerScreen extends Screen {
 
 
 		// Render Global Item Slots (Unified for all tabs: Farming, ChocolateFactory, Collections, Rift, Slayer, etc.)
-		float dropX1 = winX + SIDEBAR_W + 24f + NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f) + 16f;
+		float dropX1 = winX + SIDEBAR_W + 24f + SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f) + 16f;
 		float dropX2 = dropX1 + 145f;
 		float dropY1 = winY + 27f - 4f;
 		float dropY2 = dropY1 + 28f + (profileDropdownOpen ? (profiles.size() * 28f + 6f) : 0f);
@@ -437,11 +437,11 @@ public class ProfileViewerScreen extends Screen {
 		float hy = winY + 27f;
 
 		// Username (20.5px - slightly smaller and placed lower with more breathing room)
-		NVGRenderer.text(username, hx, hy - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 20.5f);
+		SkijaRenderer.text(username, hx, hy - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 20.5f);
 
 		// Profile Selector Button (Wider, seamless dropdown connection)
 		if (currentProfile != null) {
-			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
+			float userW = SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 			float pX = hx + userW + 16f;
 			float pW = 145f;
 			float pH = 28f;
@@ -449,20 +449,20 @@ public class ProfileViewerScreen extends Screen {
 			boolean hovP = mx >= pX && mx <= pX + pW && my >= pY && my <= pY + pH;
 
 			if (profileDropdownOpen) {
-				NVGRenderer.rect(pX, pY, pW, pH, 0xF8141624, 7f, 7f, 0f, 0f);
-				NVGRenderer.outlineRect(pX, pY, pW, pH, 1f, 0x33FFFFFF, 7f, 7f, 0f, 0f);
+				SkijaRenderer.rect(pX, pY, pW, pH, 0xF8141624, 7f, 7f, 0f, 0f);
+				SkijaRenderer.outlineRect(pX, pY, pW, pH, 1f, 0x33FFFFFF, 7f, 7f, 0f, 0f);
 			} else {
-				NVGRenderer.rect(pX, pY, pW, pH, hovP ? 0xE0222636 : 0xD0141624, 7f);
-				NVGRenderer.outlineRect(pX, pY, pW, pH, 1f, hovP ? 0x33FFFFFF : 0x1AFFFFFF, 7f);
+				SkijaRenderer.rect(pX, pY, pW, pH, hovP ? 0xE0222636 : 0xD0141624, 7f);
+				SkijaRenderer.outlineRect(pX, pY, pW, pH, 1f, hovP ? 0x33FFFFFF : 0x1AFFFFFF, 7f);
 			}
 
 			// Raspberry / Fruit Icon
-			NVGRenderer.text("\uE541", pX + 9f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF43F5E, 16f);
-			NVGRenderer.text(currentProfile.cuteName, pX + 30f, hy + 2.5f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 14f);
+			SkijaRenderer.text("\uE541", pX + 9f, hy + 2.5f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF43F5E, 16f);
+			SkijaRenderer.text(currentProfile.cuteName, pX + 30f, hy + 2.5f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 14f);
 
 			// Arrow Icon: keyboard_arrow_up \uE316 or keyboard_arrow_down \uE313
 			String arrowIcon = profileDropdownOpen ? "\uE316" : "\uE313";
-			NVGRenderer.text(arrowIcon, pX + pW - 20f, hy + 3f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 16f);
+			SkijaRenderer.text(arrowIcon, pX + pW - 20f, hy + 3f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 16f);
 
 			if (!"normal".equalsIgnoreCase(currentProfile.gameMode)) {
 				RenderHelper.drawBadge(currentProfile.gameMode.toUpperCase(), pX + pW + 10f, hy - 2f, 0xFF4A3B18, 0xFFFFAA00);
@@ -480,15 +480,15 @@ public class ProfileViewerScreen extends Screen {
 		float searchX = discX - searchW - 12f;
 		float searchY = hy - 4f;
 
-		NVGRenderer.rect(searchX, searchY, searchW, btnSize, 0xD0141624, 7f);
-		NVGRenderer.outlineRect(searchX, searchY, searchW, btnSize, 1f, 0x1AFFFFFF, 7f);
-		NVGRenderer.text("\uE8B6", searchX + 8.5f, hy + 3.5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 15f);
+		SkijaRenderer.rect(searchX, searchY, searchW, btnSize, 0xD0141624, 7f);
+		SkijaRenderer.outlineRect(searchX, searchY, searchW, btnSize, 1f, 0x1AFFFFFF, 7f);
+		SkijaRenderer.text("\uE8B6", searchX + 8.5f, hy + 3.5f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 15f);
 
 		if (searchInput.isEmpty() && !searchFocused) {
-			NVGRenderer.text("Search player...", searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_DISABLED, 13f);
+			SkijaRenderer.text("Search player...", searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_DISABLED, 13f);
 		} else {
 			String displayTxt = searchInput + (searchFocused && (System.currentTimeMillis() % 1000 < 500) ? "|" : "");
-			NVGRenderer.text(displayTxt, searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
+			SkijaRenderer.text(displayTxt, searchX + 28f, hy + 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
 		}
 
 		// Discord Button
@@ -496,25 +496,25 @@ public class ProfileViewerScreen extends Screen {
 			silence.simsool.lucent.ui.manager.LucentResourceManager.loadLucentIcons();
 		}
 		boolean hovDisc = mx >= discX && mx <= discX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
-		NVGRenderer.rect(discX, hy - 4f, btnSize, btnSize, hovDisc ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		SkijaRenderer.rect(discX, hy - 4f, btnSize, btnSize, hovDisc ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
 		if (silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord != null) {
-			NVGRenderer.image(silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord, discX + 5.5f, hy - 4f + 5.5f, 17f, 17f);
+			SkijaRenderer.image(silence.simsool.lucent.ui.manager.LucentResourceManager.iconDiscord, discX + 5.5f, hy - 4f + 5.5f, 17f, 17f);
 		}
 
 		// Settings Button
 		boolean hovSet = mx >= setX && mx <= setX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
-		NVGRenderer.rect(setX, hy - 4f, btnSize, btnSize, hovSet ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
-		NVGRenderer.text("\uE8B8", setX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.rect(setX, hy - 4f, btnSize, btnSize, hovSet ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		SkijaRenderer.text("\uE8B8", setX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 
 		// Refresh Button
 		boolean hovRef = mx >= refX && mx <= refX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
-		NVGRenderer.rect(refX, hy - 4f, btnSize, btnSize, hovRef ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
-		NVGRenderer.text("\uE5D5", refX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.rect(refX, hy - 4f, btnSize, btnSize, hovRef ? 0x33FFFFFF : 0x1AFFFFFF, 6f);
+		SkijaRenderer.text("\uE5D5", refX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 
 		// Close Button
 		boolean hovClose = mx >= closeX && mx <= closeX + btnSize && my >= hy - 4f && my <= hy - 4f + btnSize;
-		NVGRenderer.rect(closeX, hy - 4f, btnSize, btnSize, hovClose ? 0x44FF4444 : 0x1AFFFFFF, 6f);
-		NVGRenderer.text("\uE5CD", closeX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.rect(closeX, hy - 4f, btnSize, btnSize, hovClose ? 0x44FF4444 : 0x1AFFFFFF, 6f);
+		SkijaRenderer.text("\uE5CD", closeX + 5.5f, hy + 2f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_PRIMARY, 17f);
 	}
 
 	private void renderSidebar(float mx, float my) {
@@ -522,9 +522,9 @@ public class ProfileViewerScreen extends Screen {
 		float sy = winY + 28f;
 
 		// Sidebar Title (18px) with more top margin
-		NVGRenderer.text("PROFILE ", sx + 4, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 18f);
-		float pW = NVGRenderer.textWidth("PROFILE ", Fonts.PRETENDARD_SEMIBOLD, 18f);
-		NVGRenderer.text("VIEWER", sx + 4 + pW, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF6366F1, 18f);
+		SkijaRenderer.text("PROFILE ", sx + 4, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 18f);
+		float pW = SkijaRenderer.textWidth("PROFILE ", Fonts.PRETENDARD_SEMIBOLD, 18f);
+		SkijaRenderer.text("VIEWER", sx + 4 + pW, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF6366F1, 18f);
 		sy += 42f;
 
 		float tabW = SIDEBAR_W - 28f;
@@ -535,14 +535,14 @@ public class ProfileViewerScreen extends Screen {
 			boolean hov = mx >= sx && mx <= sx + tabW && my >= sy && my <= sy + tabH;
 
 			if (active) {
-				NVGRenderer.rect(sx, sy, tabW, tabH, 0xBF4F46E5, 8f);
+				SkijaRenderer.rect(sx, sy, tabW, tabH, 0xBF4F46E5, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(sx, sy, tabW, tabH, 0x1AFFFFFF, 8f);
+				SkijaRenderer.rect(sx, sy, tabW, tabH, 0x1AFFFFFF, 8f);
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			NVGRenderer.text(tab.icon, sx + 12f, sy + 9f, Fonts.MATERIAL_ICONS_ROUND, textColor, 18f);
-			NVGRenderer.text(tab.getTitle(), sx + 36f, sy + 11f, Fonts.PRETENDARD_MEDIUM, textColor, 14.5f);
+			SkijaRenderer.text(tab.icon, sx + 12f, sy + 9f, Fonts.MATERIAL_ICONS_ROUND, textColor, 18f);
+			SkijaRenderer.text(tab.getTitle(), sx + 36f, sy + 11f, Fonts.PRETENDARD_MEDIUM, textColor, 14.5f);
 
 			sy += tabH + 6f;
 		}
@@ -558,26 +558,26 @@ public class ProfileViewerScreen extends Screen {
 		if (loading) {
 			String loadTxt = "Loading Profile Data...";
 			float fs = 24f;
-			float loadW = NVGRenderer.textWidth(loadTxt, Fonts.PRETENDARD_SEMIBOLD, fs);
+			float loadW = SkijaRenderer.textWidth(loadTxt, Fonts.PRETENDARD_SEMIBOLD, fs);
 			float loadX = contentX + (contentW - loadW) / 2f;
 			float loadY = contentY + (contentH / 2f) - fs;
-			NVGRenderer.text(loadTxt, loadX, loadY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, fs);
+			SkijaRenderer.text(loadTxt, loadX, loadY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, fs);
 			return;
 		}
 
 		if (!errorMessage.isEmpty()) {
-			NVGRenderer.text(errorMessage, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF5555, RenderHelper.FS_BODY);
+			SkijaRenderer.text(errorMessage, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF5555, RenderHelper.FS_BODY);
 			return;
 		}
 
 		if (currentProfile == null) return;
 		String extraError = currentTab == PVTab.GARDEN ? currentProfile.gardenError : currentTab == PVTab.MUSEUM ? currentProfile.museumError : "";
 		if (!extraError.isEmpty()) {
-			NVGRenderer.text(extraError, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_MEDIUM, 0xFFFFAA55, RenderHelper.FS_BODY);
+			SkijaRenderer.text(extraError, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_MEDIUM, 0xFFFFAA55, RenderHelper.FS_BODY);
 			return;
 		}
 
-		NVGRenderer.pushScissor(contentX, contentY, contentW, contentH);
+		SkijaRenderer.pushScissor(contentX, contentY, contentW, contentH);
 
 		float renderedH = 0;
 		float startY = (float) (contentY - scrollOffset);
@@ -609,7 +609,7 @@ public class ProfileViewerScreen extends Screen {
 		maxScroll = Math.max(0, renderedH - contentH);
 		scrollOffset = Math.min(scrollOffset, maxScroll);
 
-		NVGRenderer.popScissor();
+		SkijaRenderer.popScissor();
 
 		if (maxScroll > 0) {
 			float trackX = contentX + contentW + 4f;
@@ -617,13 +617,13 @@ public class ProfileViewerScreen extends Screen {
 			float trackH = contentH;
 			float thumbH = Math.max(25f, (float) (contentH / (renderedH)) * trackH);
 			float thumbY = trackY + (float) (scrollOffset / maxScroll) * (trackH - thumbH);
-			NVGRenderer.rect(trackX, thumbY, 4f, thumbH, 0x55FFFFFF, 2f);
+			SkijaRenderer.rect(trackX, thumbY, 4f, thumbH, 0x55FFFFFF, 2f);
 		}
 	}
 
 	private void renderProfileDropdown(float mx, float my) {
 		float hx = winX + SIDEBAR_W + 24f;
-		float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
+		float userW = SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 		float pX = hx + userW + 16f;
 		float pW = 145f;
 		float pH = 28f;
@@ -633,17 +633,17 @@ public class ProfileViewerScreen extends Screen {
 		float totalH = profiles.size() * itemH + 6f;
 
 		// Seamless dropdown body attached underneath
-		NVGRenderer.rect(pX, pY + pH, pW, totalH, 0xF8141624, 0f, 0f, 7f, 7f);
-		NVGRenderer.outlineRect(pX, pY + pH, pW, totalH, 1f, 0x33FFFFFF, 0f, 0f, 7f, 7f);
+		SkijaRenderer.rect(pX, pY + pH, pW, totalH, 0xF8141624, 0f, 0f, 7f, 7f);
+		SkijaRenderer.outlineRect(pX, pY + pH, pW, totalH, 1f, 0x33FFFFFF, 0f, 0f, 7f, 7f);
 
 		for (int i = 0; i < profiles.size(); i++) {
 			SkyBlockProfileData p = profiles.get(i);
 			float iy = pY + pH + 3f + i * itemH;
 			boolean hov = mx >= pX && mx <= pX + pW && my >= iy && my <= iy + itemH;
-			if (hov) NVGRenderer.rect(pX + 4f, iy, pW - 8f, itemH, 0x22FFFFFF, 5f);
+			if (hov) SkijaRenderer.rect(pX + 4f, iy, pW - 8f, itemH, 0x22FFFFFF, 5f);
 
 			int col = (p == currentProfile) ? 0xFFFFFFFF : RenderHelper.FONT_MUTED;
-			NVGRenderer.text(p.cuteName, pX + 12f, iy + 7.5f, Fonts.PRETENDARD_MEDIUM, col, 13.5f);
+			SkijaRenderer.text(p.cuteName, pX + 12f, iy + 7.5f, Fonts.PRETENDARD_MEDIUM, col, 13.5f);
 		}
 	}
 
@@ -663,15 +663,15 @@ public class ProfileViewerScreen extends Screen {
 //		float tipW = Math.min(380f, maxLoreW + 24f);
 //		float tipH = 26f + (item.lore.size() * 15f) + 12f;
 //
-//		float gs = NVGRenderer.getStandardGuiScale();
+//		float gs = SkijaRenderer.getStandardGuiScale();
 //		float maxW = UDisplay.getWidth() / gs;
 //		float maxH = UDisplay.getHeight() / gs;
 //
 //		if (tx + tipW > maxW - 10) tx = maxW - tipW - 10;
 //		if (ty + tipH > maxH - 10) ty = maxH - tipH - 10;
 //
-//		NVGRenderer.rect(tx, ty, tipW, tipH, 0xF812131A, 8f);
-//		NVGRenderer.outlineRect(tx, ty, tipW, tipH, 1.2f, item.rarityColor, 8f);
+//		SkijaRenderer.rect(tx, ty, tipW, tipH, 0xF812131A, 8f);
+//		SkijaRenderer.outlineRect(tx, ty, tipW, tipH, 1.2f, item.rarityColor, 8f);
 //
 //		RenderHelper.drawColoredText(item.displayName, tx + 10f, ty + 8f, 14f, item.rarityColor);
 //
@@ -684,12 +684,12 @@ public class ProfileViewerScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
-		float mx = UMouse.getNvgScaledX(uiScale);
-		float my = UMouse.getNvgScaledY(uiScale);
+		float mx = UMouse.getSkijaScaledX(uiScale);
+		float my = UMouse.getSkijaScaledY(uiScale);
 		int btn = event.button();
 
 		if (btn == 0) {
-			float userW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
+			float userW = SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
 			float pX = winX + SIDEBAR_W + 24f + userW + 16f;
 			float pW = 145f;
 			float pH = 28f;
@@ -811,7 +811,7 @@ public class ProfileViewerScreen extends Screen {
 	@Override
 	public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double mouseX, double mouseY) {
 		if (isDraggingScrollbar && maxScroll > 0) {
-			float my = UMouse.getNvgScaledY(uiScale);
+			float my = UMouse.getSkijaScaledY(uiScale);
 			float trackY = contentY;
 			float trackH = contentH;
 			float thumbH = Math.max(25f, (float) (contentH / (maxScroll + contentH)) * trackH);
@@ -831,8 +831,8 @@ public class ProfileViewerScreen extends Screen {
 	@Override
 	public boolean mouseScrolled(double mx, double my, double hAmount, double vAmount) {
 		if (!loading && errorMessage.isEmpty() && !profileDropdownOpen && maxScroll > 0
-			&& UMouse.getNvgScaledX(uiScale) >= contentX && UMouse.getNvgScaledX(uiScale) <= contentX + contentW
-			&& UMouse.getNvgScaledY(uiScale) >= contentY && UMouse.getNvgScaledY(uiScale) <= contentY + contentH) {
+			&& UMouse.getSkijaScaledX(uiScale) >= contentX && UMouse.getSkijaScaledX(uiScale) <= contentX + contentW
+			&& UMouse.getSkijaScaledY(uiScale) >= contentY && UMouse.getSkijaScaledY(uiScale) <= contentY + contentH) {
 			scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - vAmount * 30.0));
 			return true;
 		}

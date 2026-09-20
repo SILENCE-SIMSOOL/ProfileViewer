@@ -53,16 +53,15 @@ dependencies {
 
 	runtimeOnly("me.djtheredstoner:DevAuth-fabric:${property("devauth_version")}")
 
-	def lwjglVersion = project.property("minecraft_lwjgl_version")
-	implementation "org.lwjgl:lwjgl-nanovg:${lwjglVersion}"
-	["windows", "linux", "macos", "macos-arm64"].each { os ->
-		implementation "org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-${os}"
-	}
+	implementation "io.github.humbleui:skija-shared:${project.skija_version}"
+	include "io.github.humbleui:skija-shared:${project.skija_version}"
+	implementation "io.github.humbleui:types:${project.types_version}"
+	include "io.github.humbleui:types:${project.types_version}"
 
 	def lucentVersion = "${project.lucent_version}-${project.minecraft_version}-${project.lucent_library}"
 	implementation "com.github.SILENCE-SIMSOOL:lucent:${lucentVersion}"
 
-	implementation files("libs/LucentClient-1.0.21-mc26.2-lite.jar")
+	implementation files("libs/LucentClient-1.1.10-mc26.2-lite.jar")
 	implementation files("libs/velocity-native-3.4.0.jar")
 }
 

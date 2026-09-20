@@ -10,8 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.HotfTreeData;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.MiningData;
@@ -70,19 +70,19 @@ public class ForagingTabRenderer {
 
 		for (ForagingSubTab st : ForagingSubTab.values()) {
 			boolean isSel = (st == activeSubTab);
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			boolean hov = mx >= subTabX && mx <= subTabX + stW && my >= curY && my <= curY + subTabH;
 
 			int bgCol = isSel ? 0xFF059669 : (hov ? 0x33059669 : 0x1AFFFFFF);
 			int textCol = isSel ? 0xFFFFFFFF : (hov ? 0xFF6EE7B7 : RenderHelper.FONT_MUTED);
 
-			NVGRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
+			SkijaRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
 			if (isSel) {
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
 			}
 
-			NVGRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
-			NVGRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
+			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
+			SkijaRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
 		}
@@ -103,33 +103,33 @@ public class ForagingTabRenderer {
 		// Foraging Level
 		int forLvl = (data != null && data.skills != null && data.skills.skills.containsKey("foraging")) ? data.skills.skills.get("foraging").level : 0;
 		RenderHelper.drawModernCard(startX, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE520", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
-		NVGRenderer.text("Foraging Level", startX + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text("Lv. " + forLvl, startX + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
+		SkijaRenderer.text("\uE520", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		SkijaRenderer.text("Foraging Level", startX + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Lv. " + forLvl, startX + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
 		// Heart of the Forest Level
 		int hotfLvl = (data != null && data.mining != null) ? data.mining.hotfLevel : 0;
 		float s2X = startX + statW + 10f;
 		RenderHelper.drawModernCard(s2X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE8EF", s2X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF059669, 18f);
-		NVGRenderer.text("HotF Level", s2X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text("Lv. " + hotfLvl, s2X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF059669, 16f);
+		SkijaRenderer.text("\uE8EF", s2X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF059669, 18f);
+		SkijaRenderer.text("HotF Level", s2X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Lv. " + hotfLvl, s2X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF059669, 16f);
 
 		// HotF Experience
 		double hotfExp = (data != null && data.mining != null) ? data.mining.hotfExperience : 0;
 		float s3X = s2X + statW + 10f;
 		RenderHelper.drawModernCard(s3X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE838", s3X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 18f);
-		NVGRenderer.text("HotF Experience", s3X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text(RenderHelper.formatNumber((long) hotfExp), s3X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f);
+		SkijaRenderer.text("\uE838", s3X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 18f);
+		SkijaRenderer.text("HotF Experience", s3X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text(RenderHelper.formatNumber((long) hotfExp), s3X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f);
 
 		// Wood Essence
 		long woodEssence = (data != null && data.essence != null) ? data.essence.getOrDefault("foraging", 0L) : 0L;
 		float s4X = s3X + statW + 10f;
 		RenderHelper.drawModernCard(s4X, curY, statW, statH, 10f, false);
-		NVGRenderer.text("\uE520", s4X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
-		NVGRenderer.text("Wood Essence", s4X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-		NVGRenderer.text(RenderHelper.formatNumber(woodEssence), s4X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
+		SkijaRenderer.text("\uE520", s4X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		SkijaRenderer.text("Wood Essence", s4X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text(RenderHelper.formatNumber(woodEssence), s4X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
 		curY += statH + 14f;
 
@@ -148,8 +148,8 @@ public class ForagingTabRenderer {
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
 
 		// Header
-		NVGRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
-		NVGRenderer.text("Heart of the Forest (HOTF)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		SkijaRenderer.text("Heart of the Forest (HOTF)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		int hotfLevel = data != null ? data.mining.hotfLevel : 0;
 		Map<String, Integer> activeNodes = data != null ? data.mining.foragingPresetNodes.getOrDefault(activeLoadoutSlot, data.mining.foragingNodes) : Map.of();
@@ -245,7 +245,7 @@ public class ForagingTabRenderer {
 		float subTabX = startX;
 
 		for (ForagingSubTab st : ForagingSubTab.values()) {
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
 				activeSubTab = st;
 				return true;

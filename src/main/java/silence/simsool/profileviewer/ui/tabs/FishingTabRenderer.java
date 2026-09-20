@@ -7,8 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.FishingData;
 import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.MemberData;
@@ -59,7 +59,7 @@ public class FishingTabRenderer {
 		// ---------------------------------------------------------------------
 		float c1X = startX;
 		RenderHelper.drawModernCard(c1X, curY, infoW, topCardH, 10f, false);
-		NVGRenderer.text("Information", c1X + (infoW - NVGRenderer.textWidth("Information", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Information", c1X + (infoW - SkijaRenderer.textWidth("Information", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float infoY = curY + 34f;
 		float rowH = 22f;
@@ -81,7 +81,7 @@ public class FishingTabRenderer {
 		// ---------------------------------------------------------------------
 		float c2X = c1X + infoW + colGap;
 		RenderHelper.drawModernCard(c2X, curY, statsW, topCardH, 10f, false);
-		NVGRenderer.text("Stats", c2X + (statsW - NVGRenderer.textWidth("Stats", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Stats", c2X + (statsW - SkijaRenderer.textWidth("Stats", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float statsY = curY + 34f;
 		RenderHelper.drawStatRow("Treasures caught", RenderHelper.formatNumber(f.treasuresCaught), c2X + 12f, statsY, statsW - 24f, 13f, 0xFFEF4444);
@@ -102,7 +102,7 @@ public class FishingTabRenderer {
 		// ---------------------------------------------------------------------
 		float c3X = c2X + statsW + colGap;
 		RenderHelper.drawModernCard(c3X, curY, gearW, topCardH, 10f, false);
-		NVGRenderer.text("Gear", c3X + (gearW - NVGRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Gear", c3X + (gearW - SkijaRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float slotSize = 30f;
 		float slotGap = 4f;
@@ -162,7 +162,7 @@ public class FishingTabRenderer {
 		// ---------------------------------------------------------------------
 		float trophyCardH = 220f;
 		RenderHelper.drawModernCard(startX, curY, totalW, trophyCardH, 10f, false);
-		NVGRenderer.text("Trophy Fish", startX + (totalW - NVGRenderer.textWidth("Trophy Fish", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Trophy Fish", startX + (totalW - SkijaRenderer.textWidth("Trophy Fish", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		int numFish = FishingData.TROPHY_FISH_TYPES.length; // 18
 		float tfSlotSize = 28f;

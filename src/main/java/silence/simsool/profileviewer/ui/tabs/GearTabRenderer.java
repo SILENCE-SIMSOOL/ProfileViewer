@@ -14,8 +14,8 @@ import java.util.Set;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
 import silence.simsool.profileviewer.api.data.HotfTreeData;
 import silence.simsool.profileviewer.api.data.HotmTreeData;
@@ -91,9 +91,9 @@ public class GearTabRenderer {
 
 		if (data == null || data.inventory == null || !data.inventory.available) {
 			RenderHelper.drawModernCard(startX, curY, width, 80f, 10f, false);
-			NVGRenderer.text("\uE000", startX + 24, curY + 30, Fonts.MATERIAL_ICONS_ROUND, 0xFFFFAA00, 24f);
-			NVGRenderer.text(L10n.translate("pv.gear.api_disabled_title"), startX + 60, curY + 28, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
-			NVGRenderer.text(L10n.translate("pv.gear.api_disabled_desc"), startX + 60, curY + 48, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
+			SkijaRenderer.text("\uE000", startX + 24, curY + 30, Fonts.MATERIAL_ICONS_ROUND, 0xFFFFAA00, 24f);
+			SkijaRenderer.text(L10n.translate("pv.gear.api_disabled_title"), startX + 60, curY + 28, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, RenderHelper.FS_BUTTON);
+			SkijaRenderer.text(L10n.translate("pv.gear.api_disabled_desc"), startX + 60, curY + 48, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, RenderHelper.FS_CAPTION);
 			return 90f;
 		}
 
@@ -104,7 +104,7 @@ public class GearTabRenderer {
 		for (GearSubTab st : GearSubTab.values()) {
 			String title = st.getTitle();
 			float iconW = 18f;
-			float textW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			float textW = SkijaRenderer.textWidth(title, Fonts.PRETENDARD_SEMIBOLD, 14f);
 			float stW = iconW + textW + 24f;
 			if (subTabX + stW > startX + width && subTabX > startX) {
 				subTabX = startX;
@@ -114,21 +114,21 @@ public class GearTabRenderer {
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + stW && mouseY >= curY && mouseY <= curY + subTabH;
 
 			if (active) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0xFF6366F1, 8f);
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x44FFFFFF, 8f);
+				SkijaRenderer.rect(subTabX, curY, stW, subTabH, 0xFF6366F1, 8f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x44FFFFFF, 8f);
 			} else if (hov) {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0xCC202336, 8f);
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x22FFFFFF, 8f);
+				SkijaRenderer.rect(subTabX, curY, stW, subTabH, 0xCC202336, 8f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x22FFFFFF, 8f);
 			} else {
-				NVGRenderer.rect(subTabX, curY, stW, subTabH, 0x80161824, 8f);
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x14FFFFFF, 8f);
+				SkijaRenderer.rect(subTabX, curY, stW, subTabH, 0x80161824, 8f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1f, 0x14FFFFFF, 8f);
 			}
 
 			int iconCol = active ? 0xFFFFFFFF : (hov ? 0xFF818CF8 : 0xFF9CA3AF);
 			int textCol = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
 
-			NVGRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, iconCol, 15f);
-			NVGRenderer.text(title, subTabX + 28f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
+			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, iconCol, 15f);
+			SkijaRenderer.text(title, subTabX + 28f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
 		}
@@ -178,8 +178,8 @@ public class GearTabRenderer {
 
 		float armorColX = originX;
 		RenderHelper.drawModernCard(armorColX, curY, armorCardW, cardH, 12f, false);
-		NVGRenderer.text("\uE8C9", armorColX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
-		NVGRenderer.text("Gear", armorColX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		SkijaRenderer.text("\uE8C9", armorColX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
+		SkijaRenderer.text("Gear", armorColX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int i = 0; i < 4; i++) {
 			float sy = curY + 36f + i * (slotSize + slotGap);
@@ -194,8 +194,8 @@ public class GearTabRenderer {
 
 		float invX = armorColX + armorCardW + cardGap;
 		RenderHelper.drawModernCard(invX, curY, invCardW, cardH, 12f, false);
-		NVGRenderer.text("\uE8F9", invX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
-		NVGRenderer.text("Inventory", invX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		SkijaRenderer.text("\uE8F9", invX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
+		SkijaRenderer.text("Inventory", invX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int r = 0; r < 4; r++) {
 			for (int c = 0; c < 9; c++) {
@@ -234,8 +234,8 @@ public class GearTabRenderer {
 
 			float leftX = startX;
 			RenderHelper.drawModernCard(leftX, rowY, pageW, cardH, 10f, false);
-			NVGRenderer.text("\uE52E", leftX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
-			NVGRenderer.text("Wardrobe #" + (p + 1), leftX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+			SkijaRenderer.text("\uE52E", leftX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
+			SkijaRenderer.text("Wardrobe #" + (p + 1), leftX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 			for (int row = 0; row < 4; row++) {
 				for (int col = 0; col < 9; col++) {
@@ -247,7 +247,7 @@ public class GearTabRenderer {
 
 					boolean isEquipped = (inv.loadouts != null && inv.loadouts.equippedArmorSet == setId);
 					if (isEquipped && row == 0) {
-						NVGRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, 4 * slotSize + 3 * slotGap + 3f, 1.5f, 0xFF10B981, 6f);
+						SkijaRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, 4 * slotSize + 3 * slotGap + 3f, 1.5f, 0xFF10B981, 6f);
 					}
 					drawSlot(sx, sy, slotSize, item, mx, my, false);
 				}
@@ -256,8 +256,8 @@ public class GearTabRenderer {
 			if (p + 1 < totalPages) {
 				float rightX = startX + pageW + colGap;
 				RenderHelper.drawModernCard(rightX, rowY, pageW, cardH, 10f, false);
-				NVGRenderer.text("\uE52E", rightX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
-				NVGRenderer.text("Wardrobe #" + (p + 2), rightX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+				SkijaRenderer.text("\uE52E", rightX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
+				SkijaRenderer.text("Wardrobe #" + (p + 2), rightX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 				for (int row = 0; row < 4; row++) {
 					for (int col = 0; col < 9; col++) {
@@ -269,7 +269,7 @@ public class GearTabRenderer {
 
 						boolean isEquipped = (inv.loadouts != null && inv.loadouts.equippedArmorSet == setId);
 						if (isEquipped && row == 0) {
-							NVGRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, 4 * slotSize + 3 * slotGap + 3f, 1.5f, 0xFF10B981, 6f);
+							SkijaRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, 4 * slotSize + 3 * slotGap + 3f, 1.5f, 0xFF10B981, 6f);
 						}
 						drawSlot(sx, sy, slotSize, item, mx, my, false);
 					}
@@ -325,8 +325,8 @@ public class GearTabRenderer {
 
 		// 1. Left Loadouts Selector Card (3 cols x 9 rows = 27 preset templates)
 		RenderHelper.drawModernCard(startX, curY, loadoutsW, mainH, 12f, false);
-		NVGRenderer.text("\uE8EF", startX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 15f);
-		NVGRenderer.text("Loadouts", startX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("\uE8EF", startX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 15f);
+		SkijaRenderer.text("Loadouts", startX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 		for (int r = 0; r < 9; r++) {
 			for (int c = 0; c < 3; c++) {
@@ -344,8 +344,8 @@ public class GearTabRenderer {
 
 				int bgCol = isSelected ? 0xFF2A3450 : (isHov ? 0xFF252738 : 0x40161824);
 				int borderCol = isSelected ? 0xFF818CF8 : (isHov ? 0x66FFFFFF : 0x1AFFFFFF);
-				NVGRenderer.rect(bx, by, selSlotSize, selSlotSize, bgCol, 6f);
-				NVGRenderer.outlineRect(bx, by, selSlotSize, selSlotSize, isSelected ? 1.8f : 1f, borderCol, 6f);
+				SkijaRenderer.rect(bx, by, selSlotSize, selSlotSize, bgCol, 6f);
+				SkijaRenderer.outlineRect(bx, by, selSlotSize, selSlotSize, isSelected ? 1.8f : 1f, borderCol, 6f);
 
 				ParsedItem selectorItem = getLoadoutSelectorItem(data, sl, index);
 				drawSlot(bx + 2f, by + 2f, selSlotSize - 4f, selectorItem, mx, my, false);
@@ -377,15 +377,15 @@ public class GearTabRenderer {
 		// Column 1: HOTM Loadout Card
 		float hotmX = mainStartX;
 		RenderHelper.drawModernCard(hotmX, curY, treeW, mainH, 12f, false);
-		NVGRenderer.text("\uE52F", hotmX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
-		NVGRenderer.text("HOTM Loadout", hotmX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("\uE52F", hotmX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
+		SkijaRenderer.text("HOTM Loadout", hotmX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		renderFullHotmTree(hotmX, curY + 36f, treeW, mainH - 44f, data, miningSlot, mx, my);
 
 		// Column 2: Equipment Card (Center)
 		float eqX = hotmX + treeW + colGap;
 		RenderHelper.drawModernCard(eqX, curY, eqW, mainH, 12f, false);
-		NVGRenderer.text("\uE8C9", eqX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 15f);
-		NVGRenderer.text("Equipment", eqX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("\uE8C9", eqX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 15f);
+		SkijaRenderer.text("Equipment", eqX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 		List<ParsedItem> armorItems = getLoadoutArmorItems(inv, curSl);
 		List<ParsedItem> equipmentItems = getLoadoutEquipmentItems(inv, curSl);
@@ -441,8 +441,8 @@ public class GearTabRenderer {
 		// Column 3: HOTF Loadout Card
 		float hotfX = eqX + eqW + colGap;
 		RenderHelper.drawModernCard(hotfX, curY, treeW, mainH, 12f, false);
-		NVGRenderer.text("\uE56C", hotfX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF34D399, 16f);
-		NVGRenderer.text("HOTF Loadout", hotfX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("\uE56C", hotfX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF34D399, 16f);
+		SkijaRenderer.text("HOTF Loadout", hotfX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		renderFullHotfTree(hotfX, curY + 36f, treeW, mainH - 44f, data, foragingSlot, mx, my);
 
 		curY += mainH + 16f;
@@ -582,9 +582,9 @@ public class GearTabRenderer {
 		int rows = Math.max(1, (items.size() + 8) / 9);
 		float height = 44f + rows * (slotSize + 5f);
 		RenderHelper.drawModernCard(x, y, width, height, 10f, false);
-		NVGRenderer.text(title, x + 16f, y + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		SkijaRenderer.text(title, x + 16f, y + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 		if (items.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 42f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
+			SkijaRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 42f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
 		} else {
 			for (int i = 0; i < items.size(); i++) {
 				float sx = x + 16f + (i % 9) * (slotSize + 5f);
@@ -636,7 +636,7 @@ public class GearTabRenderer {
 	private static float renderSacks(InventoryData data, float x, float y, float width) {
 		float start = y;
 		if (data.sacks.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+			SkijaRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 			return 50f;
 		}
 		var entries = data.sacks.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
@@ -648,10 +648,10 @@ public class GearTabRenderer {
 			float sy = y + (i / 2) * 42f;
 			RenderHelper.drawModernCard(sx, sy, cardW, 34f, 7f, false);
 			String name = entry.getKey().replace('_', ' ');
-			NVGRenderer.text(name, sx + 12f, sy + 9f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
+			SkijaRenderer.text(name, sx + 12f, sy + 9f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
 			String amount = RenderHelper.formatNumber(entry.getValue());
-			float amountW = NVGRenderer.textWidth(amount, Fonts.PRETENDARD_SEMIBOLD, 14f);
-			NVGRenderer.text(amount, sx + cardW - 12f - amountW, sy + 9f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+			float amountW = SkijaRenderer.textWidth(amount, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			SkijaRenderer.text(amount, sx + cardW - 12f - amountW, sy + 9f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
 		}
 		y += ((entries.size() + 1) / 2) * 42f;
 		return y - start;
@@ -664,7 +664,7 @@ public class GearTabRenderer {
 		float y0 = curY;
 		if (data.inventory.backpacks.isEmpty()) {
 			RenderHelper.drawModernCard(startX, curY, width, 60f, 10f, false);
-			NVGRenderer.text(L10n.translate("pv.gear.empty_page"), startX + 16, curY + 22, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, 14f);
+			SkijaRenderer.text(L10n.translate("pv.gear.empty_page"), startX + 16, curY + 22, Fonts.PRETENDARD, RenderHelper.FONT_SECONDARY, 14f);
 			return 70f;
 		}
 
@@ -684,7 +684,7 @@ public class GearTabRenderer {
 			float cardH1 = rows1 * slotSize + (rows1 - 1) * slotGap + 44f;
 
 			RenderHelper.drawModernCard(leftX, rowY, pageW, cardH1, 10f, false);
-			NVGRenderer.text("Backpack #" + (b + 1) + " (" + bp1.size() + " slots)", leftX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+			SkijaRenderer.text("Backpack #" + (b + 1) + " (" + bp1.size() + " slots)", leftX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 			for (int r = 0; r < rows1; r++) {
 				for (int c = 0; c < 9; c++) {
 					int idx = r * 9 + c;
@@ -704,7 +704,7 @@ public class GearTabRenderer {
 				if (cardH2 > maxH) maxH = cardH2;
 
 				RenderHelper.drawModernCard(rightX, rowY, pageW, cardH2, 10f, false);
-				NVGRenderer.text("Backpack #" + (b + 2) + " (" + bp2.size() + " slots)", rightX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+				SkijaRenderer.text("Backpack #" + (b + 2) + " (" + bp2.size() + " slots)", rightX + 12, rowY + 12, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 				for (int r = 0; r < rows2; r++) {
 					for (int c = 0; c < 9; c++) {
 						int idx = r * 9 + c;
@@ -746,8 +746,8 @@ public class GearTabRenderer {
 
 		// 1. Left: 12-Column Accessory Grid Card
 		RenderHelper.drawModernCard(startX, curY, gridW, gridH, 12f, false);
-		NVGRenderer.text("\uEA5F", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 16f);
-		NVGRenderer.text("Accessory Bag (" + totalAcc + " Items)", startX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		SkijaRenderer.text("\uEA5F", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 16f);
+		SkijaRenderer.text("Accessory Bag (" + totalAcc + " Items)", startX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int i = 0; i < totalAcc; i++) {
 			int r = i / cols;
@@ -761,10 +761,10 @@ public class GearTabRenderer {
 			drawSlot(sx, sy, slotSize, item, mx, my, true);
 
 			if (isMatched) {
-				NVGRenderer.rect(sx, sy, slotSize, slotSize, 0x4038BDF8, 6f);
-				NVGRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, slotSize + 3f, 2f, 0xFF38BDF8, 7f);
+				SkijaRenderer.rect(sx, sy, slotSize, slotSize, 0x4038BDF8, 6f);
+				SkijaRenderer.outlineRect(sx - 1.5f, sy - 1.5f, slotSize + 3f, slotSize + 3f, 2f, 0xFF38BDF8, 7f);
 			} else if (!query.isEmpty() && !item.isEmpty()) {
-				NVGRenderer.rect(sx, sy, slotSize, slotSize, 0x66000000, 6f);
+				SkijaRenderer.rect(sx, sy, slotSize, slotSize, 0x66000000, 6f);
 			}
 		}
 
@@ -780,23 +780,23 @@ public class GearTabRenderer {
 		float fontSz = 13.5f;
 
 		// Total Magical Power
-		NVGRenderer.text("Magical Power", padX, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 12f);
+		SkijaRenderer.text("Magical Power", padX, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 12f);
 		String mpStr = RenderHelper.formatNumber(analysis.totalMp);
-		NVGRenderer.text(mpStr, padX, sy + 18f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 26f);
+		SkijaRenderer.text(mpStr, padX, sy + 18f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 26f);
 
 		// Selected Power
 		String selPower = (inv.maxwell != null && !inv.maxwell.selectedPower.isEmpty())
 				? capitalize(inv.maxwell.selectedPower)
 				: "None";
-		float mpWidth = NVGRenderer.textWidth(mpStr, Fonts.PRETENDARD_SEMIBOLD, 26f);
-		NVGRenderer.text("Power: " + selPower, padX + mpWidth + 14f, sy + 24f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 13f);
+		float mpWidth = SkijaRenderer.textWidth(mpStr, Fonts.PRETENDARD_SEMIBOLD, 26f);
+		SkijaRenderer.text("Power: " + selPower, padX + mpWidth + 14f, sy + 24f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 13f);
 
 		sy += 54f;
-		NVGRenderer.rect(padX, sy, innerW, 1f, 0x1AFFFFFF, 0.5f);
+		SkijaRenderer.rect(padX, sy, innerW, 1f, 0x1AFFFFFF, 0.5f);
 		sy += 14f;
 
 		// Rarity Breakdown
-		NVGRenderer.text("Rarity Breakdown", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Rarity Breakdown", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		sy += 22f;
 
 		String[] rarityOrder = {"MYTHIC", "LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON", "SPECIAL", "VERY SPECIAL"};
@@ -806,12 +806,12 @@ public class GearTabRenderer {
 			if (count == 0) continue;
 
 			int color = getRarityColor(rar);
-			NVGRenderer.circle(padX + 5f, sy + 6f, 3.5f, color);
-			NVGRenderer.text(capitalize(rar), padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, fontSz);
+			SkijaRenderer.circle(padX + 5f, sy + 6f, 3.5f, color);
+			SkijaRenderer.text(capitalize(rar), padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, fontSz);
 
 			String statTxt = count + " pcs (+" + mpContrib + " MP)";
-			float tw = NVGRenderer.textWidth(statTxt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
-			NVGRenderer.text(statTxt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, color, fontSz);
+			float tw = SkijaRenderer.textWidth(statTxt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
+			SkijaRenderer.text(statTxt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, color, fontSz);
 
 			sy += 20f;
 		}
@@ -819,39 +819,39 @@ public class GearTabRenderer {
 		if (analysis.riftPrismBonus > 0 || analysis.abiphoneBonus > 0) {
 			sy += 4f;
 			if (analysis.riftPrismBonus > 0) {
-				NVGRenderer.text("Rift Prism", padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, fontSz);
+				SkijaRenderer.text("Rift Prism", padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, fontSz);
 				String txt = "+11 MP";
-				float tw = NVGRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
-				NVGRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
+				float tw = SkijaRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
+				SkijaRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
 				sy += 20f;
 			}
 			if (analysis.abiphoneBonus > 0) {
-				NVGRenderer.text("Abiphone Contacts", padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, fontSz);
+				SkijaRenderer.text("Abiphone Contacts", padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, fontSz);
 				String txt = "+" + analysis.abiphoneBonus + " MP";
-				float tw = NVGRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
-				NVGRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
+				float tw = SkijaRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
+				SkijaRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
 				sy += 20f;
 			}
 		}
 
 		sy += 10f;
-		NVGRenderer.rect(padX, sy, innerW, 1f, 0x1AFFFFFF, 0.5f);
+		SkijaRenderer.rect(padX, sy, innerW, 1f, 0x1AFFFFFF, 0.5f);
 		sy += 14f;
 
 		// Duplicates Section
-		NVGRenderer.text("Duplicates", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Duplicates", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		sy += 22f;
 
 		if (analysis.duplicates.isEmpty()) {
-			NVGRenderer.text("\uE86C", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 14f);
-			NVGRenderer.text("No duplicates found. All accessories active!", padX + 18f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF10B981, fontSz);
+			SkijaRenderer.text("\uE86C", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 14f);
+			SkijaRenderer.text("No duplicates found. All accessories active!", padX + 18f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF10B981, fontSz);
 		} else {
-			NVGRenderer.text("\uE002", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFEF4444, 14f);
-			NVGRenderer.text(analysis.duplicates.size() + " Duplicate(s) inactive:", padX + 18f, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFFEF4444, fontSz);
+			SkijaRenderer.text("\uE002", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFEF4444, 14f);
+			SkijaRenderer.text(analysis.duplicates.size() + " Duplicate(s) inactive:", padX + 18f, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFFEF4444, fontSz);
 			sy += 20f;
 
 			for (String dupName : analysis.duplicates) {
-				NVGRenderer.text("• " + dupName, padX + 10f, sy, Fonts.PRETENDARD, RenderHelper.FONT_MUTED, 12.5f);
+				SkijaRenderer.text("• " + dupName, padX + 10f, sy, Fonts.PRETENDARD, RenderHelper.FONT_MUTED, 12.5f);
 				sy += 18f;
 			}
 		}
@@ -881,7 +881,7 @@ public class GearTabRenderer {
 
 		if (item != null && !item.isEmpty()) {
 			if (showRarityLine) {
-				NVGRenderer.rect(x + 2, y + size - 3f, size - 4, 2f, item.rarityColor, 1f);
+				SkijaRenderer.rect(x + 2, y + size - 3f, size - 4, 2f, item.rarityColor, 1f);
 			}
 			visibleSlots.add(new SlotRenderInfo(x, y, size, item));
 
@@ -902,7 +902,7 @@ public class GearTabRenderer {
 		float subTabX = startX;
 		for (GearSubTab st : GearSubTab.values()) {
 			float iconW = 18f;
-			float textW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f);
+			float textW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f);
 			float stW = iconW + textW + 24f;
 			if (subTabX + stW > startX + width && subTabX > startX) {
 				subTabX = startX;

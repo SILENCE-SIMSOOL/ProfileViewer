@@ -11,8 +11,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import silence.simsool.lucent.ui.utils.UIColors;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.PlayerStatus;
 import silence.simsool.profileviewer.api.data.SkillsData;
@@ -157,13 +157,13 @@ public class OverviewTabRenderer {
 		String lvlPrefix = "[" + level + "] ";
 		float fs = 16.5f;
 
-		float lvlW = NVGRenderer.textWidth(lvlPrefix, Fonts.PRETENDARD_SEMIBOLD, fs);
-		float nameW = NVGRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float lvlW = SkijaRenderer.textWidth(lvlPrefix, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float nameW = SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, fs);
 		float totalW = lvlW + nameW;
 		float startX = x + (w - totalW) / 2f;
 
-		NVGRenderer.text(lvlPrefix, startX, headerY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF4D4D, fs);
-		NVGRenderer.text(username, startX + lvlW, headerY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
+		SkijaRenderer.text(lvlPrefix, startX, headerY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF4D4D, fs);
+		SkijaRenderer.text(username, startX + lvlW, headerY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
 	}
 
 	private static void drawPlayerStatusFooter(float x, float y, float w, float h, PlayerStatus status, long lastLogin) {
@@ -172,11 +172,11 @@ public class OverviewTabRenderer {
 
 		float cy = y + h / 2f;
 		float fs = 13f;
-		NVGRenderer.circle(x + 16f, cy, 3.5f, dotCol);
+		SkijaRenderer.circle(x + 16f, cy, 3.5f, dotCol);
 
 		String statusTxt = isOnline ? "ONLINE" : "OFFLINE";
 		int txtCol = isOnline ? 0xFF10B981 : RenderHelper.FONT_MUTED;
-		NVGRenderer.text(statusTxt, x + 26f, cy - 4f, Fonts.PRETENDARD_SEMIBOLD, txtCol, fs);
+		SkijaRenderer.text(statusTxt, x + 26f, cy - 4f, Fonts.PRETENDARD_SEMIBOLD, txtCol, fs);
 
 		String rightTxt;
 		if (isOnline) {
@@ -184,8 +184,8 @@ public class OverviewTabRenderer {
 		} else {
 			rightTxt = lastLogin > 0 ? formatTimeAgo(lastLogin) : "Offline";
 		}
-		float rw = NVGRenderer.textWidth(rightTxt, Fonts.PRETENDARD_MEDIUM, fs);
-		NVGRenderer.text(rightTxt, x + w - rw - 16f, cy - 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, fs);
+		float rw = SkijaRenderer.textWidth(rightTxt, Fonts.PRETENDARD_MEDIUM, fs);
+		SkijaRenderer.text(rightTxt, x + w - rw - 16f, cy - 4f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, fs);
 	}
 
 	private static void drawInfoSection(float x, float y, float w, float h, MemberData data) {
@@ -194,8 +194,8 @@ public class OverviewTabRenderer {
 		float curY = y + 15f;
 
 		// Information Header: [Icon] Information
-		NVGRenderer.text("\uE88F", padX, curY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
-		NVGRenderer.text("Information", padX + 22f, curY - 0.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
+		SkijaRenderer.text("\uE88F", padX, curY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
+		SkijaRenderer.text("Information", padX + 22f, curY - 0.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
 		curY += 26f;
 
 		float lineH = 26f;
@@ -241,9 +241,9 @@ public class OverviewTabRenderer {
 	}
 
 	private static void drawInfoRow(String label, String value, float x, float y, float w, float fs, int valColor) {
-		NVGRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, fs);
-		float valW = NVGRenderer.textWidth(value, Fonts.PRETENDARD_MEDIUM, fs);
-		NVGRenderer.text(value, x + w - valW, y, Fonts.PRETENDARD_MEDIUM, valColor, fs);
+		SkijaRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, fs);
+		float valW = SkijaRenderer.textWidth(value, Fonts.PRETENDARD_MEDIUM, fs);
+		SkijaRenderer.text(value, x + w - valW, y, Fonts.PRETENDARD_MEDIUM, valColor, fs);
 	}
 
 	private static void drawStatCard(float x, float y, float w, float h, String icon, int iconColor, String label, String val, int valColor, float mx, float my) {
@@ -253,13 +253,13 @@ public class OverviewTabRenderer {
 		float iconBoxSize = 40f;
 		float ix = x + 14f;
 		float iy = y + (h - iconBoxSize) / 2f;
-		NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(iconColor, 32), iconBoxSize / 2f);
-		NVGRenderer.text(icon, ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, iconColor, 21f);
+		SkijaRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(iconColor, 32), iconBoxSize / 2f);
+		SkijaRenderer.text(icon, ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, iconColor, 21f);
 
 		// Label (Top) & Value (Bottom) on Right with proper vertical centering
 		float tx = ix + iconBoxSize + 12f;
-		NVGRenderer.text(label, tx, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		NVGRenderer.text(val, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, valColor, 19f);
+		SkijaRenderer.text(label, tx, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		SkijaRenderer.text(val, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, valColor, 19f);
 	}
 
 	private static void drawLevelStatCard(float x, float y, float w, float h, int level, int progress, float mx, float my) {
@@ -270,20 +270,20 @@ public class OverviewTabRenderer {
 		float ix = x + 14f;
 		float iy = y + (h - iconBoxSize) / 2f;
 		int limeColor = 0xFFA3E635;
-		NVGRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(limeColor, 32), iconBoxSize / 2f);
-		NVGRenderer.text("\uE202", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, limeColor, 21f);
+		SkijaRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(limeColor, 32), iconBoxSize / 2f);
+		SkijaRenderer.text("\uE202", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, limeColor, 21f);
 
 		float tx = ix + iconBoxSize + 12f;
-		NVGRenderer.text("SkyBlock Level", tx, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
+		SkijaRenderer.text("SkyBlock Level", tx, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
 
 		// 449.29 format: integer part in Lime color, decimal part in grey
 		String intPart = String.valueOf(level);
 		String decPart = String.format(Locale.ROOT, ".%02d", progress);
 
-		NVGRenderer.text(intPart, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, limeColor, 19f);
+		SkijaRenderer.text(intPart, tx, y + 36f, Fonts.PRETENDARD_SEMIBOLD, limeColor, 19f);
 
-		float intW = NVGRenderer.textWidth(intPart, Fonts.PRETENDARD_SEMIBOLD, 19f);
-		NVGRenderer.text(decPart, tx + intW, y + 36f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 19f);
+		float intW = SkijaRenderer.textWidth(intPart, Fonts.PRETENDARD_SEMIBOLD, 19f);
+		SkijaRenderer.text(decPart, tx + intW, y + 36f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 19f);
 	}
 
 	private static void drawSkillsSection(float x, float y, float w, float h, SkillsData skills, float mx, float my) {
@@ -291,8 +291,8 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Section Header: [Icon] Skills
-		NVGRenderer.text("\uE9E4", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
-		NVGRenderer.text("Skills", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("\uE9E4", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
+		SkijaRenderer.text("Skills", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		float startGridY = y + 62f;
 		float rowStep = (h - 62f - 16f) / 5f;
@@ -324,11 +324,11 @@ public class OverviewTabRenderer {
 
 			// Skill Name & Level Text with slightly larger font size & 2px extra gap after icon
 			float fs = 15f;
-			NVGRenderer.text(name, sx + 19f, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
+			SkijaRenderer.text(name, sx + 19f, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
 			String lvlStr = String.valueOf(lvl);
-			float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
+			float lvlW = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
 			int lvlColor = isMaxed ? 0xFFFFAA00 : 0xFF6366F1;
-			NVGRenderer.text(lvlStr, sx + sColW - lvlW, sy, Fonts.PRETENDARD_SEMIBOLD, lvlColor, fs);
+			SkijaRenderer.text(lvlStr, sx + sColW - lvlW, sy, Fonts.PRETENDARD_SEMIBOLD, lvlColor, fs);
 
 			// Progress bar: Soft Rainbow if maxed, standard indigo gradient if not
 			if (isMaxed) {
@@ -344,8 +344,8 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Header: [Skull] Slayer
-		NVGRenderer.text("\uE3AF", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 18f);
-		NVGRenderer.text("Slayer", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("\uE3AF", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 18f);
+		SkijaRenderer.text("Slayer", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		// 6 Bosses in 3 columns x 2 rows without subcard boxes
 		String[] bossKeys = {"zombie", "spider", "wolf", "enderman", "blaze", "vampire"};
@@ -369,7 +369,7 @@ public class OverviewTabRenderer {
 			if (isMaxed) {
 				RenderHelper.drawRainbowBorder(iconX - 3f, iconY - 3f, iconSize + 6f, iconSize + 6f, 6f, 1.5f);
 			} else {
-				NVGRenderer.outlineRect(iconX - 3f, iconY - 3f, iconSize + 6f, iconSize + 6f, 1f, 0x26FFFFFF, 6f);
+				SkijaRenderer.outlineRect(iconX - 3f, iconY - 3f, iconSize + 6f, iconSize + 6f, 1f, 0x26FFFFFF, 6f);
 			}
 
 			// Boss icon centered
@@ -378,9 +378,9 @@ public class OverviewTabRenderer {
 
 			// Level text centered below with +2px extra gap
 			String lvlStr = String.valueOf(lvl);
-			float lw = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
+			float lw = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
 			int lvlColor = isMaxed ? 0xFFFFAA00 : RenderHelper.FONT_PRIMARY;
-			NVGRenderer.text(lvlStr, bx + (colW - lw) / 2f, by + 28f, Fonts.PRETENDARD_SEMIBOLD, lvlColor, 14f);
+			SkijaRenderer.text(lvlStr, bx + (colW - lw) / 2f, by + 28f, Fonts.PRETENDARD_SEMIBOLD, lvlColor, 14f);
 		}
 	}
 
@@ -389,8 +389,8 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Header: [Sparkle/Diamond] Essence
-		NVGRenderer.text("\uE3E8", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
-		NVGRenderer.text("Essence", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("\uE3E8", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		SkijaRenderer.text("Essence", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		// 3x3 Grid starting with unified 62px margin
 		String[] essenceKeys = {"wither", "dragon", "undead", "crimson", "diamond", "gold", "ice", "spider", "foraging"};
@@ -424,10 +424,10 @@ public class OverviewTabRenderer {
 			float fs = 14f;
 			float tx = ex + iconSize + 7f;
 
-			if (NVGRenderer.textWidth(countStr, Fonts.PRETENDARD_SEMIBOLD, fs) > colW - (iconSize + 9f)) {
+			if (SkijaRenderer.textWidth(countStr, Fonts.PRETENDARD_SEMIBOLD, fs) > colW - (iconSize + 9f)) {
 				fs = 12f;
 			}
-			NVGRenderer.text(countStr, tx, ey + (iconSize - fs) / 2f + 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
+			SkijaRenderer.text(countStr, tx, ey + (iconSize - fs) / 2f + 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, fs);
 		}
 	}
 

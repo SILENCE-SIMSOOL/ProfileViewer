@@ -9,8 +9,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.GardenData;
 import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.MemberData;
@@ -68,19 +68,19 @@ public class GardenTabRenderer {
 
 		for (GardenSubTab st : GardenSubTab.values()) {
 			boolean isSel = (st == activeSubTab);
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			boolean hov = mx >= subTabX && mx <= subTabX + stW && my >= curY && my <= curY + subTabH;
 
 			int bgCol = isSel ? 0xFF059669 : (hov ? 0x33059669 : 0x1AFFFFFF);
 			int textCol = isSel ? 0xFFFFFFFF : (hov ? 0xFF6EE7B7 : RenderHelper.FONT_MUTED);
 
-			NVGRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
+			SkijaRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
 			if (isSel) {
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
 			}
 
-			NVGRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
-			NVGRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
+			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
+			SkijaRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
 		}
@@ -110,7 +110,7 @@ public class GardenTabRenderer {
 		// ---------------------------------------------------------------------
 		float c1X = startX;
 		RenderHelper.drawModernCard(c1X, curY, gearW, cardH, 10f, false);
-		NVGRenderer.text("Gear", c1X + (gearW - NVGRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Gear", c1X + (gearW - SkijaRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float slotSize = 30f;
 		float slotGap = 4f;
@@ -172,7 +172,7 @@ public class GardenTabRenderer {
 		// ---------------------------------------------------------------------
 		float c2X = c1X + gearW + colGap;
 		RenderHelper.drawModernCard(c2X, curY, contestsW, cardH, 10f, false);
-		NVGRenderer.text("Contests", c2X + (contestsW - NVGRenderer.textWidth("Contests", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Contests", c2X + (contestsW - SkijaRenderer.textWidth("Contests", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		String[] cropIds = {"wheat", "carrot", "potato", "pumpkin", "melon", "sugar_cane", "cactus", "cocoa_beans", "mushroom", "nether_wart"};
 		ItemStack[] cropStacks = {
@@ -208,7 +208,7 @@ public class GardenTabRenderer {
 		// ---------------------------------------------------------------------
 		float c3X = c2X + contestsW + colGap;
 		RenderHelper.drawModernCard(c3X, curY, chipsW, cardH, 10f, false);
-		NVGRenderer.text("Chips", c3X + (chipsW - NVGRenderer.textWidth("Chips", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("Chips", c3X + (chipsW - SkijaRenderer.textWidth("Chips", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float chPadX = c3X + (chipsW - (2 * slotSize + slotGap)) / 2f;
 		String[] chipSbIds = {
@@ -246,8 +246,8 @@ public class GardenTabRenderer {
 		// ---------------------------------------------------------------------
 		float c4X = c3X + chipsW + colGap;
 		RenderHelper.drawModernCard(c4X, curY, infoW, cardH, 10f, false);
-		NVGRenderer.text("\uE88F", c4X + 14f, curY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFE879F9, 16f);
-		NVGRenderer.text("Information", c4X + 34f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
+		SkijaRenderer.text("\uE88F", c4X + 14f, curY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFE879F9, 16f);
+		SkijaRenderer.text("Information", c4X + 34f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float infoY = curY + 36f;
 		float rowH = 24f;
@@ -275,7 +275,7 @@ public class GardenTabRenderer {
 	private static float renderCropsView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		NVGRenderer.text("Crop Milestones", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("Crop Milestones", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 236f;
 		return curY - y0;
 	}
@@ -283,7 +283,7 @@ public class GardenTabRenderer {
 	private static float renderComposterView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		NVGRenderer.text("Composter Upgrades", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("Composter Upgrades", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 236f;
 		return curY - y0;
 	}
@@ -291,7 +291,7 @@ public class GardenTabRenderer {
 	private static float renderVisitorsView(MemberData data, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		NVGRenderer.text("Garden Visitors", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("Garden Visitors", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 236f;
 		return curY - y0;
 	}
@@ -340,7 +340,7 @@ public class GardenTabRenderer {
 		float subTabX = startX;
 
 		for (GardenSubTab st : GardenSubTab.values()) {
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
 				activeSubTab = st;
 				return true;

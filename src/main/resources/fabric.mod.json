@@ -3,7 +3,7 @@
 	"id": "profileviewer",
 	"version": "${version}",
 	"name": "ProfileViewer",
-	"description": "Modern Hypixel SkyBlock Profile Viewer powered by Lucent NanoVG",
+	"description": "Modern Hypixel SkyBlock Profile Viewer powered by Lucent Skija",
 	"authors": ["Silence"],
 	"contact": {},
 	"license": "MIT",
@@ -18,7 +18,7 @@
 		"minecraft": "~26.2-",
 		"java": ">=25",
 		"fabric-api": "*",
-		"lucent": ">=1.3.6",
-		"lucentclient": ">=1.0.21"
+		"lucent": ">=1.5.1",
+		"lucentclient": ">=1.1.10"
 	}
 }

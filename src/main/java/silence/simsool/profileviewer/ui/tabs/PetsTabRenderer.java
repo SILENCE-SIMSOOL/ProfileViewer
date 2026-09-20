@@ -5,8 +5,8 @@ import java.util.List;
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.lucent.ui.widget.components.TextBox;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.PetData;
@@ -75,18 +75,18 @@ public class PetsTabRenderer {
 		}
 
 		// Top Row Header: [Icon] Pet Collection (Score Badge) & Search Box with Icon
-		NVGRenderer.text("\uE91D", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
+		SkijaRenderer.text("\uE91D", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
 		String titleStr = L10n.translate("pv.pets.collection") + " (" + allPets.size() + ")";
-		NVGRenderer.text(titleStr, startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.text(titleStr, startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
-		float titleW = NVGRenderer.textWidth(titleStr, Fonts.PRETENDARD_SEMIBOLD, 17f);
+		float titleW = SkijaRenderer.textWidth(titleStr, Fonts.PRETENDARD_SEMIBOLD, 17f);
 		String scoreStr = L10n.translate("pv.pets.score") + ": " + petScore + " (+" + magicFindBonus + " " + L10n.translate("pv.pets.magic_find") + ")";
 		RenderHelper.drawBadge(scoreStr, startX + 38f + titleW, curY - 1f, 0x3338BDF8, 0xFF38BDF8);
 
 		// Search Box with Search Icon (\uE8B6)
 		float searchW = 170f;
 		float searchX = startX + width - searchW;
-		NVGRenderer.text("\uE8B6", searchX - 22f, curY + 4f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 18f);
+		SkijaRenderer.text("\uE8B6", searchX - 22f, curY + 4f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 18f);
 		searchBox.setPosition((int) searchX, (int) curY - 2);
 		searchBox.render(null, (int) mouseX, (int) mouseY, delta);
 
@@ -128,7 +128,7 @@ public class PetsTabRenderer {
 		RenderHelper.drawModernCard(leftX, curY, leftW, gridH, 14f, false);
 
 		if (filtered.isEmpty()) {
-			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), leftX + 24f, curY + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+			SkijaRenderer.text(L10n.translate("pv.pets.no_pets"), leftX + 24f, curY + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 		} else {
 			for (int i = 0; i < filtered.size(); i++) {
 				PetData.PetItem pet = filtered.get(i);
@@ -144,12 +144,12 @@ public class PetsTabRenderer {
 				// Slot Background & Outline
 				int bgCol = isSelected ? 0xFF222638 : (hov ? 0xFF1C1E2C : 0x6611131E);
 				int borderCol = isSelected ? 0xFF818CF8 : (hov ? pet.getRarityColor() : UIColors.withAlpha(pet.getRarityColor(), 100));
-				NVGRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 8f);
-				NVGRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelected ? 1.5f : 1.0f, borderCol, 8f);
+				SkijaRenderer.rect(sx, sy, slotSize, slotSize, bgCol, 8f);
+				SkijaRenderer.outlineRect(sx, sy, slotSize, slotSize, isSelected ? 1.5f : 1.0f, borderCol, 8f);
 
 				// Active Badge (Green dot)
 				if (pet.active) {
-					NVGRenderer.circle(sx + 6f, sy + 6f, 3f, 0xFF10B981);
+					SkijaRenderer.circle(sx + 6f, sy + 6f, 3f, 0xFF10B981);
 				}
 
 				visiblePetSlots.add(new PetSlotInfo(sx, sy, slotSize, pet));
@@ -167,7 +167,7 @@ public class PetsTabRenderer {
 		RenderHelper.drawModernCard(x, y, w, h, 14f, false);
 
 		if (selectedPet == null) {
-			NVGRenderer.text(L10n.translate("pv.pets.no_pets"), x + 24f, y + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+			SkijaRenderer.text(L10n.translate("pv.pets.no_pets"), x + 24f, y + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 			return;
 		}
 
@@ -182,21 +182,21 @@ public class PetsTabRenderer {
 		if (isMaxed) {
 			RenderHelper.drawRainbowBorder(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 10f, 1.5f);
 		} else {
-			NVGRenderer.rect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 0xFF181A26, 10f);
-			NVGRenderer.outlineRect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 1.2f, pet.getRarityColor(), 10f);
+			SkijaRenderer.rect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 0xFF181A26, 10f);
+			SkijaRenderer.outlineRect(px - 2f, py - 2f, bigSlotSize + 4f, bigSlotSize + 4f, 1.2f, pet.getRarityColor(), 10f);
 		}
 		visiblePetSlots.add(new PetSlotInfo(px, py, bigSlotSize, pet, true));
 
 		// Name & Rarity & Level
 		float nameX = px + bigSlotSize + 14f;
 		String cleanName = pet.type.replace("_", " ");
-		NVGRenderer.text(cleanName, nameX, py + 2f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
+		SkijaRenderer.text(cleanName, nameX, py + 2f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
 		String tag = pet.rarity + " PET";
 		RenderHelper.drawBadge(tag, nameX, py + 24f, UIColors.withAlpha(pet.getRarityColor(), 32), pet.getRarityColor());
 
 		if (pet.active) {
-			float tagW = NVGRenderer.textWidth(tag, Fonts.PRETENDARD_SEMIBOLD, 11f);
+			float tagW = SkijaRenderer.textWidth(tag, Fonts.PRETENDARD_SEMIBOLD, 11f);
 			RenderHelper.drawBadge(L10n.translate("pv.gear.active"), nameX + tagW + 18f, py + 24f, 0x3310B981, 0xFF10B981);
 		}
 
@@ -204,11 +204,11 @@ public class PetsTabRenderer {
 
 		// Level & XP Progress
 		String lvlText = L10n.translate("pv.ui.level") + " " + pet.level + " / " + pet.maxLevel;
-		NVGRenderer.text(lvlText, px, py, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+		SkijaRenderer.text(lvlText, px, py, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		String pctText = isMaxed ? L10n.translate("pv.ui.max") : String.format("%.1f%%", pet.progressToNextLevel * 100f);
-		float pctW = NVGRenderer.textWidth(pctText, Fonts.PRETENDARD_SEMIBOLD, 13f);
-		NVGRenderer.text(pctText, px + w - 32f - pctW, py, Fonts.PRETENDARD_SEMIBOLD, isMaxed ? 0xFFFFAA00 : 0xFF38BDF8, 13f);
+		float pctW = SkijaRenderer.textWidth(pctText, Fonts.PRETENDARD_SEMIBOLD, 13f);
+		SkijaRenderer.text(pctText, px + w - 32f - pctW, py, Fonts.PRETENDARD_SEMIBOLD, isMaxed ? 0xFFFFAA00 : 0xFF38BDF8, 13f);
 
 		py += 18f;
 		if (isMaxed) {
@@ -240,8 +240,8 @@ public class PetsTabRenderer {
 
 			RenderHelper.drawStatRow("Held Item", pet.heldItem.replace("_", " "), px, py, w - 32f - itemSlotS - 8f, 13.5f, 0xFF60A5FA);
 
-			NVGRenderer.rect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 0xFF1E293B, 4f);
-			NVGRenderer.outlineRect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 1f, 0xFF334155, 4f);
+			SkijaRenderer.rect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 0xFF1E293B, 4f);
+			SkijaRenderer.outlineRect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 1f, 0xFF334155, 4f);
 
 			ItemStack heldStack = ItemRepo.getItemStack(pet.heldItem);
 			if (!heldStack.isEmpty()) {
@@ -259,9 +259,9 @@ public class PetsTabRenderer {
 		for (PetSlotInfo slot : visiblePetSlots) {
 			if (slot.isDetailSlot || slot.pet == null || slot.pet.level <= 0) continue;
 			String lvlStr = String.valueOf(slot.pet.level);
-			float lvlW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
-			NVGRenderer.rect(slot.x + slot.size - lvlW - 6f, slot.y + slot.size - 13f, lvlW + 4f, 11f, 0xDD111218, 3f);
-			NVGRenderer.text(lvlStr, slot.x + slot.size - lvlW - 4f, slot.y + slot.size - 12.5f, Fonts.PRETENDARD_SEMIBOLD, slot.pet.getRarityColor(), 10f);
+			float lvlW = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 10f);
+			SkijaRenderer.rect(slot.x + slot.size - lvlW - 6f, slot.y + slot.size - 13f, lvlW + 4f, 11f, 0xDD111218, 3f);
+			SkijaRenderer.text(lvlStr, slot.x + slot.size - lvlW - 4f, slot.y + slot.size - 12.5f, Fonts.PRETENDARD_SEMIBOLD, slot.pet.getRarityColor(), 10f);
 		}
 	}
 

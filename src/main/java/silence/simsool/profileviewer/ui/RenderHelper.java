@@ -1,8 +1,14 @@
 package silence.simsool.profileviewer.ui;
 
+import io.github.humbleui.skija.Paint;
+import io.github.humbleui.skija.PaintMode;
+import io.github.humbleui.skija.Shader;
+import io.github.humbleui.types.RRect;
+import io.github.humbleui.types.Rect;
+import silence.simsool.lucent.skija.compositor.SkijaCompositor;
 import silence.simsool.lucent.ui.utils.UIColors;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 
 public class RenderHelper {
 
@@ -53,8 +59,8 @@ public class RenderHelper {
 	}
 
 	public static void drawNameplate(String username, int level, float x, float y, float w, float h) {
-		NVGRenderer.rect(x, y, w, h, 0xCC181A22, 6f);
-		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x33FFFFFF, 6f);
+		SkijaRenderer.rect(x, y, w, h, 0xCC181A22, 6f);
+		SkijaRenderer.outlineRect(x, y, w, h, 1f, 0x33FFFFFF, 6f);
 
 		String prefix = "[";
 		String lvlStr = String.valueOf(level);
@@ -62,20 +68,20 @@ public class RenderHelper {
 		String name = (username != null && !username.isEmpty()) ? username : "Player";
 
 		float fs = FS_BODY;
-		float pW = NVGRenderer.textWidth(prefix, Fonts.PRETENDARD_SEMIBOLD, fs);
-		float lW = NVGRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
-		float sW = NVGRenderer.textWidth(suffix, Fonts.PRETENDARD_SEMIBOLD, fs);
-		float nW = NVGRenderer.textWidth(name, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float pW = SkijaRenderer.textWidth(prefix, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float lW = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float sW = SkijaRenderer.textWidth(suffix, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float nW = SkijaRenderer.textWidth(name, Fonts.PRETENDARD_SEMIBOLD, fs);
 		float totalW = pW + lW + sW + nW;
 
 		float startX = x + (w - totalW) / 2f;
 		float textY = y + (h - fs) / 2f + 1f;
 
 		int lvlCol = getSkyBlockLevelColor(level);
-		NVGRenderer.text(prefix, startX, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
-		NVGRenderer.text(lvlStr, startX + pW, textY, Fonts.PRETENDARD_SEMIBOLD, lvlCol, fs);
-		NVGRenderer.text(suffix, startX + pW + lW, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
-		NVGRenderer.text(name, startX + pW + lW + sW, textY, Fonts.PRETENDARD_SEMIBOLD, FONT_PRIMARY, fs);
+		SkijaRenderer.text(prefix, startX, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
+		SkijaRenderer.text(lvlStr, startX + pW, textY, Fonts.PRETENDARD_SEMIBOLD, lvlCol, fs);
+		SkijaRenderer.text(suffix, startX + pW + lW, textY, Fonts.PRETENDARD_SEMIBOLD, 0xFF6B7280, fs);
+		SkijaRenderer.text(name, startX + pW + lW + sW, textY, Fonts.PRETENDARD_SEMIBOLD, FONT_PRIMARY, fs);
 	}
 
 	public static String formatNumber(long num) {
@@ -86,49 +92,35 @@ public class RenderHelper {
 	}
 
 	public static void drawModernCard(float x, float y, float w, float h, float radius, boolean hovered) {
-		NVGRenderer.rect(x, y, w, h, 0xC80D0F18, radius);
-		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x18FFFFFF, radius);
+		SkijaRenderer.rect(x, y, w, h, 0xC80D0F18, radius);
+		SkijaRenderer.outlineRect(x, y, w, h, 1f, 0x18FFFFFF, radius);
 	}
 
 	public static void drawSubCard(float x, float y, float w, float h, float radius, boolean hovered) {
-		NVGRenderer.rect(x, y, w, h, 0xD0121422, radius);
-		NVGRenderer.outlineRect(x, y, w, h, 1f, 0x12FFFFFF, radius);
+		SkijaRenderer.rect(x, y, w, h, 0xD0121422, radius);
+		SkijaRenderer.outlineRect(x, y, w, h, 1f, 0x12FFFFFF, radius);
 	}
 
 	public static void drawAmbientGlow(float cx, float cy, float radius, int innerColor, int outerColor) {
-		long vg = NVGRenderer.getVG();
-		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
-			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
-
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((innerColor >> 16) & 0xFF), (byte) ((innerColor >> 8) & 0xFF), (byte) (innerColor & 0xFF), (byte) ((innerColor >> 24) & 0xFF), c1);
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((outerColor >> 16) & 0xFF), (byte) ((outerColor >> 8) & 0xFF), (byte) (outerColor & 0xFF), (byte) ((outerColor >> 24) & 0xFF), c2);
-
-			org.lwjgl.nanovg.NanoVG.nvgRadialGradient(vg, cx, cy, 0f, radius, c1, c2, paint);
-			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
-			org.lwjgl.nanovg.NanoVG.nvgCircle(vg, cx, cy, radius);
-			org.lwjgl.nanovg.NanoVG.nvgFillPaint(vg, paint);
-			org.lwjgl.nanovg.NanoVG.nvgFill(vg);
-		}
+		SkijaCompositor.INSTANCE.enqueue(canvas -> {
+			try (Shader shader = Shader.makeRadialGradient(cx, cy, radius, new int[]{innerColor, outerColor});
+				 Paint paint = new Paint()) {
+				paint.setShader(shader);
+				paint.setAntiAlias(true);
+				canvas.drawCircle(cx, cy, radius, paint);
+			}
+		});
 	}
 
 	public static void drawPlayerShadow(float cx, float cy, float rx, float ry) {
-		long vg = NVGRenderer.getVG();
-		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
-			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
-
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 160, c1);
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 0, c2);
-
-			org.lwjgl.nanovg.NanoVG.nvgRadialGradient(vg, cx, cy, 0f, rx, c1, c2, paint);
-			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
-			org.lwjgl.nanovg.NanoVG.nvgEllipse(vg, cx, cy, rx, ry);
-			org.lwjgl.nanovg.NanoVG.nvgFillPaint(vg, paint);
-			org.lwjgl.nanovg.NanoVG.nvgFill(vg);
-		}
+		SkijaCompositor.INSTANCE.enqueue(canvas -> {
+			try (Shader shader = Shader.makeRadialGradient(cx, cy, rx, new int[]{0xA0000000, 0x00000000});
+				 Paint paint = new Paint()) {
+				paint.setShader(shader);
+				paint.setAntiAlias(true);
+				canvas.drawOval(Rect.makeXYWH(cx - rx, cy - ry, rx * 2f, ry * 2f), paint);
+			}
+		});
 	}
 
 	public static void drawProgressBar(float x, float y, float w, float h, float progress, int fillColor) {
@@ -136,15 +128,15 @@ public class RenderHelper {
 	}
 
 	public static void drawProgressBar(float x, float y, float w, float h, float progress, int startCol, int endCol) {
-		NVGRenderer.rect(x, y, w, h, 0x44000000, h / 2f);
+		SkijaRenderer.rect(x, y, w, h, 0x44000000, h / 2f);
 		float fillW = Math.max(0, Math.min(w, w * progress));
 		if (fillW > 0) {
-			NVGRenderer.rect(x, y, fillW, h, startCol, h / 2f);
+			SkijaRenderer.rect(x, y, fillW, h, startCol, h / 2f);
 		}
 	}
 
 	public static void drawRainbowProgressBar(float x, float y, float w, float h, float progress) {
-		NVGRenderer.rect(x, y, w, h, 0x44000000, h / 2f);
+		SkijaRenderer.rect(x, y, w, h, 0x44000000, h / 2f);
 		float fillW = Math.max(0, Math.min(w, w * progress));
 		if (fillW <= 0) return;
 
@@ -166,46 +158,39 @@ public class RenderHelper {
 			float r2 = (i == numSegs - 1) ? h / 2f : 0f;    // Top-Right (tr)
 			float r3 = (i == numSegs - 1) ? h / 2f : 0f;    // Bottom-Right (br)
 			float r4 = (i == 0) ? h / 2f : 0f;              // Bottom-Left (bl)
-			NVGRenderer.gradientRect(sx, y, curSegW, h, colors[i], colors[i + 1], silence.simsool.lucent.general.enums.GradientType.LEFT_TO_RIGHT, r1, r2, r3, r4);
+			SkijaRenderer.gradientRect(sx, y, curSegW, h, colors[i], colors[i + 1], silence.simsool.lucent.general.enums.GradientType.LEFT_TO_RIGHT, r1, r2, r3, r4);
 		}
 	}
 
 	public static void drawRainbowBorder(float x, float y, float w, float h, float radius, float thickness) {
-		long vg = NVGRenderer.getVG();
-		try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
-			org.lwjgl.nanovg.NVGColor c1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGColor c2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-			org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
-
-			// Soft pastel gradient from Pink/Coral to Sky/Lavender
-			int col1 = 0xE0F472B6;
-			int col2 = 0xE038BDF8;
-
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((col1 >> 16) & 0xFF), (byte) ((col1 >> 8) & 0xFF), (byte) (col1 & 0xFF), (byte) ((col1 >> 24) & 0xFF), c1);
-			org.lwjgl.nanovg.NanoVG.nvgRGBA((byte) ((col2 >> 16) & 0xFF), (byte) ((col2 >> 8) & 0xFF), (byte) (col2 & 0xFF), (byte) ((col2 >> 24) & 0xFF), c2);
-
-			org.lwjgl.nanovg.NanoVG.nvgLinearGradient(vg, x, y, x + w, y + h, c1, c2, paint);
-			org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
-			org.lwjgl.nanovg.NanoVG.nvgRoundedRect(vg, x, y, w, h, radius);
-			org.lwjgl.nanovg.NanoVG.nvgStrokeWidth(vg, thickness);
-			org.lwjgl.nanovg.NanoVG.nvgStrokePaint(vg, paint);
-			org.lwjgl.nanovg.NanoVG.nvgStroke(vg);
-		}
+		int col1 = 0xE0F472B6;
+		int col2 = 0xE038BDF8;
+		SkijaCompositor.INSTANCE.enqueue(canvas -> {
+			try (Shader shader = Shader.makeLinearGradient(x, y, x + w, y + h, new int[]{col1, col2});
+				 Paint paint = new Paint()) {
+				paint.setShader(shader);
+				paint.setMode(PaintMode.STROKE);
+				paint.setStrokeWidth(thickness);
+				paint.setAntiAlias(true);
+				if (radius <= 0) canvas.drawRect(Rect.makeXYWH(x, y, w, h), paint);
+				else canvas.drawRRect(RRect.makeXYWH(x, y, w, h, radius), paint);
+			}
+		});
 	}
 
 	public static void drawStatRow(String label, String value, float x, float y, float w, float fontSize, int valColor) {
-		NVGRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, UIColors.TEXT_SECONDARY, fontSize);
-		float valW = NVGRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, fontSize);
-		NVGRenderer.text(value, x + w - valW, y, Fonts.PRETENDARD_SEMIBOLD, valColor, fontSize);
+		SkijaRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, UIColors.TEXT_SECONDARY, fontSize);
+		float valW = SkijaRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, fontSize);
+		SkijaRenderer.text(value, x + w - valW, y, Fonts.PRETENDARD_SEMIBOLD, valColor, fontSize);
 	}
 
 	public static void drawBadge(String text, float x, float y, int bgColor, int textColor) {
 		float fs = 11f;
-		float tw = NVGRenderer.textWidth(text, Fonts.PRETENDARD_SEMIBOLD, fs);
+		float tw = SkijaRenderer.textWidth(text, Fonts.PRETENDARD_SEMIBOLD, fs);
 		float bw = tw + 12f;
 		float bh = 18f;
-		NVGRenderer.rect(x, y, bw, bh, bgColor, 6f);
-		NVGRenderer.text(text, x + 6f, y + 3.5f, Fonts.PRETENDARD_SEMIBOLD, textColor, fs);
+		SkijaRenderer.rect(x, y, bw, bh, bgColor, 6f);
+		SkijaRenderer.text(text, x + 6f, y + 3.5f, Fonts.PRETENDARD_SEMIBOLD, textColor, fs);
 	}
 
 	public static int getMinecraftColor(char code, int defaultColor) {
@@ -243,8 +228,8 @@ public class RenderHelper {
 			if (c == '§' && i + 1 < text.length()) {
 				if (buffer.length() > 0) {
 					String segment = buffer.toString();
-					NVGRenderer.text(segment, curX, y, Fonts.PRETENDARD, currentColor, fontSize);
-					curX += NVGRenderer.textWidth(segment, Fonts.PRETENDARD, fontSize);
+					SkijaRenderer.text(segment, curX, y, Fonts.PRETENDARD, currentColor, fontSize);
+					curX += SkijaRenderer.textWidth(segment, Fonts.PRETENDARD, fontSize);
 					buffer.setLength(0);
 				}
 				char colorCode = Character.toLowerCase(text.charAt(i + 1));
@@ -257,8 +242,8 @@ public class RenderHelper {
 
 		if (buffer.length() > 0) {
 			String segment = buffer.toString();
-			NVGRenderer.text(segment, curX, y, Fonts.PRETENDARD, currentColor, fontSize);
-			curX += NVGRenderer.textWidth(segment, Fonts.PRETENDARD, fontSize);
+			SkijaRenderer.text(segment, curX, y, Fonts.PRETENDARD, currentColor, fontSize);
+			curX += SkijaRenderer.textWidth(segment, Fonts.PRETENDARD, fontSize);
 		}
 
 		return curX - x;
@@ -267,7 +252,7 @@ public class RenderHelper {
 	public static float getColoredTextWidth(String text, float fontSize) {
 		if (text == null || text.isEmpty()) return 0;
 		String clean = text.replaceAll("§[0-9a-fk-orA-FK-OR]", "");
-		return NVGRenderer.textWidth(clean, Fonts.PRETENDARD, fontSize);
+		return SkijaRenderer.textWidth(clean, Fonts.PRETENDARD, fontSize);
 	}
 
 	// =========================================================================
@@ -332,7 +317,7 @@ public class RenderHelper {
 
 
 	public static void drawItemSlotBg(float x, float y, float size, boolean hovered, int borderColor, int bgColor, float radius) {
-		NVGRenderer.rect(x, y, size, size, bgColor, radius);
-		NVGRenderer.outlineRect(x, y, size, size, hovered ? 1.4f : 1.0f, borderColor, radius);
+		SkijaRenderer.rect(x, y, size, size, bgColor, radius);
+		SkijaRenderer.outlineRect(x, y, size, size, hovered ? 1.4f : 1.0f, borderColor, radius);
 	}
 }

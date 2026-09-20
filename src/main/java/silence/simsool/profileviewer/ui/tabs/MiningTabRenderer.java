@@ -6,8 +6,8 @@ import java.util.Map;
 
 import net.minecraft.world.item.ItemStack;
 import silence.simsool.lucent.general.utils.L10n;
-import silence.simsool.lucent.ui.utils.nvg.Fonts;
-import silence.simsool.lucent.ui.utils.nvg.NVGRenderer;
+import silence.simsool.lucent.ui.utils.skija.Fonts;
+import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.GearFinder;
 import silence.simsool.profileviewer.api.data.HotmTreeData;
 import silence.simsool.profileviewer.api.data.MemberData;
@@ -77,20 +77,20 @@ public class MiningTabRenderer {
 		float subTabX = startX;
 		for (MiningSubTab st : MiningSubTab.values()) {
 			String title = st.getTitle();
-			float stW = NVGRenderer.textWidth(title, Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(title, Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			boolean active = (st == activeSubTab);
 			boolean hov = mouseX >= subTabX && mouseX <= subTabX + stW && mouseY >= curY && mouseY <= curY + subTabH;
 
 			int bgCol = active ? 0xFF0284C7 : (hov ? 0x330284C7 : 0x1AFFFFFF);
 			int textCol = active ? 0xFFFFFFFF : (hov ? 0xFF7DD3FC : RenderHelper.FONT_MUTED);
 
-			NVGRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
+			SkijaRenderer.rect(subTabX, curY, stW, subTabH, bgCol, 7f);
 			if (active) {
-				NVGRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF38BDF8, 7f);
+				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF38BDF8, 7f);
 			}
 
-			NVGRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textCol, 16f);
-			NVGRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 14f);
+			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textCol, 16f);
+			SkijaRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 14f);
 
 			subTabX += stW + 8f;
 		}
@@ -121,7 +121,7 @@ public class MiningTabRenderer {
 
 		// 1. HOTM Information
 		RenderHelper.drawModernCard(startX, curY, c1W, topH, 10f, false);
-		NVGRenderer.text("HOTM Information", startX + (c1W - NVGRenderer.textWidth("HOTM Information", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+		SkijaRenderer.text("HOTM Information", startX + (c1W - SkijaRenderer.textWidth("HOTM Information", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
 
 		float infoY = curY + 36f;
 		float rowH = 24f;
@@ -138,7 +138,7 @@ public class MiningTabRenderer {
 		// 2. Powder Details
 		float c2X = startX + c1W + gap;
 		RenderHelper.drawModernCard(c2X, curY, c2W, topH, 10f, false);
-		NVGRenderer.text("Powders", c2X + (c2W - NVGRenderer.textWidth("Powders", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+		SkijaRenderer.text("Powders", c2X + (c2W - SkijaRenderer.textWidth("Powders", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
 
 		float pY = curY + 36f;
 		RenderHelper.drawStatRow("Mithril Available", RenderHelper.formatNumber(m.mithrilPowder), c2X + 14f, pY, c2W - 28f, 13.5f, 0xFF10B981);
@@ -153,7 +153,7 @@ public class MiningTabRenderer {
 		// 3. Mining Gear Card (Armor + Drill + Equipment + Pets)
 		float c3X = c2X + c2W + gap;
 		RenderHelper.drawModernCard(c3X, curY, c3W, topH, 10f, false);
-		NVGRenderer.text("Mining Gear", c3X + (c3W - NVGRenderer.textWidth("Mining Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+		SkijaRenderer.text("Mining Gear", c3X + (c3W - SkijaRenderer.textWidth("Mining Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
 
 		float slotSize = 30f;
 		float slotGap = 4f;
@@ -224,8 +224,8 @@ public class MiningTabRenderer {
 		float treeCardH = treeH + 116f;
 
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
-		NVGRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
-		NVGRenderer.text("Heart of the Mountain (HOTM)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
+		SkijaRenderer.text("Heart of the Mountain (HOTM)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		renderLoadoutSlots(m, startX, curY + 42f, width, mx, my);
 		float startTreeX = startX + (width - treeW) / 2f;
@@ -280,7 +280,7 @@ public class MiningTabRenderer {
 	private static float renderGlaciteView(MiningData m, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		RenderHelper.drawModernCard(startX, curY, width, 200f, 12f, false);
-		NVGRenderer.text("Glacite Mineshafts", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+		SkijaRenderer.text("Glacite Mineshafts", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 216f;
 		return curY - y0;
 	}
@@ -299,7 +299,7 @@ public class MiningTabRenderer {
 		float subTabH = 32f;
 		float subTabX = startX;
 		for (MiningSubTab st : MiningSubTab.values()) {
-			float stW = NVGRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
+			float stW = SkijaRenderer.textWidth(st.getTitle(), Fonts.PRETENDARD_SEMIBOLD, 14f) + 38f;
 			if (mx >= subTabX && mx <= subTabX + stW && my >= startY && my <= startY + subTabH) {
 				activeSubTab = st;
 				return true;
