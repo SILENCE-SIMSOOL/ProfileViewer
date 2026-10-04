@@ -55,12 +55,9 @@ public class SlayerData {
 					data.totalSlayerXp += b.totalXp;
 
 					for (int t = 0; t < 5; t++) {
-						String tk1 = "boss_kills_tier_" + t;
-						String tk2 = "boss_kills_tier_" + (t + 1);
-						if (bo.has(tk1) && bo.get(tk1).isJsonPrimitive()) {
-							b.tierKills[t] = bo.get(tk1).getAsInt();
-						} else if (bo.has(tk2) && bo.get(tk2).isJsonPrimitive()) {
-							b.tierKills[t] = bo.get(tk2).getAsInt();
+						String tk = "boss_kills_tier_" + t;
+						if (bo.has(tk) && bo.get(tk).isJsonPrimitive()) {
+							b.tierKills[t] = bo.get(tk).getAsInt();
 						}
 					}
 				}

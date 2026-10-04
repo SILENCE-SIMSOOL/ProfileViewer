@@ -24,6 +24,9 @@ import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class MuseumTabRenderer {
+	private record CategoryButton(MuseumCategory category, float x, float y, float width) {}
+	private static final List<CategoryButton> categoryButtons = new ArrayList<>();
+	private static float controlsY;
 
 	public enum MuseumCategory {
 		ALL("All", "\uEA40"),
@@ -103,12 +106,18 @@ public class MuseumTabRenderer {
 		MuseumData m = (data != null && data.museum != null) ? data.museum : new MuseumData();
 
 		// 1. Top Control Bar: Category Pills on Left, Selector Dropdown and Search Box on Right
+		categoryButtons.clear();
 		float catX = startX;
 		float catH = 28f;
 
 		for (MuseumCategory cat : MuseumCategory.values()) {
 			boolean isSel = (cat == activeCategory);
 			float catW = SkijaRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
+			if (catX > startX && catX + catW > startX + width) {
+				catX = startX;
+				curY += catH + 8f;
+			}
+			categoryButtons.add(new CategoryButton(cat, catX, curY, catW));
 			boolean hov = mouseX >= catX && mouseX <= catX + catW && mouseY >= curY && mouseY <= curY + catH;
 
 			int bgCol = isSel ? 0xFF6366F1 : (hov ? 0x336366F1 : 0x1AFFFFFF);
@@ -117,18 +126,20 @@ public class MuseumTabRenderer {
 			SkijaRenderer.rect(catX, curY, catW, catH, bgCol, 6f);
 			if (isSel) SkijaRenderer.outlineRect(catX, curY, catW, catH, 1.2f, 0xFF818CF8, 6f);
 
-			SkijaRenderer.text(cat.icon, catX + 8f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 14f);
+			RenderHelper.alignedIcon(cat.icon, catX + 8f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 14f, 13f);
 			SkijaRenderer.text(cat.label, catX + 26f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13f);
 
 			catX += catW + 6f;
 		}
 
+		curY += 38f;
 		// Right controls: [Filter: Selector] and [Search Box]
-		float searchW = 150f;
+		float searchW = 160f;
 		float searchX = startX + width - searchW;
-		float filterW = 160f;
-		float btnX = searchX - filterW - 10f;
-		float btnY = curY;
+		float filterW = 230f;
+		float btnX = searchX - filterW - 34f;
+		controlsY = curY;
+		float btnY = controlsY;
 		float btnH = 26f;
 
 		// Filter Selector Button (Interactive Selector Modal)
@@ -136,7 +147,7 @@ public class MuseumTabRenderer {
 		SkijaRenderer.rect(btnX, btnY, filterW, btnH, hovBtn ? 0xFF2A2D3D : 0xFF1C1E2A, 6f);
 		SkijaRenderer.outlineRect(btnX, btnY, filterW, btnH, 1.2f, filterDropdownOpen ? 0xFF818CF8 : 0xFF4B5563, 6f);
 
-		SkijaRenderer.text("\uE152", btnX + 8f, btnY + 5.5f, Fonts.MATERIAL_ICONS_ROUND, currentFilter.color, 14f);
+		RenderHelper.alignedIcon("\uE152", btnX + 8f, btnY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, currentFilter.color, 14f, 12f);
 		String filterText = currentFilter.label;
 		SkijaRenderer.text(filterText, btnX + 26f, btnY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, currentFilter.color, 12f);
 		SkijaRenderer.text(filterDropdownOpen ? "\uE316" : "\uE313", btnX + filterW - 16f, btnY + 6f, Fonts.MATERIAL_ICONS_ROUND, RenderHelper.FONT_MUTED, 14f);
@@ -272,11 +283,11 @@ public class MuseumTabRenderer {
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
 		if (searchBox.mouseClicked(mx, my, 0)) return true;
 
-		float searchW = 150f;
+		float searchW = 160f;
 		float searchX = startX + width - searchW;
-		float filterW = 160f;
-		float btnX = searchX - filterW - 10f;
-		float btnY = startY;
+		float filterW = 230f;
+		float btnX = searchX - filterW - 34f;
+		float btnY = controlsY;
 		float btnH = 26f;
 
 		// Filter dropdown clicks
@@ -296,16 +307,11 @@ public class MuseumTabRenderer {
 			return true;
 		}
 
-		// Category clicks
-		float catX = startX;
-		float catH = 28f;
-		for (MuseumCategory cat : MuseumCategory.values()) {
-			float catW = SkijaRenderer.textWidth(cat.label, Fonts.PRETENDARD_SEMIBOLD, 13f) + 34f;
-			if (mx >= catX && mx <= catX + catW && my >= startY && my <= startY + catH) {
-				activeCategory = cat;
+		for (CategoryButton button : categoryButtons) {
+			if (mx >= button.x && mx <= button.x + button.width && my >= button.y && my <= button.y + 28f) {
+				activeCategory = button.category;
 				return true;
 			}
-			catX += catW + 6f;
 		}
 
 		// Toggle Filter Selector Dropdown

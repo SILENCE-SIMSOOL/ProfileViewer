@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import silence.simsool.profileviewer.api.data.GardenData;
 import silence.simsool.profileviewer.api.data.MuseumData;
+import silence.simsool.profileviewer.api.data.NetworthData;
 import silence.simsool.profileviewer.api.data.PlayerStatus;
 import silence.simsool.profileviewer.api.data.SkyBlockProfileData;
 
@@ -82,17 +83,16 @@ public class PvApi {
 					JsonElement garden = response.data.get("garden");
 					if (garden == null || !garden.isJsonObject()) throw new IllegalStateException("Garden data unavailable");
 					GardenData shared = GardenData.fromJson(garden.getAsJsonObject());
-					shared.copper = profile.member.garden.copper;
-					shared.goldMedals = profile.member.garden.goldMedals;
-					shared.silverMedals = profile.member.garden.silverMedals;
-					shared.bronzeMedals = profile.member.garden.bronzeMedals;
-					shared.personalBests = profile.member.garden.personalBests;
+					shared.copyMemberData(profile.member.garden);
 					profile.member.garden = shared;
 				}).exceptionally(error -> { profile.gardenError = "Garden data unavailable. Refresh to retry."; return null; }));
 				extras.add(get("/museum/" + profile.profileId, refresh).thenAcceptAsync(response -> {
 					JsonElement members = response.data.get("members");
 					if (members == null || !members.isJsonObject()) throw new IllegalStateException("Museum data unavailable");
 					profile.member.museum = MuseumData.fromJson(members.getAsJsonObject(), uuid);
+					if (profile.member.networth != null) {
+						profile.member.networth = NetworthData.calculate(profile.member, profile.banking != null ? profile.banking.balance : 0.0);
+					}
 				}).exceptionally(error -> { profile.museumError = "Museum data unavailable. Refresh to retry."; return null; }));
 			}
 			return CompletableFuture.allOf(extras.toArray(CompletableFuture[]::new)).thenApply(ignored -> profiles);

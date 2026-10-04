@@ -54,7 +54,7 @@ public class CollectionsTabRenderer {
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			SkijaRenderer.text(cat.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
+			RenderHelper.alignedIcon(cat.icon, subTabX + 10f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 16f, 14f);
 			SkijaRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
 
 			subTabX += catW + 8f;
@@ -65,6 +65,10 @@ public class CollectionsTabRenderer {
 		if (activeCategory == ColCategory.MINIONS) {
 			curY += renderMinionsView(col, startX, curY, width, mouseX, mouseY);
 		} else {
+			if (!col.available) {
+				SkijaRenderer.text("Collection API is disabled or unavailable.", startX + 14f, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
+				return curY - startY + 50f;
+			}
 			List<CollectionData.CollectionItem> items = switch (activeCategory) {
 				case FARMING -> col.farmingCollections;
 				case MINING -> col.miningCollections;
@@ -192,7 +196,7 @@ public class CollectionsTabRenderer {
 		curY += cardH + 24f;
 
 		if (!col.craftedMinions.isEmpty()) {
-			SkijaRenderer.text("\uE8C9", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+			RenderHelper.alignedIcon("\uE8C9", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 18f, 16f);
 			SkijaRenderer.text(L10n.translate("pv.col.crafted_minions_list") + " (" + col.craftedMinions.size() + ")", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
@@ -230,12 +234,13 @@ public class CollectionsTabRenderer {
 
 	private static ItemStack createMinionStack(String minionKey) {
 		String cleanId = minionKey.toUpperCase();
+		if (!cleanId.contains("_GENERATOR_")) cleanId = cleanId.replaceFirst("_([0-9]+)$", "_GENERATOR_$1");
 		ItemStack stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId);
 		if (stack.isEmpty()) {
 			stack = silence.simsool.profileviewer.api.repo.ItemRepo.getItemStack(cleanId + "_1");
 		}
 		if (stack.isEmpty()) {
-			stack = new ItemStack(net.minecraft.world.item.Items.PLAYER_HEAD);
+			stack = new ItemStack(net.minecraft.world.item.Items.BARRIER);
 		}
 		String mName = minionKey.replace("_GENERATOR_", " ").replace("_", " ").toLowerCase();
 		mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);

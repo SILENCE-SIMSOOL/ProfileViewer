@@ -1,6 +1,10 @@
 package silence.simsool.profileviewer.ui;
 
 import io.github.humbleui.skija.Paint;
+import io.github.humbleui.skija.Font;
+import java.util.Map;
+import java.util.HashMap;
+import silence.simsool.lucent.ui.font.LucentFont;
 import io.github.humbleui.skija.PaintMode;
 import io.github.humbleui.skija.Shader;
 import io.github.humbleui.types.RRect;
@@ -11,6 +15,27 @@ import silence.simsool.lucent.ui.utils.skija.Fonts;
 import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 
 public class RenderHelper {
+
+	private record IconAlignment(String glyph, float iconSize, float textSize, LucentFont font) {}
+	private static final Map<IconAlignment, Float> ICON_OFFSETS = new HashMap<>();
+
+	public static void alignedIcon(String glyph, float x, float textY, LucentFont textFont, int color, float iconSize, float textSize) {
+		float offset = ICON_OFFSETS.computeIfAbsent(new IconAlignment(glyph, iconSize, textSize, textFont), key -> {
+			try (Font icon = new Font(Fonts.getTypeface(Fonts.MATERIAL_ICONS_ROUND), iconSize);
+				 Font text = new Font(Fonts.getTypeface(textFont), textSize)) {
+				return inkCenter(text, "Ag", textSize) - inkCenter(icon, glyph, iconSize);
+			}
+		});
+		SkijaRenderer.text(glyph, x, textY + offset, Fonts.MATERIAL_ICONS_ROUND, color, iconSize);
+	}
+
+	private static float inkCenter(Font font, String text, float size) {
+		var metrics = font.getMetrics();
+		Rect bounds = font.measureText(text);
+		float ascent = -metrics.getAscent();
+		return size * ascent / (ascent + metrics.getDescent()) + (bounds.getTop() + bounds.getBottom()) / 2f;
+	}
+
 
 	// Font Color Guide (Dark background contrast >= 4.5:1, 5 levels)
 	public static final int FONT_PRIMARY   = 0xFFFFFFFF; // High emphasis / Headings / White
@@ -179,11 +204,18 @@ public class RenderHelper {
 	}
 
 	public static void drawStatRow(String label, String value, float x, float y, float w, float fontSize, int valColor) {
-		SkijaRenderer.text(label, x, y, Fonts.PRETENDARD_MEDIUM, UIColors.TEXT_SECONDARY, fontSize);
-		float valW = SkijaRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, fontSize);
-		SkijaRenderer.text(value, x + w - valW, y, Fonts.PRETENDARD_SEMIBOLD, valColor, fontSize);
+		float valueWidth = SkijaRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, fontSize);
+		float valueSize = valueWidth > w * 0.6f ? fontSize * w * 0.6f / valueWidth : fontSize;
+		float valW = SkijaRenderer.textWidth(value, Fonts.PRETENDARD_SEMIBOLD, valueSize);
+		float labelWidth = Math.max(0, w - valW - 10f);
+		String visibleLabel = label;
+		while (!visibleLabel.isEmpty() && SkijaRenderer.textWidth(visibleLabel, Fonts.PRETENDARD_MEDIUM, fontSize) > labelWidth) {
+			visibleLabel = visibleLabel.substring(0, visibleLabel.length() - 1);
+		}
+		if (!visibleLabel.equals(label) && visibleLabel.length() > 1) visibleLabel = visibleLabel.substring(0, visibleLabel.length() - 1) + "…";
+		SkijaRenderer.text(visibleLabel, x, y, Fonts.PRETENDARD_MEDIUM, UIColors.TEXT_SECONDARY, fontSize);
+		SkijaRenderer.text(value, x + w - valW, y + (fontSize - valueSize) / 2f, Fonts.PRETENDARD_SEMIBOLD, valColor, valueSize);
 	}
-
 	public static void drawBadge(String text, float x, float y, int bgColor, int textColor) {
 		float fs = 11f;
 		float tw = SkijaRenderer.textWidth(text, Fonts.PRETENDARD_SEMIBOLD, fs);

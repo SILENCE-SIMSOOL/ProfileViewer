@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
@@ -49,7 +51,9 @@ public class NbtItemParser {
 					items.add(item);
 				}
 			}
-		} catch (Exception ignored) {}
+		} catch (Exception error) {
+			throw new IllegalArgumentException("Could not decode inventory NBT", error);
+		}
 
 		return items;
 	}
@@ -105,6 +109,7 @@ public class NbtItemParser {
 			if (subTag.contains("ExtraAttributes")) {
 				CompoundTag ea = subTag.getCompound("ExtraAttributes").orElse(new CompoundTag());
 				if (ea.contains("id")) item.skyblockId = ea.getString("id").orElse("");
+				item.uuid = ea.getString("uuid").orElse("");
 				item.upgradeScore = calculateUpgradeScore(ea);
 				if (ea.contains("skin")) {
 					String skinVal = ea.getString("skin").orElse("");
@@ -219,7 +224,22 @@ public class NbtItemParser {
 		score += scoreLevels(attributes.getCompound("enchantments").orElse(null), 4, true);
 		score += scoreLevels(attributes.getCompound("attributes").orElse(null), 7, false);
 		CompoundTag gems = attributes.getCompound("gems").orElse(null);
-		if (gems != null) score += Math.min(6, gems.keySet().size());
+		if (gems != null) {
+			for (String slot : gems.keySet()) {
+				String quality = gems.getString(slot).orElse("");
+				int qualityLevel = switch (quality) {
+					case "ROUGH" -> 0;
+					case "FLAWED" -> 1;
+					case "FINE" -> 2;
+					case "FLAWLESS" -> 3;
+					case "PERFECT" -> 4;
+					default -> -1;
+				};
+				boolean jasper = slot.startsWith("JASPER_") || "JASPER".equals(gems.getString(slot + "_gem").orElse(""));
+				score += Math.max(0, qualityLevel - (jasper ? 2 : 3));
+			}
+		}
+		score += attributes.getInt("divan_powder_coating").orElse(0);
 		return score;
 	}
 
@@ -229,7 +249,7 @@ public class NbtItemParser {
 		for (String key : values.keySet()) {
 			int level = values.getInt(key).orElse(0);
 			if (countUltimate && key.startsWith("ultimate_")) score += level;
-			else if (level > threshold) score += level - threshold;
+			if (level > threshold) score += level - threshold;
 		}
 		return score;
 	}
@@ -383,17 +403,24 @@ public class NbtItemParser {
 	}
 
 
+	private static final Pattern RARITY_LINE = Pattern.compile("^(?:[a-z]\\s+)?(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL)(?:\\s|$)");
 	private static void detectRarity(ParsedItem item) {
 		for (int i = item.lore.size() - 1; i >= 0; i--) {
-			String line = item.lore.get(i).toUpperCase();
-			if (line.contains("COMMON")) { item.rarity = "COMMON"; item.rarityColor = 0xFFFFFFFF; break; }
-			if (line.contains("UNCOMMON")) { item.rarity = "UNCOMMON"; item.rarityColor = 0xFF55FF55; break; }
-			if (line.contains("RARE")) { item.rarity = "RARE"; item.rarityColor = 0xFF5555FF; break; }
-			if (line.contains("EPIC")) { item.rarity = "EPIC"; item.rarityColor = 0xFFAA00AA; break; }
-			if (line.contains("LEGENDARY")) { item.rarity = "LEGENDARY"; item.rarityColor = 0xFFFFAA00; break; }
-			if (line.contains("MYTHIC")) { item.rarity = "MYTHIC"; item.rarityColor = 0xFFFF55FF; break; }
-			if (line.contains("DIVINE")) { item.rarity = "DIVINE"; item.rarityColor = 0xFF55FFFF; break; }
-			if (line.contains("SPECIAL") || line.contains("VERY SPECIAL")) { item.rarity = "SPECIAL"; item.rarityColor = 0xFFFF5555; break; }
+			String line = item.lore.get(i).replaceAll("§[0-9a-fk-orA-FK-OR]", "").strip();
+			var match = RARITY_LINE.matcher(line);
+			if (!match.find()) continue;
+			item.rarity = match.group(1).replace(' ', '_').toUpperCase(Locale.ROOT);
+			item.rarityColor = switch (item.rarity) {
+				case "UNCOMMON" -> 0xFF55FF55;
+				case "RARE" -> 0xFF5555FF;
+				case "EPIC" -> 0xFFAA00AA;
+				case "LEGENDARY" -> 0xFFFFAA00;
+				case "MYTHIC" -> 0xFFFF55FF;
+				case "DIVINE" -> 0xFF55FFFF;
+				case "SPECIAL", "VERY_SPECIAL" -> 0xFFFF5555;
+				default -> 0xFFFFFFFF;
+			};
+			break;
 		}
 	}
 }

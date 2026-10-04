@@ -14,7 +14,7 @@ public class SlayerTabRenderer {
 		float curY = startY;
 
 		// Section Header: [Icon] Slayer Bosses (Total XP)
-		SkijaRenderer.text("\uE3AF", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 20f);
+		RenderHelper.alignedIcon("\uE3AF", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFA855F7, 20f, 17f);
 		SkijaRenderer.text(L10n.translate("pv.slayer.bosses"), startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
 		String xpBadge = L10n.translate("pv.slayer.total_xp") + ": " + RenderHelper.formatNumber((long) data.slayer.totalSlayerXp);

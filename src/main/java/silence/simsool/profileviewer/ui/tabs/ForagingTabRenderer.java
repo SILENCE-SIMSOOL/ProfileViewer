@@ -15,6 +15,9 @@ import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.HotfTreeData;
 import silence.simsool.profileviewer.api.data.MemberData;
 import silence.simsool.profileviewer.api.data.MiningData;
+import silence.simsool.profileviewer.api.data.ForagingData;
+import silence.simsool.profileviewer.api.data.ProfileJson;
+import java.util.Locale;
 import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
@@ -81,7 +84,7 @@ public class ForagingTabRenderer {
 				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
 			}
 
-			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
+			RenderHelper.alignedIcon(st.icon, subTabX + 10f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 15f, 13.5f);
 			SkijaRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
@@ -103,7 +106,7 @@ public class ForagingTabRenderer {
 		// Foraging Level
 		int forLvl = (data != null && data.skills != null && data.skills.skills.containsKey("foraging")) ? data.skills.skills.get("foraging").level : 0;
 		RenderHelper.drawModernCard(startX, curY, statW, statH, 10f, false);
-		SkijaRenderer.text("\uE520", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		RenderHelper.alignedIcon("\uE520", startX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 18f, 13.5f);
 		SkijaRenderer.text("Foraging Level", startX + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		SkijaRenderer.text("Lv. " + forLvl, startX + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
@@ -111,7 +114,7 @@ public class ForagingTabRenderer {
 		int hotfLvl = (data != null && data.mining != null) ? data.mining.hotfLevel : 0;
 		float s2X = startX + statW + 10f;
 		RenderHelper.drawModernCard(s2X, curY, statW, statH, 10f, false);
-		SkijaRenderer.text("\uE8EF", s2X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF059669, 18f);
+		RenderHelper.alignedIcon("\uE8EF", s2X + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF059669, 18f, 13.5f);
 		SkijaRenderer.text("HotF Level", s2X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		SkijaRenderer.text("Lv. " + hotfLvl, s2X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF059669, 16f);
 
@@ -119,7 +122,7 @@ public class ForagingTabRenderer {
 		double hotfExp = (data != null && data.mining != null) ? data.mining.hotfExperience : 0;
 		float s3X = s2X + statW + 10f;
 		RenderHelper.drawModernCard(s3X, curY, statW, statH, 10f, false);
-		SkijaRenderer.text("\uE838", s3X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 18f);
+		RenderHelper.alignedIcon("\uE838", s3X + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 18f, 13.5f);
 		SkijaRenderer.text("HotF Experience", s3X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		SkijaRenderer.text(RenderHelper.formatNumber((long) hotfExp), s3X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f);
 
@@ -127,11 +130,30 @@ public class ForagingTabRenderer {
 		long woodEssence = (data != null && data.essence != null) ? data.essence.getOrDefault("foraging", 0L) : 0L;
 		float s4X = s3X + statW + 10f;
 		RenderHelper.drawModernCard(s4X, curY, statW, statH, 10f, false);
-		SkijaRenderer.text("\uE520", s4X + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		RenderHelper.alignedIcon("\uE520", s4X + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 18f, 13.5f);
 		SkijaRenderer.text("Wood Essence", s4X + 36f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		SkijaRenderer.text(RenderHelper.formatNumber(woodEssence), s4X + 14f, curY + 38f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 16f);
 
-		curY += statH + 14f;
+				curY += statH + 14f;
+		ForagingData f = data.foraging;
+		RenderHelper.drawModernCard(startX, curY, width, 102f, 10f, false);
+		RenderHelper.drawStatRow("Forest Whispers · Current / Total", RenderHelper.formatNumber(f.forestWhispers) + " / " + RenderHelper.formatNumber(f.forestTotal), startX + 16f, curY + 16f, width - 32f, 14f, 0xFF34D399);
+		RenderHelper.drawStatRow("Desert Whispers · Current / Total", RenderHelper.formatNumber(f.desertWhispers) + " / " + RenderHelper.formatNumber(f.desertTotal), startX + 16f, curY + 44f, width - 32f, 14f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Daily Trees / Gifts", f.dailyTrees + " / " + f.dailyGifts, startX + 16f, curY + 72f, width - 32f, 14f, RenderHelper.FONT_SECONDARY);
+		curY += 118f;
+		String[] types = {"FIG", "MANGROVE", "HELIX"};
+		for (String type : types) {
+			String key = type.toLowerCase(Locale.ROOT);
+			String npc = type.equals("HELIX") ? "miria" : "agatha";
+			int fortune = f.perks.getOrDefault(npc + "_" + key + "_fortune", 0);
+			boolean personalBest = f.perks.containsKey(npc + "_" + key + "_personal_best");
+			RenderHelper.drawModernCard(startX, curY, width, 126f, 10f, false);
+			SkijaRenderer.text(type.charAt(0) + key.substring(1), startX + 16f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF34D399, 15f);
+			RenderHelper.drawStatRow("Gifts · Tier / Total", f.giftTiers.getOrDefault(type, 0) + "/" + ProfileJson.array(ForagingData.CATALOG, "tree_gifts", key).size() + " · " + RenderHelper.formatNumber(f.treeGifts.getOrDefault(type, 0L)), startX + 16f, curY + 42f, width - 32f, 14f, RenderHelper.FONT_PRIMARY);
+			RenderHelper.drawStatRow("Personal Best", personalBest ? RenderHelper.formatNumber(f.personalBests.getOrDefault(type + "_LOG", 0L)) : "Locked", startX + 16f, curY + 68f, width - 32f, 14f, RenderHelper.FONT_PRIMARY);
+			RenderHelper.drawStatRow("Fortune", fortune + " / " + ProfileJson.number(ForagingData.CATALOG, "misc", key + "_fortune"), startX + 16f, curY + 94f, width - 32f, 14f, RenderHelper.FONT_PRIMARY);
+			curY += 142f;
+		}
 
 		return curY - y0;
 	}
@@ -148,12 +170,12 @@ public class ForagingTabRenderer {
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
 
 		// Header
-		SkijaRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 18f);
+		RenderHelper.alignedIcon("\uE8EF", startX + 16f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, 0xFF10B981, 18f, 16f);
 		SkijaRenderer.text("Heart of the Forest (HOTF)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		int hotfLevel = data != null ? data.mining.hotfLevel : 0;
-		Map<String, Integer> activeNodes = data != null ? data.mining.foragingPresetNodes.getOrDefault(activeLoadoutSlot, data.mining.foragingNodes) : Map.of();
-		String activeAbility = data != null ? data.mining.foragingPresetAbilities.getOrDefault(activeLoadoutSlot, data.mining.selectedForagingAbility) : "";
+		Map<String, Integer> activeNodes = data != null ? data.mining.foragingPresetNodes.getOrDefault(activeLoadoutSlot, Map.of()) : Map.of();
+		String activeAbility = data != null ? data.mining.foragingPresetAbilities.getOrDefault(activeLoadoutSlot, "") : "";
 		renderLoadoutSlots(startX, curY + 42f, width, mx, my);
 		float gridStartX = startX + (width - (slotSize * 8 + slotGap * 8 + 14f)) / 2f;
 		float gridStartY = curY + 106f;
@@ -210,7 +232,7 @@ public class ForagingTabRenderer {
 				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
 				RenderHelper.drawItemSlotBg(nx, ny, slotSize, hov, isSelected ? 0xFF34D399 : 0x33FFFFFF, isSelected ? 0xFF1E382B : 0x5514151E, 6f);
 
-				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel);
+				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0));
 				// In screenshot 1: Level text only rendered for intermediate levels (not maxed and not ability)
 				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && !isMaxed ? String.valueOf(nodeLvl) : null);
 				int textColor = isSelected ? 0xFF34D399 : 0xFFFFFFFF;

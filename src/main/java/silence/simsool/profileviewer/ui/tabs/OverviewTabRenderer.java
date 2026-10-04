@@ -194,7 +194,7 @@ public class OverviewTabRenderer {
 		float curY = y + 15f;
 
 		// Information Header: [Icon] Information
-		SkijaRenderer.text("\uE88F", padX, curY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
+		RenderHelper.alignedIcon("\uE88F", padX, curY - 0.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 16f, 15f);
 		SkijaRenderer.text("Information", padX + 22f, curY - 0.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
 		curY += 26f;
 
@@ -291,7 +291,7 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Section Header: [Icon] Skills
-		SkijaRenderer.text("\uE9E4", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
+		RenderHelper.alignedIcon("\uE9E4", padX, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 18f, 16f);
 		SkijaRenderer.text("Skills", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		float startGridY = y + 62f;
@@ -344,7 +344,7 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Header: [Skull] Slayer
-		SkijaRenderer.text("\uE3AF", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFFA855F7, 18f);
+		RenderHelper.alignedIcon("\uE3AF", padX, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, 0xFFA855F7, 18f, 16f);
 		SkijaRenderer.text("Slayer", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		// 6 Bosses in 3 columns x 2 rows without subcard boxes
@@ -389,7 +389,7 @@ public class OverviewTabRenderer {
 		float headerY = y + 16f;
 
 		// Header: [Sparkle/Diamond] Essence
-		SkijaRenderer.text("\uE3E8", padX, headerY, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		RenderHelper.alignedIcon("\uE3E8", padX, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 18f, 16f);
 		SkijaRenderer.text("Essence", padX + 24f, headerY - 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		// 3x3 Grid starting with unified 62px margin

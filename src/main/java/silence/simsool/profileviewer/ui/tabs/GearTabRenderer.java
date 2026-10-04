@@ -127,7 +127,7 @@ public class GearTabRenderer {
 			int iconCol = active ? 0xFFFFFFFF : (hov ? 0xFF818CF8 : 0xFF9CA3AF);
 			int textCol = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
 
-			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, iconCol, 15f);
+			RenderHelper.alignedIcon(st.icon, subTabX + 10f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, iconCol, 15f, 13.5f);
 			SkijaRenderer.text(title, subTabX + 28f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
@@ -153,7 +153,7 @@ public class GearTabRenderer {
 			case BACKPACKS -> curY += renderBackpacksView(data, startX, curY, width, mouseX, mouseY);
 			case ACCESSORIES -> curY += renderAccessoriesView(data, startX, curY, width, mouseX, mouseY);
 			case BAGS -> curY += renderBags(data.inventory, startX, curY, width, mouseX, mouseY);
-			case SACKS -> curY += renderSacks(data.inventory, startX, curY, width);
+			case SACKS -> curY += SacksTabRenderer.render(data.inventory, startX, curY, width, mouseX, mouseY);
 		}
 
 		return curY - startY;
@@ -163,6 +163,10 @@ public class GearTabRenderer {
 	// 1. INVENTORY VIEW (1.12x Scaled & Centered in X/Y)
 	// =========================================================================
 	private static float renderInventoryView(MemberData data, float startX, float curY, float width, float mx, float my) {
+		return renderInventoryLayout(data.inventory, startX, curY, width, mx, my);
+	}
+
+	public static float renderInventoryLayout(InventoryData inventory, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
 		float slotSize = 42.5f;
 		float slotGap = 6f;
@@ -178,23 +182,23 @@ public class GearTabRenderer {
 
 		float armorColX = originX;
 		RenderHelper.drawModernCard(armorColX, curY, armorCardW, cardH, 12f, false);
-		SkijaRenderer.text("\uE8C9", armorColX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 16f);
+		RenderHelper.alignedIcon("\uE8C9", armorColX + 13f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 16f, 14f);
 		SkijaRenderer.text("Gear", armorColX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int i = 0; i < 4; i++) {
 			float sy = curY + 36f + i * (slotSize + slotGap);
 			float sxArmor = armorColX + 13f;
-			ParsedItem armorItem = (data.inventory.armor.size() > (3 - i)) ? data.inventory.armor.get(3 - i) : ParsedItem.EMPTY;
+			ParsedItem armorItem = (inventory.armor.size() > (3 - i)) ? inventory.armor.get(3 - i) : ParsedItem.EMPTY;
 			drawSlot(sxArmor, sy, slotSize, armorItem, mx, my, false);
 
 			float sxEq = armorColX + 13f + slotSize + slotGap;
-			ParsedItem eqItem = (data.inventory.equipment.size() > i) ? data.inventory.equipment.get(i) : ParsedItem.EMPTY;
+			ParsedItem eqItem = (inventory.equipment.size() > i) ? inventory.equipment.get(i) : ParsedItem.EMPTY;
 			drawSlot(sxEq, sy, slotSize, eqItem, mx, my, false);
 		}
 
 		float invX = armorColX + armorCardW + cardGap;
 		RenderHelper.drawModernCard(invX, curY, invCardW, cardH, 12f, false);
-		SkijaRenderer.text("\uE8F9", invX + 13f, curY + 15f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
+		RenderHelper.alignedIcon("\uE8F9", invX + 13f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 16f, 14f);
 		SkijaRenderer.text("Inventory", invX + 33f, curY + 14f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int r = 0; r < 4; r++) {
@@ -202,7 +206,7 @@ public class GearTabRenderer {
 				int slotIdx = (r == 3) ? c : ((r + 1) * 9 + c);
 				float sx = invX + 13f + c * (slotSize + slotGap);
 				float sy = curY + 36f + r * (slotSize + slotGap);
-				ParsedItem item = (data.inventory.inventory.size() > slotIdx) ? data.inventory.inventory.get(slotIdx) : ParsedItem.EMPTY;
+				ParsedItem item = (inventory.inventory.size() > slotIdx) ? inventory.inventory.get(slotIdx) : ParsedItem.EMPTY;
 				drawSlot(sx, sy, slotSize, item, mx, my, false);
 			}
 		}
@@ -234,7 +238,7 @@ public class GearTabRenderer {
 
 			float leftX = startX;
 			RenderHelper.drawModernCard(leftX, rowY, pageW, cardH, 10f, false);
-			SkijaRenderer.text("\uE52E", leftX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
+			RenderHelper.alignedIcon("\uE52E", leftX + 12f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFFA78BFA, 15f, 13.5f);
 			SkijaRenderer.text("Wardrobe #" + (p + 1), leftX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 			for (int row = 0; row < 4; row++) {
@@ -256,7 +260,7 @@ public class GearTabRenderer {
 			if (p + 1 < totalPages) {
 				float rightX = startX + pageW + colGap;
 				RenderHelper.drawModernCard(rightX, rowY, pageW, cardH, 10f, false);
-				SkijaRenderer.text("\uE52E", rightX + 12f, rowY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFA78BFA, 15f);
+				RenderHelper.alignedIcon("\uE52E", rightX + 12f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, 0xFFA78BFA, 15f, 13.5f);
 				SkijaRenderer.text("Wardrobe #" + (p + 2), rightX + 32f, rowY + 11.5f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 				for (int row = 0; row < 4; row++) {
@@ -325,7 +329,7 @@ public class GearTabRenderer {
 
 		// 1. Left Loadouts Selector Card (3 cols x 9 rows = 27 preset templates)
 		RenderHelper.drawModernCard(startX, curY, loadoutsW, mainH, 12f, false);
-		SkijaRenderer.text("\uE8EF", startX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 15f);
+		RenderHelper.alignedIcon("\uE8EF", startX + 12f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 15f, 13.5f);
 		SkijaRenderer.text("Loadouts", startX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 		for (int r = 0; r < 9; r++) {
@@ -377,14 +381,14 @@ public class GearTabRenderer {
 		// Column 1: HOTM Loadout Card
 		float hotmX = mainStartX;
 		RenderHelper.drawModernCard(hotmX, curY, treeW, mainH, 12f, false);
-		SkijaRenderer.text("\uE52F", hotmX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 16f);
+		RenderHelper.alignedIcon("\uE52F", hotmX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 16f, 13.5f);
 		SkijaRenderer.text("HOTM Loadout", hotmX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		renderFullHotmTree(hotmX, curY + 36f, treeW, mainH - 44f, data, miningSlot, mx, my);
 
 		// Column 2: Equipment Card (Center)
 		float eqX = hotmX + treeW + colGap;
 		RenderHelper.drawModernCard(eqX, curY, eqW, mainH, 12f, false);
-		SkijaRenderer.text("\uE8C9", eqX + 12f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 15f);
+		RenderHelper.alignedIcon("\uE8C9", eqX + 12f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 15f, 13.5f);
 		SkijaRenderer.text("Equipment", eqX + 30f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 
 		List<ParsedItem> armorItems = getLoadoutArmorItems(inv, curSl);
@@ -441,7 +445,7 @@ public class GearTabRenderer {
 		// Column 3: HOTF Loadout Card
 		float hotfX = eqX + eqW + colGap;
 		RenderHelper.drawModernCard(hotfX, curY, treeW, mainH, 12f, false);
-		SkijaRenderer.text("\uE56C", hotfX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFF34D399, 16f);
+		RenderHelper.alignedIcon("\uE56C", hotfX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF34D399, 16f, 13.5f);
 		SkijaRenderer.text("HOTF Loadout", hotfX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
 		renderFullHotfTree(hotfX, curY + 36f, treeW, mainH - 44f, data, foragingSlot, mx, my);
 
@@ -465,19 +469,9 @@ public class GearTabRenderer {
 		String activeAb = "";
 
 		if (m != null) {
-			if (m.presetNodes.containsKey(slot) && !m.presetNodes.get(slot).isEmpty()) {
-				activeNodes = m.presetNodes.get(slot);
-			} else if (!m.nodes.isEmpty()) {
-				activeNodes = m.nodes;
-			}
-
-			if (m.presetAbilities.containsKey(slot) && !m.presetAbilities.get(slot).isEmpty()) {
-				activeAb = m.presetAbilities.get(slot);
-			} else {
-				activeAb = m.selectedAbility;
-			}
+			activeNodes = m.presetNodes.getOrDefault(slot, Map.of());
+			activeAb = m.presetAbilities.getOrDefault(slot, "");
 		}
-
 		int coreLevel = activeNodes.getOrDefault("core_of_the_mountain", activeNodes.getOrDefault("peak_of_the_mountain", activeNodes.getOrDefault("special_0", 0)));
 		int treeLevel = (m != null) ? m.hotmLevel : 10;
 
@@ -527,7 +521,10 @@ public class GearTabRenderer {
 		float startTreeX = x + (w - treeW) / 2f;
 		float startTreeY = y + (h - treeH) / 2f;
 
-		int hotfLevel = 6;
+		MiningData mining = data.mining;
+		int hotfLevel = mining.hotfLevel;
+		Map<String, Integer> activeNodes = mining.foragingPresetNodes.getOrDefault(slot, Map.of());
+		String activeAbility = mining.foragingPresetAbilities.getOrDefault(slot, "");
 
 		for (int r = 0; r < 8; r++) {
 			for (int c = 0; c < 7; c++) {
@@ -537,23 +534,14 @@ public class GearTabRenderer {
 				float nx = startTreeX + c * (slotSize + slotGap);
 				float ny = startTreeY + r * (slotSize + slotGap);
 
-				boolean isSelected = "hotf_t2_4".equals(node.id);
-				int nodeLvl = switch (node.id) {
-					case "center_of_the_forest" -> 41;
-					case "hotf_t2_3" -> 12;
-					case "hotf_t2_2" -> 37;
-					case "hotf_t2_4" -> 1;
-					case "hotf_t3_3" -> 3;
-					case "hotf_t5_3" -> 4;
-					case "hotf_t4_0", "hotf_t4_1", "hotf_t4_2", "hotf_t4_3", "hotf_t5_1" -> 50;
-					default -> 0;
-				};
+				boolean isSelected = node.id.equals(activeAbility);
+				int nodeLvl = activeNodes.getOrDefault(node.id, 0);
 
 				boolean isMaxed = (nodeLvl >= node.maxLevel);
 				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
 				RenderHelper.drawItemSlotBg(nx, ny, slotSize, hov, isSelected ? 0xFF34D399 : 0x33FFFFFF, isSelected ? 0xFF1E382B : 0x5514151E, 5f);
 
-				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel);
+				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0));
 				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && !isMaxed ? String.valueOf(nodeLvl) : null);
 				int textColor = isSelected ? 0xFF34D399 : 0xFFFFFFFF;
 
@@ -633,29 +621,6 @@ public class GearTabRenderer {
 		return 44f + Math.max(1, (items.size() + 8) / 9) * (slotSize + 5f);
 	}
 
-	private static float renderSacks(InventoryData data, float x, float y, float width) {
-		float start = y;
-		if (data.sacks.isEmpty()) {
-			SkijaRenderer.text(L10n.translate("pv.gear.empty_page"), x + 16f, y + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
-			return 50f;
-		}
-		var entries = data.sacks.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
-		float gap = 10f;
-		float cardW = (width - gap) / 2f;
-		for (int i = 0; i < entries.size(); i++) {
-			var entry = entries.get(i);
-			float sx = x + (i % 2) * (cardW + gap);
-			float sy = y + (i / 2) * 42f;
-			RenderHelper.drawModernCard(sx, sy, cardW, 34f, 7f, false);
-			String name = entry.getKey().replace('_', ' ');
-			SkijaRenderer.text(name, sx + 12f, sy + 9f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13.5f);
-			String amount = RenderHelper.formatNumber(entry.getValue());
-			float amountW = SkijaRenderer.textWidth(amount, Fonts.PRETENDARD_SEMIBOLD, 14f);
-			SkijaRenderer.text(amount, sx + cardW - 12f - amountW, sy + 9f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
-		}
-		y += ((entries.size() + 1) / 2) * 42f;
-		return y - start;
-	}
 
 	// =========================================================================
 	// 5. BACKPACKS VIEW
@@ -746,7 +711,7 @@ public class GearTabRenderer {
 
 		// 1. Left: 12-Column Accessory Grid Card
 		RenderHelper.drawModernCard(startX, curY, gridW, gridH, 12f, false);
-		SkijaRenderer.text("\uEA5F", startX + 14f, curY + 14f, Fonts.MATERIAL_ICONS_ROUND, 0xFFF59E0B, 16f);
+		RenderHelper.alignedIcon("\uEA5F", startX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f, 14f);
 		SkijaRenderer.text("Accessory Bag (" + totalAcc + " Items)", startX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
 
 		for (int i = 0; i < totalAcc; i++) {
@@ -771,16 +736,16 @@ public class GearTabRenderer {
 		// 2. Right: Stats & Duplicates Panel (Compact font, generous vertical line height)
 		AccessoryAnalysis analysis = analyzeAccessories(accessories, inv.maxwell);
 
-		float statsH = Math.max(gridH, 440f);
+		float statsH = Math.max(gridH, 480f + analysis.duplicates.size() * 22f);
 		RenderHelper.drawModernCard(statsX, curY, statsW, statsH, 12f, false);
 
 		float sy = curY + 16f;
 		float padX = statsX + 16f;
 		float innerW = statsW - 32f;
-		float fontSz = 13.5f;
+		float fontSz = 15f;
 
 		// Total Magical Power
-		SkijaRenderer.text("Magical Power", padX, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 12f);
+		SkijaRenderer.text("Magical Power", padX, sy, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 14f);
 		String mpStr = RenderHelper.formatNumber(analysis.totalMp);
 		SkijaRenderer.text(mpStr, padX, sy + 18f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 26f);
 
@@ -789,14 +754,14 @@ public class GearTabRenderer {
 				? capitalize(inv.maxwell.selectedPower)
 				: "None";
 		float mpWidth = SkijaRenderer.textWidth(mpStr, Fonts.PRETENDARD_SEMIBOLD, 26f);
-		SkijaRenderer.text("Power: " + selPower, padX + mpWidth + 14f, sy + 24f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 13f);
+		SkijaRenderer.text("Power: " + selPower, padX + mpWidth + 14f, sy + 24f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14.5f);
 
 		sy += 54f;
 		SkijaRenderer.rect(padX, sy, innerW, 1f, 0x1AFFFFFF, 0.5f);
 		sy += 14f;
 
 		// Rarity Breakdown
-		SkijaRenderer.text("Rarity Breakdown", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Rarity Breakdown", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
 		sy += 22f;
 
 		String[] rarityOrder = {"MYTHIC", "LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON", "SPECIAL", "VERY SPECIAL"};
@@ -813,7 +778,7 @@ public class GearTabRenderer {
 			float tw = SkijaRenderer.textWidth(statTxt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
 			SkijaRenderer.text(statTxt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, color, fontSz);
 
-			sy += 20f;
+			sy += 23f;
 		}
 
 		if (analysis.riftPrismBonus > 0 || analysis.abiphoneBonus > 0) {
@@ -823,14 +788,14 @@ public class GearTabRenderer {
 				String txt = "+11 MP";
 				float tw = SkijaRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
 				SkijaRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
-				sy += 20f;
+				sy += 23f;
 			}
 			if (analysis.abiphoneBonus > 0) {
 				SkijaRenderer.text("Abiphone Contacts", padX + 14f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, fontSz);
 				String txt = "+" + analysis.abiphoneBonus + " MP";
 				float tw = SkijaRenderer.textWidth(txt, Fonts.PRETENDARD_SEMIBOLD, fontSz);
 				SkijaRenderer.text(txt, padX + innerW - tw, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, fontSz);
-				sy += 20f;
+				sy += 23f;
 			}
 		}
 
@@ -839,16 +804,16 @@ public class GearTabRenderer {
 		sy += 14f;
 
 		// Duplicates Section
-		SkijaRenderer.text("Duplicates", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+		SkijaRenderer.text("Duplicates", padX, sy, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 15f);
 		sy += 22f;
 
 		if (analysis.duplicates.isEmpty()) {
-			SkijaRenderer.text("\uE86C", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF10B981, 14f);
-			SkijaRenderer.text("No duplicates found. All accessories active!", padX + 18f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF10B981, fontSz);
+			RenderHelper.alignedIcon("\uE86C", padX, sy, Fonts.PRETENDARD_MEDIUM, 0xFF10B981, 16f, fontSz);
+			SkijaRenderer.text("All accessories active", padX + 18f, sy, Fonts.PRETENDARD_MEDIUM, 0xFF10B981, fontSz);
 		} else {
-			SkijaRenderer.text("\uE002", padX, sy + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFEF4444, 14f);
+			RenderHelper.alignedIcon("\uE002", padX, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFFEF4444, 16f, fontSz);
 			SkijaRenderer.text(analysis.duplicates.size() + " Duplicate(s) inactive:", padX + 18f, sy, Fonts.PRETENDARD_SEMIBOLD, 0xFFEF4444, fontSz);
-			sy += 20f;
+			sy += 23f;
 
 			for (String dupName : analysis.duplicates) {
 				SkijaRenderer.text("• " + dupName, padX + 10f, sy, Fonts.PRETENDARD, RenderHelper.FONT_MUTED, 12.5f);
@@ -894,6 +859,7 @@ public class GearTabRenderer {
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
+		if (activeSubTab == GearSubTab.SACKS && SacksTabRenderer.mouseClicked(mx, my)) return true;
 		if (activeSubTab == GearSubTab.ACCESSORIES && searchBox.mouseClicked(mx, my, 0)) {
 			return true;
 		}

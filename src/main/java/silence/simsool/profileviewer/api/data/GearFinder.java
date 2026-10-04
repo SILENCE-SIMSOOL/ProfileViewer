@@ -7,14 +7,58 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.LinkedHashSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
+import java.util.Comparator;
 import silence.simsool.profileviewer.api.nbt.ParsedItem;
 
 public final class GearFinder {
+
+	public static ItemStack findFarmingItem(MemberData data, Set<String> ids) {
+		return getAllPlayerItems(data).stream()
+			.filter(item -> !item.isEmpty() && ids.contains(item.skyblockId))
+			.max(Comparator.comparingInt(GearFinder::farmingScore))
+			.map(item -> item.itemStack).orElse(ItemStack.EMPTY);
+	}
+
+	public static ItemStack findRarestItem(MemberData data, Set<String> ids) {
+		return getAllPlayerItems(data).stream()
+			.filter(item -> !item.isEmpty() && ids.contains(item.skyblockId))
+			.max(Comparator.comparingInt(item -> rarityScore(item.rarity)))
+			.map(item -> item.itemStack).orElse(ItemStack.EMPTY);
+	}
+
+	public static int farmingScore(ParsedItem item) {
+		int score = rarityScore(item.rarity);
+		var custom = item.itemStack.get(DataComponents.CUSTOM_DATA);
+		if (custom == null) return score;
+		var attributes = custom.copyTag();
+		var enchantments = attributes.getCompound("enchantments").orElse(null);
+		if (enchantments != null) for (String enchant : enchantments.keySet()) score += enchantments.getInt(enchant).orElse(0);
+		if (attributes.getInt("rarity_upgrades").orElse(0) > 0) score++;
+		if (!attributes.getString("modifier").orElse("").isEmpty()) score++;
+		return score;
+	}
+
+	private static int rarityScore(String rarity) {
+		return switch (rarity.toUpperCase(Locale.ROOT)) {
+			case "UNCOMMON" -> 1;
+			case "RARE" -> 2;
+			case "EPIC" -> 3;
+			case "LEGENDARY" -> 4;
+			case "MYTHIC" -> 5;
+			case "DIVINE" -> 6;
+			case "SPECIAL" -> 7;
+			case "VERY_SPECIAL" -> 8;
+			default -> 0;
+		};
+	}
+
 
 	// =========================================================================
 	// 1. FARMING GEAR IDS
@@ -69,20 +113,20 @@ public final class GearFinder {
 
 	private static Set<String> ids(String section, String key) {
 		if (!GEAR.has(section) || !GEAR.getAsJsonObject(section).has(key)) return Set.of();
-		Set<String> result = new java.util.LinkedHashSet<>();
+		Set<String> result = new LinkedHashSet<>();
 		JsonArray array = GEAR.getAsJsonObject(section).getAsJsonArray(key);
 		array.forEach(value -> result.add(value.getAsString()));
 		return Collections.unmodifiableSet(result);
 	}
 
 	private static Set<String> armorPart(String section, String suffix) {
-		Set<String> result = new java.util.LinkedHashSet<>();
-		for (String id : ids(section, "armor")) if (id.endsWith(suffix)) result.add(id);
+		Set<String> result = new LinkedHashSet<>();
+		for (String id : ids(section, "armor")) if (List.of(id.split("_")).contains(suffix)) result.add(id);
 		return Collections.unmodifiableSet(result);
 	}
 
 	private static Set<String> combined(String section, String... keys) {
-		Set<String> result = new java.util.LinkedHashSet<>();
+		Set<String> result = new LinkedHashSet<>();
 		for (String key : keys) result.addAll(ids(section, key));
 		return Collections.unmodifiableSet(result);
 	}
@@ -100,7 +144,15 @@ public final class GearFinder {
 				if (bp != null) all.addAll(bp);
 			}
 		}
-		return all;
+		all.addAll(data.inventory.personalVault);
+		all.addAll(data.inventory.fishingBag);
+		all.addAll(data.inventory.accessoryBag);
+		all.addAll(data.inventory.potionBag);
+		all.addAll(data.inventory.quiver);
+		for (InventoryData.ArmorSet set : data.inventory.loadouts.armorSets.values()) all.addAll(set.getStacks());
+		for (InventoryData.EquipmentSet set : data.inventory.loadouts.equipmentSets.values()) all.addAll(set.getStacks());
+		Set<String> seen = new LinkedHashSet<>();
+		return all.stream().distinct().filter(item -> item != null && (item.uuid.isEmpty() || seen.add(item.uuid))).toList();
 	}
 
 	public static ItemStack findBestItem(MemberData data, Set<String> targetIds) {
@@ -132,15 +184,15 @@ public final class GearFinder {
 		int rarity = switch (item.rarity.toUpperCase(Locale.ROOT)) {
 			case "VERY_SPECIAL" -> 9;
 			case "SPECIAL" -> 8;
-			case "MYTHIC" -> 7;
-			case "DIVINE" -> 6;
+			case "MYTHIC" -> 6;
+			case "DIVINE" -> 7;
 			case "LEGENDARY" -> 5;
 			case "EPIC" -> 4;
 			case "RARE" -> 3;
 			case "UNCOMMON" -> 2;
 			default -> 1;
 		};
-		return (item.upgradeScore + rarity) * 1_000_000_000d + item.estimatedValue;
+		return item.upgradeScore + Math.clamp(rarity - 3, 0, 3);
 	}
 
 
@@ -154,13 +206,17 @@ public final class GearFinder {
 	}
 
 	public static List<ItemStack> findEquipmentSet(MemberData data, Set<String> eqIds) {
+		return findEquipmentSet(data, eqIds, false);
+	}
+
+	public static List<ItemStack> findEquipmentSet(MemberData data, Set<String> eqIds, boolean farming) {
 		List<ItemStack> list = new ArrayList<>();
-		for (String suffix : List.of("NECKLACE", "CLOAK", "BELT", "GLOVES|BRACELET")) {
-			Set<String> matching = eqIds.stream().filter(id -> {
-				for (String part : suffix.split("\\|")) if (id.endsWith(part)) return true;
-				return false;
-			}).collect(java.util.stream.Collectors.toSet());
-			list.add(findBestItem(data, matching));
+		for (String slot : List.of("necklaces", "cloaks", "belts", "gloves")) {
+			Set<String> matching = new LinkedHashSet<>();
+			for (String section : List.of("mining", "fishing", "farming")) {
+				for (String id : ids(section, slot)) if (eqIds.contains(id)) matching.add(id);
+			}
+			list.add(farming ? findFarmingItem(data, matching) : findBestItem(data, matching));
 		}
 		return list;
 	}

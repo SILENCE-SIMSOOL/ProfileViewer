@@ -1,8 +1,19 @@
 package silence.simsool.profileviewer.api.data;
 
 import com.google.gson.JsonObject;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MemberData {
+	private static final Logger LOGGER = LoggerFactory.getLogger(MemberData.class);
+	public final Map<String, String> sectionErrors = new LinkedHashMap<>();
+
+	private void recordError(String section, Exception error) {
+		sectionErrors.put(section, "Could not read " + section + " data. Refresh to retry.");
+		LOGGER.warn("Could not parse profile section: {}", section, error);
+	}
 
 	public double purse = 0;
 	public int skyBlockLevel = 0;
@@ -16,6 +27,7 @@ public class MemberData {
 	public DungeonData dungeons = new DungeonData();
 	public SlayerData slayer = new SlayerData();
 	public MiningData mining = new MiningData();
+	public ForagingData foraging = new ForagingData();
 	public GardenData garden = new GardenData();
 	public FishingData fishing = new FishingData();
 	public MuseumData museum = new MuseumData();
@@ -89,25 +101,26 @@ public class MemberData {
 			}
 		}
 
-		try { m.skills = SkillsData.fromJson(member); } catch (Exception ignored) {}
-		try { m.inventory = InventoryData.fromJson(member); } catch (Exception ignored) {}
-		try { m.pets = PetData.fromJson(member); } catch (Exception ignored) {}
-		try { m.dungeons = DungeonData.fromJson(member); } catch (Exception ignored) {}
-		try { m.slayer = SlayerData.fromJson(member); } catch (Exception ignored) {}
-		try { m.mining = MiningData.fromJson(member); } catch (Exception ignored) {}
-		try { m.garden = GardenData.fromJson(member); } catch (Exception ignored) {}
-		try { m.fishing = FishingData.fromJson(member); } catch (Exception ignored) {}
-		try { m.museum = MuseumData.fromJson(member); } catch (Exception ignored) {}
-		try { m.rift = RiftData.fromJson(member); } catch (Exception ignored) {}
-		try { m.collections = CollectionData.fromJson(member); } catch (Exception ignored) {}
-		try { m.cf = CfData.fromJson(member); } catch (Exception ignored) {}
+		try { m.skills = SkillsData.fromJson(member); } catch (Exception error) { m.recordError("skills", error); }
+		try { m.inventory = InventoryData.fromJson(member); } catch (Exception error) { m.recordError("inventory", error); }
+		try { m.pets = PetData.fromJson(member); } catch (Exception error) { m.recordError("pets", error); }
+		try { m.dungeons = DungeonData.fromJson(member); } catch (Exception error) { m.recordError("dungeons", error); }
+		try { m.slayer = SlayerData.fromJson(member); } catch (Exception error) { m.recordError("slayer", error); }
+		try { m.mining = MiningData.fromJson(member); } catch (Exception error) { m.recordError("mining", error); }
+		try { m.foraging = ForagingData.fromJson(member); } catch (Exception error) { m.recordError("foraging", error); }
+		try { m.garden = GardenData.fromJson(member); } catch (Exception error) { m.recordError("garden", error); }
+		try { m.fishing = FishingData.fromJson(member); } catch (Exception error) { m.recordError("fishing", error); }
+		try { m.museum = MuseumData.fromJson(member); } catch (Exception error) { m.recordError("museum", error); }
+		try { m.rift = RiftData.fromJson(member); } catch (Exception error) { m.recordError("rift", error); }
+		try { m.collections = CollectionData.fromJson(member); } catch (Exception error) { m.recordError("collections", error); }
+		try { m.cf = CfData.fromJson(member); } catch (Exception error) { m.recordError("cf", error); }
 
 		if (member.has("networth") && member.get("networth").isJsonObject()) {
-			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("networth"), bankBalance); } catch (Exception ignored) {}
+			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("networth"), bankBalance); } catch (Exception error) { m.recordError("networth", error); }
 		} else if (member.has("net_worth") && member.get("net_worth").isJsonObject()) {
-			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("net_worth"), bankBalance); } catch (Exception ignored) {}
+			try { m.networth = NetworthData.fromJson(member.getAsJsonObject("net_worth"), bankBalance); } catch (Exception error) { m.recordError("networth", error); }
 		} else {
-			try { m.networth = NetworthData.calculate(m, bankBalance); } catch (Exception ignored) {}
+			try { m.networth = NetworthData.calculate(m, bankBalance); } catch (Exception error) { m.recordError("networth", error); }
 		}
 
 		return m;
@@ -134,17 +147,17 @@ public class MemberData {
 		if (dataObj.has("skills") && dataObj.get("skills").isJsonObject()) {
 			m.skills = SkillsData.fromSkyCrypt(dataObj.getAsJsonObject("skills"));
 		}
-		try { m.dungeons = DungeonData.fromJson(dataObj); } catch (Exception ignored) {}
+		try { m.dungeons = DungeonData.fromJson(dataObj); } catch (Exception error) { m.recordError("dungeons", error); }
 		if (dataObj.has("slayer") && dataObj.get("slayer").isJsonObject()) {
 			m.slayer = SlayerData.fromJson(dataObj.getAsJsonObject("slayer"));
 		}
-		try { m.mining = MiningData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.garden = GardenData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.fishing = FishingData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.museum = MuseumData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.rift = RiftData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.inventory = InventoryData.fromJson(dataObj); } catch (Exception ignored) {}
-		try { m.pets = PetData.fromJson(dataObj); } catch (Exception ignored) {}
+		try { m.mining = MiningData.fromJson(dataObj); } catch (Exception error) { m.recordError("mining", error); }
+		try { m.garden = GardenData.fromJson(dataObj); } catch (Exception error) { m.recordError("garden", error); }
+		try { m.fishing = FishingData.fromJson(dataObj); } catch (Exception error) { m.recordError("fishing", error); }
+		try { m.museum = MuseumData.fromJson(dataObj); } catch (Exception error) { m.recordError("museum", error); }
+		try { m.rift = RiftData.fromJson(dataObj); } catch (Exception error) { m.recordError("rift", error); }
+		try { m.inventory = InventoryData.fromJson(dataObj); } catch (Exception error) { m.recordError("inventory", error); }
+		try { m.pets = PetData.fromJson(dataObj); } catch (Exception error) { m.recordError("pets", error); }
 
 		if (dataObj.has("essence") && dataObj.get("essence").isJsonObject()) {
 			parseEssenceObject(dataObj.getAsJsonObject("essence"), m);

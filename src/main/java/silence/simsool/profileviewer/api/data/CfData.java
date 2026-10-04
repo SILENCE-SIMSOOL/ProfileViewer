@@ -9,6 +9,26 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class CfData {
+	public static final JsonObject CATALOG = ProfileJson.catalog("chocolate_catalog");
+	private static final Map<String, String> RABBIT_RARITIES = rabbitRarities();
+	public int timeTowerLevel;
+	public int timeTowerCharges;
+	public int hitmanSlots;
+	public int uncollectedEggs;
+	public String faction = "";
+	public int factionLevel;
+
+	private static Map<String, String> rabbitRarities() {
+		Map<String, String> result = new LinkedHashMap<>();
+		for (var tier : ProfileJson.object(CATALOG, "rabbits").entrySet()) {
+			for (var rabbit : tier.getValue().getAsJsonArray()) result.put(rabbit.getAsString(), tier.getKey());
+		}
+		return result;
+	}
+
+	public static String rabbitRarity(String id) {
+		return RABBIT_RARITIES.getOrDefault(id, "");
+	}
 
 	public long chocolate = 0;
 	public long totalChocolate = 0;
@@ -46,6 +66,12 @@ public class CfData {
 		}
 
 		if (cf != null) {
+			data.timeTowerLevel = (int) ProfileJson.number(cf, "time_tower", "level");
+			data.timeTowerCharges = (int) ProfileJson.number(cf, "time_tower", "charges");
+			data.hitmanSlots = (int) ProfileJson.number(cf, "rabbit_hitmen", "rabbit_hitmen_slots");
+			data.uncollectedEggs = (int) ProfileJson.number(cf, "rabbit_hitmen", "missed_uncollected_eggs");
+			data.faction = ProfileJson.string(cf, "rabbits", "selected_faction");
+			data.factionLevel = (int) ProfileJson.number(cf, "rabbits", "faction_level");
 			if (cf.has("chocolate")) data.chocolate = cf.get("chocolate").getAsLong();
 			if (cf.has("total_chocolate")) data.totalChocolate = cf.get("total_chocolate").getAsLong();
 			if (cf.has("chocolate_since_prestige")) data.chocolateSincePrestige = cf.get("chocolate_since_prestige").getAsLong();
@@ -68,7 +94,7 @@ public class CfData {
 				JsonObject r = cf.getAsJsonObject("rabbits");
 				for (Map.Entry<String, JsonElement> e : r.entrySet()) {
 					if (e.getValue() instanceof JsonPrimitive && ((JsonPrimitive) e.getValue()).isNumber()) {
-						data.rabbits.put(e.getKey(), e.getValue().getAsInt());
+						if (RABBIT_RARITIES.containsKey(e.getKey()) && e.getValue().getAsInt() > 0) data.rabbits.put(e.getKey(), e.getValue().getAsInt());
 					}
 				}
 			}

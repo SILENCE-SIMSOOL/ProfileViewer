@@ -1,0 +1,847 @@
+{
+  "nodes": [
+    {
+      "type": "PERK",
+      "id": "250_gifts",
+      "location": [
+        3,
+        3
+      ],
+      "max_level": 40,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.07)",
+      "reward_formula": "level",
+      "name": "250 Gifts",
+      "tooltip": [
+        "<gray>Your first </gray><green>250 </green><gray>Tree Gifts of the day</gray>",
+        "<gray>grant </gray><green>%reward%% </green><gray>more loot and </gray><green>20 </green><gray>extra</gray>",
+        "<dark_aqua>Forest </dark_aqua><gray> or <gold>Desert Whispers</gold>.</gray>"
+      ]
+    },
+    {
+      "type": "SPACER",
+      "location": [
+        -1,
+        0
+      ],
+      "size": [
+        5,
+        5
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        0
+      ],
+      "name": "Tier 1",
+      "rewards": [
+        "<dark_gray>+<purple>1 Token of the Mountain"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        1
+      ],
+      "name": "Tier 2",
+      "rewards": [
+        "<dark_gray>+<purple>2 Token of the Mountain",
+        "<gold>Access to the Forge",
+        "<dark_gray>+<gold>New Forgeable Items"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        2
+      ],
+      "name": "Tier 3",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        3
+      ],
+      "name": "Tier 4",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        4
+      ],
+      "name": "Tier 5",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        5
+      ],
+      "name": "Tier 6",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        6
+      ],
+      "name": "Tier 7",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "TIER",
+      "location": [
+        -2,
+        7
+      ],
+      "name": "Tier 8",
+      "rewards": [
+        "<dark_gray>+<green>2 Token of the Forest"
+      ]
+    },
+    {
+      "type": "ABILITY",
+      "id": "axe_toss",
+      "name": "Axe Toss",
+      "location": [
+        5,
+        1
+      ],
+      "reward_formula": "120 - effectiveLevel * 4",
+      "tooltip": [
+        "<gold>Axe Ability: Axe Toss</gold>",
+        "<gray>Throwing your Axe has no </gray><dark_green> Sweep</dark_green>",
+        "<gray>penalty for </gray><green>10s</green><gray>.</gray>",
+        "<dark_gray>Cooldown: </dark_gray><green>%reward%s</green>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "beekeeper",
+      "name": "Beekeeper",
+      "location": [
+        6,
+        7
+      ],
+      "tooltip": [
+        "<gray>Every SkyBlock day, gain a random",
+        "<gray>effect while on any <dark_green>Foraging Island</dark_green>.",
+        "<gray>",
+        "<gray>Possible Buffs",
+        "<gray> <dark_gray>■</dark_gray> <gold>Honeyhives</gold> refill <green>20%</green> faster.",
+        "<gray> <dark_gray>■</dark_gray> <green>Trees</green> lathered with <gold>Honeycomb",
+        "<gray>    attract <green> Critters 20%</green> faster.",
+        "<gray> <dark_gray>■</dark_gray> Gain <green>2x <gold>Honeycomb <gray>from</gray> Honeyhives",
+        "<gray>    and <green>Trees</green> lathered with <gold>Honeycomb</gold>.",
+        "<gray> <dark_gray>■</dark_gray> <green>Trees</green> lathered with <gold>Honeycomb</gold> have",
+        "<gray>    a <green>25%</green> chance to attract a second <green>",
+        "<gray>    <green>Critter</green>."
+      ]
+    },
+    {
+      "type": "CORE",
+      "id": "center_of_the_forest",
+      "name": "Center of the Forest",
+      "location": [
+        3,
+        4
+      ],
+      "level": [
+        {
+          "reward": [
+            "<dark_gray>+</dark_gray><red>1 Axe Ability Level</red>",
+            "<dark_gray>+</dark_gray><green>1 Token of the Forest</green>"
+          ]
+        },
+        {
+          "include": [
+            1
+          ],
+          "cost": {
+            "type": "WHISPER",
+            "kind": "FOREST",
+            "amount": 50000
+          },
+          "reward": "<dark_gray>+</dark_gray><dark_green>5%  Sweep</dark_green><gray>.</gray>"
+        },
+        {
+          "include": [
+            1,
+            2
+          ],
+          "cost": {
+            "type": "WHISPER",
+            "kind": "FOREST",
+            "amount": 100000
+          },
+          "reward": [
+            "<dark_gray>+</dark_gray><dark_aqua>20 Forest Whispers </dark_aqua><gray>per Tree Gift.</gray>",
+            "<dark_gray>+</dark_gray><dark_aqua>2 Forest Whispers </dark_aqua><gray>per</gray>",
+            "<gray>Fig/Mangrove logs cut.</gray>"
+          ]
+        },
+        {
+          "include": [
+            1,
+            2,
+            3
+          ],
+          "cost": {
+            "type": "WHISPER",
+            "kind": "FOREST",
+            "amount": 200000
+          },
+          "reward": "<dark_gray>+</dark_gray><dark_green>10%  Sweep</dark_green><gray>.</gray>"
+        },
+        {
+          "cost": {
+            "type": "WHISPER",
+            "kind": "FOREST",
+            "amount": 300000
+          },
+          "reward": [
+            "<dark_gray>+</dark_gray><red>1 Axe Ability Level</red>",
+            "<dark_gray>+</dark_gray><dark_green>5%  Sweep</dark_green><gray>.</gray>",
+            "<dark_gray>+</dark_gray><dark_aqua>20 Forest Whispers </dark_aqua><gray>per Tree Gift.</gray>",
+            "<dark_gray>+</dark_gray><dark_aqua>2 Forest Whispers </dark_aqua><gray>per</gray>",
+            "<gray>Fig/Mangrove logs cut.</gray>",
+            "<dark_gray>+</dark_gray><dark_green>10%  Sweep</dark_green><gray>.</gray>",
+            "<dark_gray>+</dark_gray><green>2 Token of the Forest</green>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "collector",
+      "location": [
+        4,
+        1
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^2.9)",
+      "reward_formula": "level * 2",
+      "name": "Collector",
+      "tooltip": [
+        "<gray>Berries and Island Resources have</gray>",
+        "<gray>a </gray><green>%reward%% </green><gray>chance to drop double</gray>",
+        "<gray>resource.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "daily_wishes",
+      "location": [
+        4,
+        3
+      ],
+      "max_level": 100,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor(200 + (level * 18))",
+      "reward_formula": {
+        "reward": "level * 400",
+        "helix": "level * 800"
+      },
+      "name": "Daily Wishes",
+      "tooltip": [
+        "<gray>You gain </gray><green>%reward%<gray>-</gray>%helix%</green><dark_aqua> Whispers </dark_aqua><gray>from</gray>",
+        "<gray>the first type of log you cut on</gray>",
+        "<dark_green>Galatea </dark_green><gray>every day.</gray>",
+        "",
+        "<dark_gray><strikethrough>Fig Log: +%reward% Forest Whispers</strikethrough></dark_gray>",
+        "<yellow>Mangrove Log</yellow><gray>: </gray><green>+%reward% </green><dark_aqua>Forest Whispers</dark_aqua>",
+        "<yellow>Helix Log</yellow><gray>: </gray><green>+%helix% </green><gold>Desert Whispers</dark_aqua>"
+      ]
+    },
+    {
+      "type": "ABILITY",
+      "id": "damage_boost",
+      "name": "Damage Boost",
+      "location": [
+        1,
+        1
+      ],
+      "reward_formula": "120 - effectiveLevel * 5",
+      "tooltip": [
+        "<gold>Axe Ability: Damage Boost</gold>",
+        "<gray>Your axe deals double </gray><red> Damage </red><gray>to</gray>",
+        "<gray>creatures on </gray><dark_green>Galatea </dark_green><gray>for </gray><green>10s</green><gray>.</gray>",
+        "<dark_gray>Cooldown: </dark_gray><green>%reward%s</green>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "deep_waters",
+      "location": [
+        1,
+        2
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^2.9)",
+      "reward_formula": "level",
+      "name": "Deep Waters",
+      "tooltip": [
+        "<gray>You gain </gray><green>%reward% </green><blue> Pressure Resistance</blue><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "early_bird",
+      "name": "Early Bird",
+      "location": [
+        5,
+        3
+      ],
+      "tooltip": [
+        "<gray>Increase </gray><dark_green> Sweep </dark_green><gray>by </gray><green>20</green><gray> and </gray><gold></gold>",
+        "<gold>Foraging Fortune </gold><gray>by </gray><green>100</green><gray> for the</gray>",
+        "<gray>first </gray><green>250 </green><gray>trees cut every day.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "efficient_forager",
+      "location": [
+        5,
+        5
+      ],
+      "max_level": 100,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^2.6)",
+      "reward_formula": "5 + (level * 0.1)",
+      "name": "Efficient Forager",
+      "tooltip": [
+        "<gray>Grants </gray><dark_aqua>%reward%☯ Foraging Wisdom</dark_aqua><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "essence_fortune",
+      "location": [
+        2,
+        7
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.2)",
+      "reward_formula": "level * 0.5",
+      "name": "Essence Fortune",
+      "tooltip": [
+        "<gray>Every time you obtain </gray><light_purple>Forest</light_purple>",
+        "<light_purple>Essence</light_purple><gray>, there is a </gray><green>%reward%%</green><gray> chance for</gray>",
+        "<gray>it to double.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "foraging_fortune",
+      "location": [
+        3,
+        1
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3.05)",
+      "reward_formula": "level * 3",
+      "name": "Foraging Fortune",
+      "tooltip": [
+        "<gray>Increase </gray><gold> Foraging Fortune </gold><gray>by </gray><green>%reward%</green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "foraging_madness",
+      "name": "Foraging Madness",
+      "location": [
+        1,
+        3
+      ],
+      "tooltip": [
+        "<gray>Increase </gray><dark_green> Sweep </dark_green><gray>by </gray><green>10</green><gray> and </gray><gold></gold>",
+        "<gold>Foraging Fortune </gold><gray>by </gray><green>50</green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "forest_fisher",
+      "location": [
+        1,
+        5
+      ],
+      "max_level": 40,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.07)",
+      "reward_formula": {
+        "fishing_speed": "5 + 0.5 * level",
+        "sea_creature_chance": "1 + level * 0.1"
+      },
+      "name": "Forest Fisher",
+      "tooltip": [
+        "<gray>Gain <aqua>+%fishing_speed% Fishing Speed </aqua>and",
+        "<gray><dark_aqua>+%sea_creature_chance% Sea Creature Chance</dark_aqua> while on",
+        "<dark_green>Foraging Islands<gray>."
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "forest_speed",
+      "location": [
+        1,
+        7
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.4)",
+      "reward_formula": "level * 0.2",
+      "name": "Forest Speed",
+      "tooltip": [
+        "<gray>Gain </gray><green>%reward%% </green><gray>of your total </gray><white> Speed </white><gray>as</gray>",
+        "<gold> Foraging Fortune </gold><gray>and </gray><dark_green> Sweep</dark_green><gray>.</gray>",
+        "<dark_gray>(Caps at 500 Speed).</dark_gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "forest_strength",
+      "location": [
+        5,
+        7
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3.4)",
+      "reward_formula": "level * 0.1",
+      "name": "Forest Strength",
+      "tooltip": [
+        "<gray>Gain </gray><green>%reward%% </green><gray>of your total </gray><red> Strength</red>",
+        "<gray>as </gray><gold> Foraging Fortune </gold><gray>and </gray><dark_green></dark_green>",
+        "<dark_green>Sweep</dark_green><gray>. </gray><dark_gray>(Caps at 1,000 Strength).</dark_gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "free_trial",
+      "name": "Free Trial",
+      "location": [
+        5,
+        4
+      ],
+      "tooltip": [
+        "<gray>The first <dark_green>Tree Gift</dark_green> you obtain every",
+        "<gray>day will contain a <dark_green>Basic Safari Ticket</dark_green>."
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "galateas_might",
+      "location": [
+        5,
+        2
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3.2)",
+      "reward_formula": "level * 0.5",
+      "name": "Galatea's Might",
+      "tooltip": [
+        "<gray>Gain </gray><green>%reward%% </green><gray>Combat Stats on </gray><dark_green>Galatea</dark_green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "half_empty",
+      "location": [
+        1,
+        6
+      ],
+      "max_level": 25,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^4.1)",
+      "reward_formula": {
+        "foraging_fortune": "level * 2",
+        "sweep": "level"
+      },
+      "name": "Half Empty",
+      "tooltip": [
+        "<gray>Gain </gray><green>%foraging_fortune% </green><gold> Foraging Fortune </gold><gray>and </gray><green>%sweep% </green><dark_green></dark_green>",
+        "<dark_green>Sweep </dark_green><gray>when within </gray><green>16 </green><gray>Blocks of a</gray>",
+        "<gray>player with Half Full enabled.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "half_full",
+      "location": [
+        5,
+        6
+      ],
+      "max_level": 25,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^4.1)",
+      "reward_formula": {
+        "foraging_fortune": "level * 2",
+        "sweep": "level"
+      },
+      "name": "Half Full",
+      "tooltip": [
+        "<gray>Gain </gray><green>%foraging_fortune% </green><gold> Foraging Fortune </gold><gray>and </gray><green>%sweep% </green><dark_green></dark_green>",
+        "<dark_green>Sweep </dark_green><gray>when within </gray><green>16 </green><gray>Blocks of a</gray>",
+        "<gray>player with Half Empty enabled.</gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "homing_axe",
+      "name": "Homing Axe",
+      "location": [
+        0,
+        5
+      ],
+      "tooltip": [
+        "<gray>Your Throwing Axes gain permanent</gray>",
+        "<gray>homing abilities towards trees on</gray>",
+        "<dark_green>Galatea</dark_green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "hunters_luck",
+      "location": [
+        3,
+        2
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3.2)",
+      "reward_formula": "level",
+      "name": "Hunter's Luck",
+      "tooltip": [
+        "<gray>You gain </gray><green>%reward% </green><light_purple> Hunter Fortune</light_purple><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "iron_lungs",
+      "location": [
+        2,
+        3
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^2.9)",
+      "reward_formula": "level",
+      "name": "Iron Lung",
+      "tooltip": [
+        "<gray>Grants </gray><dark_aqua>%reward%  Respiration</dark_aqua><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "lottery",
+      "name": "Lottery",
+      "location": [
+        0,
+        3
+      ],
+      "tooltip": [
+        "<gray>Every SkyBlock day, you receive a</gray>",
+        "<gray>random effect.</gray>",
+        "",
+        "<gray>Possible Buffs</gray>",
+        "<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+50 </green><gold> Fig Fortune</gold><gray>.</gray>",
+        "<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+50 </green><gold> Mangrove Fortune</gold><gray>.</gray>",
+        "<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+50 </green><gold> Helix  Fortune</gold><gray>.</gray>",
+        "<dark_gray> ■ </dark_gray><gray>Gain </gray><green>+5% </green><dark_green> Sweep</dark_green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "luck_of_the_forest",
+      "location": [
+        2,
+        1
+      ],
+      "max_level": 40,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3.07)",
+      "reward_formula": "level * 0.5",
+      "name": "Luck of the Forest",
+      "tooltip": [
+        "<gray>Tree Gifts grant </gray><green>%reward%% </green><gray>more loot.</gray>"
+      ]
+    },
+    {
+      "type": "ABILITY",
+      "id": "maniac_slicer",
+      "name": "Maniac Slicer",
+      "location": [
+        6,
+        5
+      ],
+      "reward_formula": {
+        "cooldown": "60 - effectiveLevel * 2",
+        "duration": "15 + effectiveLevel * 5"
+      },
+      "tooltip": [
+        "<gold>Axe Ability: Maniac Slicer</gold>",
+        "<gray>Throwing your axe consumes </gray><green>100%</green>",
+        "<gray>of your total mana. You gain </gray><dark_green>1</dark_green>",
+        "<dark_green>Sweep </dark_green><gray>for every </gray><aqua>100 Mana </aqua><gray>used, for</gray>",
+        "<green>%duration% </green><gray>seconds.</gray>",
+        "<dark_gray>Cooldown: </dark_gray><green>%cooldown%s</green>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "monster_hunter",
+      "name": "Monster Hunter",
+      "location": [
+        0,
+        7
+      ],
+      "tooltip": [
+        "<gray>Hunting a <green> Critter</green> grants <green>+25",
+        "<dark_aqua>Forest Whispers <gray>while on the",
+        "<dark_green>Moonglade Marsh <gray>or <green>+25 <gold>Desert",
+        "<gold>Whispers <gray>if on</gray> Torrhus Canyon<gray>."
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "precision_cutting",
+      "name": "Precision Cutting",
+      "location": [
+        6,
+        3
+      ],
+      "tooltip": [
+        "<gray>A particle appears on every nearby</gray>",
+        "<gray>tree. Cutting the marked log grants</gray>",
+        "<gray>you a </gray><green>+10</green><gray> </gray><dark_green> Sweep </dark_green><gray>on that hit.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "ricochet",
+      "location": [
+        3,
+        6
+      ],
+      "max_level": 10,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^5.5)",
+      "reward_formula": "level",
+      "name": "Ricochet",
+      "tooltip": [
+        "<gray>Your Axe has a </gray><green>%reward%% </green><gray>chance to bounce</gray>",
+        "<gray>to a nearby tree when thrown.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "speed_boost",
+      "location": [
+        4,
+        5
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.1)",
+      "reward_formula": "level",
+      "name": "Speed Boost",
+      "tooltip": [
+        "<gray>Increase <white> Speed </white>by <green>%reward%</green> while on</gray>",
+        "<dark_green>Foraging Islands</dark_green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "starlyn_supreme",
+      "location": [
+        3,
+        5
+      ],
+      "max_level": 100,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^2.6)",
+      "reward_formula": "level * 0.2",
+      "name": "Starlyn Supreme",
+      "tooltip": [
+        "<gray>Gain <green>+%reward%% </green> more points towards",
+        "<light_purple>Starlyn Contests<gray>."
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "strength_boost",
+      "location": [
+        2,
+        5
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^3.1)",
+      "reward_formula": "level * 2",
+      "name": "Strength Boost",
+      "tooltip": [
+        "<gray>Increase <red> Strength</red> by <green>%reward%</green> while on</gray>",
+        "<dark_green>Foraging Islands</dark_green><gray>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "sweep",
+      "location": [
+        3,
+        0
+      ],
+      "max_level": 50,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "FOREST"
+      },
+      "cost_formula": "floor((level + 1)^3)",
+      "reward_formula": "level",
+      "name": "Sweep",
+      "tooltip": [
+        "<gray>Increase <dark_green> Sweep</dark_green> by <green>%reward%</green>.</gray>"
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "timber",
+      "location": [
+        3,
+        7
+      ],
+      "max_level": 10,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 7)^5)",
+      "reward_formula": "level * 0.1",
+      "name": "Timber",
+      "tooltip": [
+        "<gray>Grants <dark_red>%reward% Timber</dark_red>.</gray>"
+      ]
+    },
+    {
+      "type": "UNLEVELABLE",
+      "id": "tree_whisperer",
+      "name": "Tree Whisperer",
+      "location": [
+        1,
+        4
+      ],
+      "tooltip": [
+        "<gray><green>Fig</green> and <dark_green>Mangrove Tree Gifts</dark_green> give",
+        "<gray><green>+200</green> <dark_aqua>Forest Whispers</dark_aqua> and <gold>Helix Tree",
+        "<gray><gold>Gifts</gold> give <lime>+200</lime><gold> Desert Whispers</gold>."
+      ]
+    },
+    {
+      "type": "PERK",
+      "id": "two_for_one",
+      "location": [
+        4,
+        7
+      ],
+      "max_level": 100,
+      "cost": {
+        "type": "WHISPER",
+        "kind": "DESERT"
+      },
+      "cost_formula": "floor((level + 1)^2.45)",
+      "reward_formula": "level * 0.25",
+      "name": "Two-for-one",
+      "tooltip": [
+        "<gray>Grans a <green>+%reward%%</green> chance to receive an",
+        "<gray>extra <dark_green>Safari Ticket</dark_green> from <aqua>Miria's",
+        "<aqua>Contest <gray>rewards."
+      ]
+    }
+  ]
+}

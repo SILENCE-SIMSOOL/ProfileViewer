@@ -56,7 +56,7 @@ public class DungeonsTabRenderer {
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textColor, 16f);
+			RenderHelper.alignedIcon(st.icon, subTabX + 10f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 16f, 14f);
 			SkijaRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_MEDIUM, textColor, 14f);
 
 			subTabX += stW + 8f;
@@ -66,7 +66,7 @@ public class DungeonsTabRenderer {
 
 		switch (activeSubTab) {
 			case DUNGEONS -> curY += renderDungeonsView(d, startX, curY, width, mouseX, mouseY);
-			case BESTIARY -> curY += renderBestiaryView(d, startX, curY, width, mouseX, mouseY);
+			case BESTIARY -> curY += BestiaryTabRenderer.render(d, startX, curY, width, mouseX, mouseY);
 			case CRIMSON_ISLE -> curY += renderCrimsonIsleView(d, startX, curY, width, mouseX, mouseY);
 		}
 
@@ -137,16 +137,18 @@ public class DungeonsTabRenderer {
 		curY += cardH + 20f;
 
 		// 2. 5 Dungeon Classes Cards
-		SkijaRenderer.text("\uE8E8", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		RenderHelper.alignedIcon("\uE8E8", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 18f, 16f);
 		SkijaRenderer.text(L10n.translate("pv.dungeons.classes") + " (5)", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 24f;
 
-		float clsW = (width - 4 * 10f) / 5f;
+		int classColumns = Math.min(5, Math.max(1, (int) ((width + 10f) / 168f)));
+		float clsW = (width - (classColumns - 1) * 10f) / classColumns;
 		float clsH = 76f;
 		int cIdx = 0;
 
 		for (DungeonData.ClassInfo ci : d.classes.values()) {
-			float cx = startX + cIdx * (clsW + 10f);
+			float cx = startX + cIdx % classColumns * (clsW + 10f);
+			if (cIdx > 0 && cIdx % classColumns == 0) curY += clsH + 10f;
 			boolean isSel = ci.isSelected;
 			RenderHelper.drawModernCard(cx, curY, clsW, clsH, 10f, isSel);
 
@@ -192,7 +194,7 @@ public class DungeonsTabRenderer {
 		curY += clsH + 24f;
 
 		// 3. Dungeon Runs Floor Breakdown (F1 ~ F7)
-		SkijaRenderer.text("\uE3AF", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFEF4444, 18f);
+		RenderHelper.alignedIcon("\uE3AF", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFEF4444, 18f, 16f);
 		SkijaRenderer.text(L10n.translate("pv.dungeons.floor_runs"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		int totalRuns = d.totalNormalRuns + d.totalMasterRuns;
@@ -204,14 +206,14 @@ public class DungeonsTabRenderer {
 
 		float tblW = width;
 		float rowH = 58f;
-		float pillW = 230f;
+		float pillW = (width - 52f) / 3f;
 		float pillH = 44f;
 		float mPillX = startX + tblW - 14f - pillW;
 		float nPillX = mPillX - 12f - pillW;
 
 		String[] floorKeys = {"F1", "F2", "F3", "F4", "F5", "F6", "F7"};
 		String[] floorBadges = {"F1", "F2", "F3", "F4", "F5", "F6", "F7"};
-		String[] floorNames = {"Floor 1 (Bonzo)", "Floor 2 (Scarf)", "Floor 3 (Professor)", "Floor 4 (Thorn)", "Floor 5 (Livid)", "Floor 6 (Sadan)", "Floor 7 (Necron)"};
+		String[] floorNames = {"Bonzo", "Scarf", "Professor", "Thorn", "Livid", "Sadan", "Necron"};
 
 		// Table Column Labels
 		SkijaRenderer.text("Floor", startX + 14f, curY + 3f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 13f);
@@ -257,9 +259,9 @@ public class DungeonsTabRenderer {
 
 			// S+ Stopwatch Time
 			String normSplus = norm.fastestTimeSplusMs > 0 ? norm.getFastestSPlusFormatted() : (norm.fastestTimeMs > 0 ? norm.getFastestTimeFormatted() : "-");
-			float nTimeW = SkijaRenderer.textWidth(normSplus, Fonts.PRETENDARD_MEDIUM, 12.5f);
+			float nTimeW = SkijaRenderer.textWidth(normSplus, Fonts.PRETENDARD_MEDIUM, 13.5f);
 			float nTimeX = nPillX + pillW - 12f - nTimeW;
-			SkijaRenderer.text("\uE425", nTimeX - 15f, pillY + 7f, Fonts.MATERIAL_ICONS_ROUND, hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_DISABLED, 14f);
+			RenderHelper.alignedIcon("\uE425", nTimeX - 15f, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_DISABLED, 14f, 13.5f);
 			SkijaRenderer.text(normSplus, nTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
 			SkijaRenderer.text("Best score  " + (norm.bestScore > 0 ? norm.bestScore : "-"), nPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
@@ -282,9 +284,9 @@ public class DungeonsTabRenderer {
 
 			// Master S+ Stopwatch Time
 			String mastSplus = mast.fastestTimeSplusMs > 0 ? mast.getFastestSPlusFormatted() : (mast.fastestTimeMs > 0 ? mast.getFastestTimeFormatted() : "-");
-			float mTimeW = SkijaRenderer.textWidth(mastSplus, Fonts.PRETENDARD_MEDIUM, 12.5f);
+			float mTimeW = SkijaRenderer.textWidth(mastSplus, Fonts.PRETENDARD_MEDIUM, 13.5f);
 			float mTimeX = mPillX + pillW - 12f - mTimeW;
-			SkijaRenderer.text("\uE425", mTimeX - 15f, pillY + 7f, Fonts.MATERIAL_ICONS_ROUND, hasMast ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 14f);
+			RenderHelper.alignedIcon("\uE425", mTimeX - 15f, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 14f, 13.5f);
 			SkijaRenderer.text(mastSplus, mTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
 			SkijaRenderer.text("Best score  " + (mast.bestScore > 0 ? mast.bestScore : "-"), mPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
@@ -292,51 +294,6 @@ public class DungeonsTabRenderer {
 		}
 
 		curY += 16f;
-		return curY - y0;
-	}
-
-	private static float renderBestiaryView(DungeonData d, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		float cardH = 76f;
-		RenderHelper.drawModernCard(startX, curY, width, cardH, 12f, false);
-
-		float iconBoxSize = 40f;
-		float ix = startX + 16f;
-		float iy = curY + (cardH - iconBoxSize) / 2f;
-		SkijaRenderer.rect(ix, iy, iconBoxSize, iconBoxSize, UIColors.withAlpha(0xFFFF7777, 32), iconBoxSize / 2f);
-		SkijaRenderer.text("\uE8E8", ix + 9.5f, iy + 10f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFF7777, 21f);
-
-		float tx = ix + iconBoxSize + 14f;
-		SkijaRenderer.text("BESTIARY OVERVIEW", tx, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
-		SkijaRenderer.text(RenderHelper.formatNumber(d.bestiaryKills) + " Total Kills", tx, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF7777, 19f);
-		SkijaRenderer.text("Unlocked Species: " + d.bestiaryMobKills.size(), startX + width - 200f, curY + 30f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 14f);
-
-		curY += cardH + 24f;
-
-		if (!d.bestiaryMobKills.isEmpty()) {
-			SkijaRenderer.text("\uE3E7", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
-			SkijaRenderer.text(L10n.translate("pv.dungeons.bestiary_families"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-			curY += 24f;
-
-			float bColW = (width - 24f) / 3f;
-			float bH = 52f;
-			int idx = 0;
-
-			for (Map.Entry<String, Integer> entry : d.bestiaryMobKills.entrySet()) {
-				float bx = startX + (idx % 3) * (bColW + 12f);
-				float by = curY + (idx / 3) * (bH + 10f);
-
-				RenderHelper.drawModernCard(bx, by, bColW, bH, 10f, false);
-				String mName = entry.getKey().replace("_", " ").toLowerCase();
-				mName = mName.substring(0, 1).toUpperCase() + mName.substring(1);
-				SkijaRenderer.text(mName, bx + 14f, by + 10f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
-				SkijaRenderer.text(RenderHelper.formatNumber(entry.getValue()) + " kills", bx + 14f, by + 28f, Fonts.PRETENDARD_MEDIUM, 0xFFFF8888, 13f);
-
-				idx++;
-			}
-			curY += ((idx + 2) / 3) * (bH + 10f) + 12f;
-		}
-
 		return curY - y0;
 	}
 
@@ -381,7 +338,7 @@ public class DungeonsTabRenderer {
 		curY += cardH + 24f;
 
 		// Kuudra Tier Completions
-		SkijaRenderer.text("\uE3AF", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFF7777, 18f);
+		RenderHelper.alignedIcon("\uE3AF", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF7777, 18f, 16f);
 		SkijaRenderer.text(L10n.translate("pv.dungeons.kuudra_tiers"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 24f;
 
@@ -402,7 +359,7 @@ public class DungeonsTabRenderer {
 
 		// Dojo Scores
 		if (!d.dojoScores.isEmpty()) {
-			SkijaRenderer.text("\uE838", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 18f);
+			RenderHelper.alignedIcon("\uE838", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 18f, 16f);
 			SkijaRenderer.text("DOJO SCORES", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
@@ -429,6 +386,7 @@ public class DungeonsTabRenderer {
 	}
 
 	public static boolean mouseClicked(float mx, float my, float startX, float startY, float width) {
+		if (activeSubTab == CombatSubTab.BESTIARY && BestiaryTabRenderer.mouseClicked(mx, my)) return true;
 		float subTabH = 32f;
 		float subTabX = startX;
 		for (CombatSubTab st : CombatSubTab.values()) {

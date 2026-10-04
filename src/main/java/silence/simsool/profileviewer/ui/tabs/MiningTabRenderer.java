@@ -89,7 +89,7 @@ public class MiningTabRenderer {
 				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF38BDF8, 7f);
 			}
 
-			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 8f, Fonts.MATERIAL_ICONS_ROUND, textCol, 16f);
+			RenderHelper.alignedIcon(st.icon, subTabX + 10f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 16f, 14f);
 			SkijaRenderer.text(title, subTabX + 30f, curY + 8.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 14f);
 
 			subTabX += stW + 8f;
@@ -117,7 +117,7 @@ public class MiningTabRenderer {
 		float c1W = (width - gap * 2) * 0.35f;
 		float c2W = (width - gap * 2) * 0.31f;
 		float c3W = width - gap * 2 - c1W - c2W;
-		float topH = 200f;
+		float topH = 224f;
 
 		// 1. HOTM Information
 		RenderHelper.drawModernCard(startX, curY, c1W, topH, 10f, false);
@@ -155,7 +155,7 @@ public class MiningTabRenderer {
 		RenderHelper.drawModernCard(c3X, curY, c3W, topH, 10f, false);
 		SkijaRenderer.text("Mining Gear", c3X + (c3W - SkijaRenderer.textWidth("Mining Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
 
-		float slotSize = 30f;
+		float slotSize = 40f;
 		float slotGap = 4f;
 		float gTopY = curY + 34f;
 		float gCol1X = c3X + (c3W - (4 * slotSize + 3 * slotGap)) / 2f;
@@ -173,32 +173,32 @@ public class MiningTabRenderer {
 			RenderHelper.registerItemSlot(gCol1X, sy, slotSize, st);
 		}
 
-		// Col 2: Mining Tools / Drills
+		// Col 3: Mining Tools / Drills
 		List<ItemStack> miningTools = getMiningDrills(data);
-		for (int r = 0; r < 4; r++) {
-			float sy = gTopY + r * (slotSize + slotGap);
-			boolean hov = mx >= gCol2X && mx <= gCol2X + slotSize && my >= sy && my <= sy + slotSize;
-			RenderHelper.drawItemSlotBg(gCol2X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
-			ItemStack st = (r < miningTools.size()) ? miningTools.get(r) : ItemStack.EMPTY;
-			RenderHelper.registerItemSlot(gCol2X, sy, slotSize, st);
-		}
-
-		// Col 3: Mining Equipment
-		List<ItemStack> miningEq = GearFinder.findEquipmentSet(data, GearFinder.MINING_EQUIPMENT);
 		for (int r = 0; r < 4; r++) {
 			float sy = gTopY + r * (slotSize + slotGap);
 			boolean hov = mx >= gCol3X && mx <= gCol3X + slotSize && my >= sy && my <= sy + slotSize;
 			RenderHelper.drawItemSlotBg(gCol3X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
-			ItemStack st = miningEq.get(r);
+			ItemStack st = (r < miningTools.size()) ? miningTools.get(r) : ItemStack.EMPTY;
 			RenderHelper.registerItemSlot(gCol3X, sy, slotSize, st);
+		}
+
+		// Col 2: Mining Equipment
+		List<ItemStack> miningEq = GearFinder.findEquipmentSet(data, GearFinder.MINING_EQUIPMENT);
+		for (int r = 0; r < 4; r++) {
+			float sy = gTopY + r * (slotSize + slotGap);
+			boolean hov = mx >= gCol2X && mx <= gCol2X + slotSize && my >= sy && my <= sy + slotSize;
+			RenderHelper.drawItemSlotBg(gCol2X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
+			ItemStack st = miningEq.get(r);
+			RenderHelper.registerItemSlot(gCol2X, sy, slotSize, st);
 		}
 
 		// Col 4: Chisel and Suspicious Scrap, matching the original mining gear screen
 		ItemStack chisel = GearFinder.findBestItem(data, GearFinder.MINING_CHISELS);
 		ItemStack scrap = ItemRepo.getItemStack("SUSPICIOUS_SCRAP");
 		long scrapCount = GearFinder.countItems(data, GearFinder.MINING_SCRAP);
-		for (int r = 0; r < 4; r++) {
-			float sy = gTopY + r * (slotSize + slotGap);
+		for (int r = 0; r < 2; r++) {
+			float sy = gTopY + (r + 1) * (slotSize + slotGap);
 			boolean hov = mx >= gCol4X && mx <= gCol4X + slotSize && my >= sy && my <= sy + slotSize;
 			RenderHelper.drawItemSlotBg(gCol4X, sy, slotSize, hov, 0x33FFFFFF, 0x5514151E, 4f);
 			if (r == 0) RenderHelper.registerItemSlot(gCol4X, sy, slotSize, chisel);
@@ -224,14 +224,14 @@ public class MiningTabRenderer {
 		float treeCardH = treeH + 116f;
 
 		RenderHelper.drawModernCard(startX, curY, width, treeCardH, 12f, false);
-		SkijaRenderer.text("\uE8EF", startX + 16f, curY + 16f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 18f);
+		RenderHelper.alignedIcon("\uE8EF", startX + 16f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 18f, 16f);
 		SkijaRenderer.text("Heart of the Mountain (HOTM)", startX + 40f, curY + 15f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 
 		renderLoadoutSlots(m, startX, curY + 42f, width, mx, my);
 		float startTreeX = startX + (width - treeW) / 2f;
 		float startTreeY = curY + 101f;
-		Map<String, Integer> activeNodes = m.presetNodes.getOrDefault(activeLoadoutSlot, m.nodes);
-		String activeAbility = m.presetAbilities.getOrDefault(activeLoadoutSlot, m.selectedAbility);
+		Map<String, Integer> activeNodes = m.presetNodes.getOrDefault(activeLoadoutSlot, Map.of());
+		String activeAbility = m.presetAbilities.getOrDefault(activeLoadoutSlot, "");
 
 		for (HotmTreeData.HotmNode node : HotmTreeData.ALL_NODES) {
 			if (node.type == HotmTreeData.NodeType.TIER || node.type == HotmTreeData.NodeType.SPACER) continue;
@@ -279,9 +279,82 @@ public class MiningTabRenderer {
 
 	private static float renderGlaciteView(MiningData m, float startX, float curY, float width, float mx, float my) {
 		float y0 = curY;
-		RenderHelper.drawModernCard(startX, curY, width, 200f, 12f, false);
-		SkijaRenderer.text("Glacite Mineshafts", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 216f;
+		float gap = 14f;
+		float cardW = (width - gap) / 2f;
+		float cardH = 220f;
+
+		MiningData.GlaciteData g = (m != null && m.glacite != null) ? m.glacite : new MiningData.GlaciteData();
+
+		// 1. Left Card: Mineshafts & Corpses Looted
+		RenderHelper.drawModernCard(startX, curY, cardW, cardH, 12f, false);
+		RenderHelper.alignedIcon("\uE3E8", startX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 16f, 13.5f);
+		SkijaRenderer.text("Glacite Mineshafts & Corpses", startX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+
+		float rowY = curY + 38f;
+		float rowH = 24f;
+		float padW = cardW - 28f;
+		RenderHelper.drawStatRow("Mineshafts Entered", RenderHelper.formatNumber(g.mineshaftsEntered), startX + 14f, rowY, padW, 13.5f, 0xFF38BDF8);
+		rowY += rowH;
+		RenderHelper.drawStatRow("Total Corpses Looted", RenderHelper.formatNumber(g.totalCorpses), startX + 14f, rowY, padW, 13.5f, 0xFFFFFFFF);
+		rowY += rowH;
+		RenderHelper.drawStatRow("Lapis Corpses", RenderHelper.formatNumber(g.corpsesLooted.getOrDefault("lapis", 0)), startX + 14f, rowY, padW, 13.5f, 0xFF60A5FA);
+		rowY += rowH;
+		RenderHelper.drawStatRow("Tungsten Corpses", RenderHelper.formatNumber(g.corpsesLooted.getOrDefault("tungsten", 0)), startX + 14f, rowY, padW, 13.5f, 0xFF9CA3AF);
+		rowY += rowH;
+		RenderHelper.drawStatRow("Umber Corpses", RenderHelper.formatNumber(g.corpsesLooted.getOrDefault("umber", 0)), startX + 14f, rowY, padW, 13.5f, 0xFFFBBF24);
+		rowY += rowH;
+		RenderHelper.drawStatRow("Vanguard Corpses", RenderHelper.formatNumber(g.corpsesLooted.getOrDefault("vanguard", 0)), startX + 14f, rowY, padW, 13.5f, 0xFF2DD4BF);
+
+		// 2. Right Card: Fossils Donated (8 known fossils)
+		float rightX = startX + cardW + gap;
+		RenderHelper.drawModernCard(rightX, curY, cardW, cardH, 12f, false);
+		RenderHelper.alignedIcon("\uE88F", rightX + 14f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, 0xFFF59E0B, 16f, 13.5f);
+		SkijaRenderer.text("Fossils Donated (" + g.fossilsDonated.size() + " / 8)", rightX + 34f, curY + 13f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+
+		String[][] fossils = {
+			{"clubbed", "Clubbed Fossil"},
+			{"spined", "Spined Fossil"},
+			{"webbed", "Webbed Fossil"},
+			{"clawed", "Clawed Fossil"},
+			{"tusked", "Tusked Fossil"},
+			{"horned", "Horned Fossil"},
+			{"helix", "Helix Fossil"},
+			{"footprint", "Footprint Fossil"}
+		};
+
+		float fColW = (cardW - 36f) / 2f;
+		float fRowH = 34f;
+		float fStartY = curY + 40f;
+
+		for (int i = 0; i < fossils.length; i++) {
+			int col = i % 2;
+			int row = i / 2;
+			float fx = rightX + 14f + col * (fColW + 8f);
+			float fy = fStartY + row * (fRowH + 6f);
+
+			String fKey = fossils[i][0];
+			String fName = fossils[i][1];
+
+			boolean donated = false;
+			for (String don : g.fossilsDonated) {
+				if (don.contains(fKey)) {
+					donated = true;
+					break;
+				}
+			}
+
+			int bgCol = donated ? 0x2210B981 : 0x14FFFFFF;
+			int borderCol = donated ? 0x6610B981 : 0x1AFFFFFF;
+			int textCol = donated ? 0xFFFFFFFF : RenderHelper.FONT_MUTED;
+
+			SkijaRenderer.rect(fx, fy, fColW, fRowH, bgCol, 6f);
+			SkijaRenderer.outlineRect(fx, fy, fColW, fRowH, 1f, borderCol, 6f);
+
+			RenderHelper.alignedIcon(donated ? "\uE86C" : "\uE5C9", fx + 8f, fy + 9.5f, Fonts.PRETENDARD_MEDIUM, donated ? 0xFF10B981 : 0xFFEF4444, 15f, 12.5f);
+			SkijaRenderer.text(fName, fx + 28f, fy + 9.5f, Fonts.PRETENDARD_MEDIUM, textCol, 12.5f);
+		}
+
+		curY += cardH + 16f;
 		return curY - y0;
 	}
 

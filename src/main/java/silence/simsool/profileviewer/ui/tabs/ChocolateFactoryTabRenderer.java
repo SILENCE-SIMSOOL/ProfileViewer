@@ -2,6 +2,7 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -14,10 +15,14 @@ import silence.simsool.lucent.ui.utils.skija.Fonts;
 import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.CfData;
 import silence.simsool.profileviewer.api.data.MemberData;
-import silence.simsool.profileviewer.api.repo.ItemRepo;
+import silence.simsool.profileviewer.api.data.ProfileJson;
+import silence.simsool.profileviewer.api.nbt.NbtItemParser;
+import com.google.gson.JsonObject;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class ChocolateFactoryTabRenderer {
+	private static final JsonObject EMPLOYEE_TEXTURES = ProfileJson.catalog("chocolate_textures");
+	private static final JsonObject SKULL_TEXTURES = ProfileJson.catalog("skull_textures");
 
 	public static float render(MemberData data, float startX, float startY, float width, float mouseX, float mouseY, float delta) {
 		float curY = startY;
@@ -25,7 +30,7 @@ public class ChocolateFactoryTabRenderer {
 
 		if (cf.totalChocolate <= 0 && cf.prestigeLevel <= 0 && cf.rabbits.isEmpty()) {
 			RenderHelper.drawModernCard(startX, curY, width, 80f, 12f, false);
-			SkijaRenderer.text("\uE5D2", startX + 24f, curY + 28f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFFAA00, 24f);
+			RenderHelper.alignedIcon("\uE5D2", startX + 24f, curY + 22f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, 24f, 16f);
 			SkijaRenderer.text(L10n.translate("pv.cf.no_data_title"), startX + 60f, curY + 22f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			SkijaRenderer.text(L10n.translate("pv.cf.no_data_desc"), startX + 60f, curY + 44f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13f);
 			return 90f;
@@ -46,7 +51,7 @@ public class ChocolateFactoryTabRenderer {
 		float tx1 = ix1 + iconBoxSize + 12f;
 		SkijaRenderer.text(L10n.translate("pv.cf.current_chocolate"), tx1, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
 		SkijaRenderer.text(RenderHelper.formatNumber(cf.chocolate), tx1, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFFD2691E, 19f);
-		SkijaRenderer.text(L10n.translate("pv.dungeons.total_runs") + ": " + RenderHelper.formatNumber(cf.totalChocolate), tx1, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+		SkijaRenderer.text("Lifetime: " + RenderHelper.formatNumber(cf.totalChocolate), tx1, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 		// Card 2: Prestige & Barn
 		float c2X = startX + colW + 12f;
@@ -58,7 +63,7 @@ public class ChocolateFactoryTabRenderer {
 		float tx2 = ix2 + iconBoxSize + 12f;
 		SkijaRenderer.text(L10n.translate("pv.cf.factory_prestige"), tx2, curY + 16f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 13.5f);
 		SkijaRenderer.text("Prestige " + cf.prestigeLevel, tx2, curY + 36f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 19f);
-		SkijaRenderer.text(L10n.translate("pv.cf.barn_capacity") + " Lv. " + cf.barnCapacityLevel, tx2, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
+		SkijaRenderer.text(L10n.translate("pv.cf.barn_capacity") + ": " + (18 + cf.barnCapacityLevel * 2), tx2, curY + 58f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
 
 		// Card 3: Rabbits Collected
 		float c3X = c2X + colW + 12f;
@@ -75,7 +80,7 @@ public class ChocolateFactoryTabRenderer {
 		curY += cardH + 20f;
 
 		// Section: Factory Upgrades (4 Cards with Actual Item Slots)
-		SkijaRenderer.text("\uE5D5", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFF818CF8, 18f);
+		RenderHelper.alignedIcon("\uE5D5", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF818CF8, 18f, 16f);
 		SkijaRenderer.text(L10n.translate("pv.cf.factory_upgrades"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 24f;
 
@@ -87,7 +92,7 @@ public class ChocolateFactoryTabRenderer {
 		renderUpgradeCard(startX, curY, uColW, uCardH, uSlotS, createCookieUpgradeStack(cf.clickUpgrades + 1), "Click Upgrade", "Lv. " + (cf.clickUpgrades + 1), 0xFF38BDF8, mouseX, mouseY);
 
 		// Upgrade 2: Clock (Time Tower)
-		renderUpgradeCard(startX + uColW + 10f, curY, uColW, uCardH, uSlotS, createClockUpgradeStack(cf), "Time Tower", "Active", 0xFF10B981, mouseX, mouseY);
+		renderUpgradeCard(startX + uColW + 10f, curY, uColW, uCardH, uSlotS, createClockUpgradeStack(cf), "Time Tower", "Lv. " + cf.timeTowerLevel, 0xFF10B981, mouseX, mouseY);
 
 		// Upgrade 3: Rabbit Foot (Rabbit Shrine)
 		renderUpgradeCard(startX + 2 * (uColW + 10f), curY, uColW, uCardH, uSlotS, createShrineUpgradeStack(cf.rabbitRarityUpgrades), "Rabbit Shrine", "Lv. " + cf.rabbitRarityUpgrades, 0xFFF472B6, mouseX, mouseY);
@@ -100,7 +105,7 @@ public class ChocolateFactoryTabRenderer {
 
 		// Section: Employees
 		if (!cf.employees.isEmpty()) {
-			SkijaRenderer.text("\uE91D", startX + 4f, curY + 1f, Fonts.MATERIAL_ICONS_ROUND, 0xFFFBBF24, 18f);
+			RenderHelper.alignedIcon("\uE91D", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFBBF24, 18f, 16f);
 			SkijaRenderer.text(L10n.translate("pv.cf.employees") + " (" + cf.employees.size() + ")", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
@@ -135,6 +140,26 @@ public class ChocolateFactoryTabRenderer {
 			curY += ((idx + 1) / 2) * (eH + 10f) + 20f;
 		}
 
+		RenderHelper.drawModernCard(startX, curY, width, 104f, 10f, false);
+		RenderHelper.drawStatRow("Time Tower Charges", String.valueOf(cf.timeTowerCharges), startX + 16f, curY + 16f, width - 32f, 14f, 0xFF34D399);
+		RenderHelper.drawStatRow("Hitman Slots / Uncollected Eggs", cf.hitmanSlots + " / " + cf.uncollectedEggs, startX + 16f, curY + 44f, width - 32f, 14f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Faction", cf.faction.isEmpty() ? "None" : cf.faction + " · Lv. " + cf.factionLevel, startX + 16f, curY + 72f, width - 32f, 14f, 0xFF38BDF8);
+		curY += 120f;
+		if (!cf.rabbits.isEmpty()) {
+			SkijaRenderer.text("Rabbit Collection", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+			curY += 28f;
+			float rabbitW = (width - 24f) / 3f;
+			int index = 0;
+			for (var rabbit : cf.rabbits.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+				float x = startX + index % 3 * (rabbitW + 12f);
+				float y = curY + index / 3 * 64f;
+				RenderHelper.drawModernCard(x, y, rabbitW, 52f, 8f, false);
+				SkijaRenderer.text(formatRabbitName(rabbit.getKey()), x + 12f, y + 8f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13f);
+				SkijaRenderer.text(CfData.rabbitRarity(rabbit.getKey()) + " · " + rabbit.getValue(), x + 12f, y + 29f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12f);
+				index++;
+			}
+			curY += ((index + 2) / 3) * 64f;
+		}
 		return curY - startY;
 	}
 
@@ -166,7 +191,8 @@ public class ChocolateFactoryTabRenderer {
 		ItemStack stack = new ItemStack(Items.CLOCK);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§aTime Tower"));
 		List<Component> lore = new ArrayList<>();
-		lore.add(Component.literal("§7Boosts chocolate production."));
+		lore.add(Component.literal("§7Level: §a" + cf.timeTowerLevel));
+		lore.add(Component.literal("§7Charges: §a" + cf.timeTowerCharges));
 		stack.set(DataComponents.LORE, new ItemLore(lore));
 		return stack;
 	}
@@ -181,8 +207,7 @@ public class ChocolateFactoryTabRenderer {
 	}
 
 	private static ItemStack createJackrabbitUpgradeStack(int level) {
-		ItemStack stack = ItemRepo.getItemStack("COACH_JACKRABBIT");
-		if (stack.isEmpty()) stack = new ItemStack(Items.PLAYER_HEAD);
+		ItemStack stack = NbtItemParser.createSkull(ProfileJson.string(SKULL_TEXTURES, "coach_jackrabbit"), 1);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§eCoach Jackrabbit " + level));
 		List<Component> lore = new ArrayList<>();
 		lore.add(Component.literal("§7Increases chocolate per second."));
@@ -191,10 +216,7 @@ public class ChocolateFactoryTabRenderer {
 	}
 
 	private static ItemStack createEmployeeStack(CfData.RabbitEmployee emp) {
-		ItemStack stack = ItemRepo.getItemStack(emp.id.toUpperCase());
-		if (stack.isEmpty()) {
-			stack = (emp.level > 0) ? new ItemStack(Items.PLAYER_HEAD) : new ItemStack(Items.GUNPOWDER);
-		}
+		ItemStack stack = emp.level > 0 ? NbtItemParser.createSkull(ProfileJson.string(EMPLOYEE_TEXTURES, emp.id), 1) : new ItemStack(Items.DYE.gray());
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§a" + formatRabbitName(emp.id) + " (Lv. " + emp.level + ")"));
 		List<Component> lore = new ArrayList<>();
 		lore.add(Component.literal("§7Employee Level: §e" + emp.level));

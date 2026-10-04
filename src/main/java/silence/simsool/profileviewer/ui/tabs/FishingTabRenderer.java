@@ -17,14 +17,36 @@ import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
 public class FishingTabRenderer {
-	private static String getHighestTrophyTier(FishingData data) {
-		if (data.diamondTrophy > 0) return "Diamond";
-		if (data.goldTrophy > 0) return "Gold";
-		if (data.silverTrophy > 0) return "Silver";
-		if (data.bronzeTrophy > 0) return "Bronze";
-		return "None";
-	}
+	private static FishingData cachedFishing;
+	private static long cachedRepoRevision = -1;
+	private static List<List<ItemStack>> trophyStacks = List.of();
 
+	private static List<List<ItemStack>> createTrophyStacks(FishingData data) {
+		List<List<ItemStack>> result = new ArrayList<>();
+		String[] tiers = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
+		for (String type : FishingData.TROPHY_FISH_TYPES) {
+			int[] counts = data.trophyFishCounts.getOrDefault(type, new int[4]);
+			List<ItemStack> row = new ArrayList<>();
+			for (int tier = 0; tier < 5; tier++) {
+				int count = tier < 4 ? counts[tier] : data.trophyFishTotals.getOrDefault(type, 0);
+				int iconTier = tier;
+				if (tier == 4) {
+					iconTier = 0;
+					for (int candidate = 0; candidate < 4; candidate++) if (counts[candidate] > 0) iconTier = candidate;
+				}
+				ItemStack stack = count > 0 ? ItemRepo.getItemStack(FishingData.trophyId(type) + "_" + tiers[iconTier]) : new ItemStack(Items.DYE.gray());
+				if (stack.isEmpty()) stack = new ItemStack(Items.PAPER);
+				stack.set(DataComponents.CUSTOM_NAME, Component.literal("§e" + type + " " + (tier < 4 ? tiers[tier] : "TOTAL")));
+				List<Component> lore = new ArrayList<>();
+				for (int t = 0; t < 4; t++) lore.add(Component.literal("§7" + tiers[t] + ": §f" + counts[t]));
+				lore.add(Component.literal("§aTotal: §f" + data.trophyFishTotals.getOrDefault(type, 0)));
+				stack.set(DataComponents.LORE, new ItemLore(lore));
+				row.add(stack);
+			}
+			result.add(row);
+		}
+		return result;
+	}
 	public static class TrophySlotInfo {
 		public float x, y, size;
 		public ItemStack stack;
@@ -64,17 +86,17 @@ public class FishingTabRenderer {
 		float infoY = curY + 34f;
 		float rowH = 22f;
 
-		RenderHelper.drawStatRow("Trophy Fish", RenderHelper.formatNumber(f.bronzeTrophy + f.silverTrophy + f.goldTrophy + f.diamondTrophy), c1X + 12f, infoY, infoW - 24f, 13f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Trophy Fish", RenderHelper.formatNumber(f.totalCatches), c1X + 12f, infoY, infoW - 24f, 13f, 0xFFFBBF24);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Highest Tier", getHighestTrophyTier(f), c1X + 12f, infoY, infoW - 24f, 13f, RenderHelper.FONT_MUTED);
+		RenderHelper.drawStatRow("Trophy Rank", new String[]{"None", "Bronze", "Silver", "Gold", "Diamond"}[f.trophyRank], c1X + 12f, infoY, infoW - 24f, 13f, RenderHelper.FONT_MUTED);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Drake Piper", "1/1", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		RenderHelper.drawStatRow("Drake Piper", String.valueOf(f.drakePiper), c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Midas Lure", "10/10", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		RenderHelper.drawStatRow("Midas Lure", String.valueOf(f.midasLure), c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Radiant Fisher", "10/10", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
+		RenderHelper.drawStatRow("Radiant Fisher", String.valueOf(f.radiantFisher), c1X + 12f, infoY, infoW - 24f, 13f, 0xFF10B981);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Dolphin Pet", "Uncommon", c1X + 12f, infoY, infoW - 24f, 13f, 0xFF55FF55);
+		RenderHelper.drawStatRow("Dolphin Pet", f.dolphinRarity(), c1X + 12f, infoY, infoW - 24f, 13f, 0xFF55FF55);
 
 		// ---------------------------------------------------------------------
 		// Card 2: Stats
@@ -88,13 +110,13 @@ public class FishingTabRenderer {
 		statsY += rowH;
 		RenderHelper.drawStatRow("Sea creatures killed", RenderHelper.formatNumber(f.seaCreaturesKilled), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Total Catches", RenderHelper.formatNumber(f.totalCatches), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Total Catches", RenderHelper.formatNumber(f.itemsFishedTotal), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Normal Catches", RenderHelper.formatNumber(f.itemsFishedTotal), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Normal Catches", RenderHelper.formatNumber(f.normalCatches), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		RenderHelper.drawStatRow("Treasures Found", RenderHelper.formatNumber(f.treasuresCaught), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
+		RenderHelper.drawStatRow("Treasures / Large", RenderHelper.formatNumber(f.treasuresFished) + " / " + RenderHelper.formatNumber(f.largeTreasuresCaught), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 		statsY += rowH;
-		int trophyTotal = f.bronzeTrophy + f.silverTrophy + f.goldTrophy + f.diamondTrophy;
+		int trophyTotal = f.totalCatches;
 		RenderHelper.drawStatRow("Trophy Fishes Caught", RenderHelper.formatNumber(trophyTotal), c2X + 12f, statsY, statsW - 24f, 13f, RenderHelper.FONT_PRIMARY);
 
 		// ---------------------------------------------------------------------
@@ -157,68 +179,41 @@ public class FishingTabRenderer {
 
 		curY += topCardH + 16f;
 
-		// ---------------------------------------------------------------------
-		// Card 4: Trophy Fish (18 Columns x 5 Rows Grid with Skull Heads)
-		// ---------------------------------------------------------------------
-		float trophyCardH = 220f;
-		RenderHelper.drawModernCard(startX, curY, totalW, trophyCardH, 10f, false);
-		SkijaRenderer.text("Trophy Fish", startX + (totalW - SkijaRenderer.textWidth("Trophy Fish", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
-
-		int numFish = FishingData.TROPHY_FISH_TYPES.length; // 18
-		float tfSlotSize = 28f;
-		float tfSlotGap = 4f;
-		float tfGridW = numFish * tfSlotSize + (numFish - 1) * tfSlotGap;
-		float tfStartX = startX + (totalW - tfGridW) / 2f;
-		float tfStartY = curY + 34f;
-
-		// 5 Rows: Diamond, Gold, Silver, Bronze, None/Total
-		String[] tierNames = {"DIAMOND", "GOLD", "SILVER", "BRONZE", "TOTAL"};
-
-		for (int r = 0; r < 5; r++) {
-			for (int c = 0; c < numFish; c++) {
-				String fishName = FishingData.TROPHY_FISH_TYPES[c];
-				float sx = tfStartX + c * (tfSlotSize + tfSlotGap);
-				float sy = tfStartY + r * (tfSlotSize + tfSlotGap);
-
-				int[] counts = f.trophyFishCounts.getOrDefault(fishName, new int[4]);
-				int bronze = counts[0], silver = counts[1], gold = counts[2], diamond = counts[3];
-				int total = bronze + silver + gold + diamond;
-
-				int rowCount = (r == 0) ? diamond : ((r == 1) ? gold : ((r == 2) ? silver : ((r == 3) ? bronze : total)));
-				boolean hasFish = rowCount > 0;
-
-				boolean hov = mouseX >= sx && mouseX <= sx + tfSlotSize && mouseY >= sy && mouseY <= sy + tfSlotSize;
-				RenderHelper.drawItemSlotBg(sx, sy, tfSlotSize, hov, hasFish ? 0x33FFFFFF : 0x224B5563, hasFish ? 0x5514151E : 0x33000000, 3f);
-
-				ItemStack stack;
-				if (hasFish) {
-					String sbId = fishName.toUpperCase().replace(" ", "_");
-					stack = ItemRepo.getItemStack(sbId);
-					if (stack.isEmpty()) stack = ItemRepo.getItemStack(sbId + "_" + tierNames[r]);
-					if (stack.isEmpty()) stack = new ItemStack(Items.COD);
-				} else {
-					stack = ItemRepo.getItemStack("GRAY_DYE");
-					if (stack.isEmpty()) stack = new ItemStack(Items.GUNPOWDER);
-				}
-
-
-				stack.set(DataComponents.CUSTOM_NAME, Component.literal("§e" + fishName + " §6" + tierNames[r]));
-				List<Component> lore = new ArrayList<>();
-				lore.add(Component.literal("§7Found swimming around in the lava."));
-				lore.add(Component.literal(""));
-				lore.add(Component.literal("§bDiamond: §f" + diamond));
-				lore.add(Component.literal("§6Gold: §f" + gold));
-				lore.add(Component.literal("§7Silver: §f" + silver));
-				lore.add(Component.literal("§cBronze: §f" + bronze));
-				lore.add(Component.literal("§aTotal: §f" + total));
-				stack.set(DataComponents.LORE, new ItemLore(lore));
-
-				String badge = (hasFish && rowCount > 0) ? String.valueOf(rowCount) : null;
-				RenderHelper.registerItemSlot(sx, sy, tfSlotSize, stack, badge, 0xFFFFFFFF);
+		if (cachedFishing != f || cachedRepoRevision != ItemRepo.getRevision()) {
+			cachedFishing = f;
+			cachedRepoRevision = ItemRepo.getRevision();
+			trophyStacks = createTrophyStacks(f);
+		}
+		SkijaRenderer.text("Trophy Fish", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 16f);
+		curY += 28f;
+		int columns = Math.max(1, Math.min(3, (int) (width / 260f)));
+		float cardW = (width - (columns - 1) * 12f) / columns;
+		float cardH = 116f;
+		String[] tiers = {"Bronze", "Silver", "Gold", "Diamond", "Total"};
+		int[] colors = {0xFFCD7F32, 0xFFD1D5DB, 0xFFFBBF24, 0xFF67E8F9, 0xFF9CA3AF};
+		for (int index = 0; index < FishingData.TROPHY_FISH_TYPES.length; index++) {
+			String type = FishingData.TROPHY_FISH_TYPES[index];
+			float x = startX + index % columns * (cardW + 12f);
+			float y = curY + index / columns * (cardH + 12f);
+			RenderHelper.drawModernCard(x, y, cardW, cardH, 10f, false);
+			SkijaRenderer.text(type, x + 12f, y + 10f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14f);
+			int[] counts = f.trophyFishCounts.getOrDefault(type, new int[4]);
+			float cellW = (cardW - 20f) / 5f;
+			for (int tier = 0; tier < 5; tier++) {
+				float sx = x + 10f + tier * cellW + (cellW - 28f) / 2f;
+				float sy = y + 46f;
+				int count = tier < 4 ? counts[tier] : f.trophyFishTotals.getOrDefault(type, 0);
+				float labelW = SkijaRenderer.textWidth(tiers[tier], Fonts.PRETENDARD_MEDIUM, 10f);
+				SkijaRenderer.text(tiers[tier], sx + (28f - labelW) / 2f, y + 30f, Fonts.PRETENDARD_MEDIUM, colors[tier], 10f);
+				boolean hovered = mouseX >= sx && mouseX <= sx + 28f && mouseY >= sy && mouseY <= sy + 28f;
+				RenderHelper.drawItemSlotBg(sx, sy, 28f, hovered, count > 0 ? 0x44FFFFFF : 0x224B5563, 0x5514151E, 4f);
+				RenderHelper.registerItemSlot(sx, sy, 28f, trophyStacks.get(index).get(tier));
+				String amount = RenderHelper.formatNumber(count);
+				float amountW = SkijaRenderer.textWidth(amount, Fonts.PRETENDARD_MEDIUM, 14f);
+				SkijaRenderer.text(amount, sx + (28f - amountW) / 2f, y + 84f, Fonts.PRETENDARD_MEDIUM, count > 0 ? colors[tier] : RenderHelper.FONT_DISABLED, 14f);
 			}
 		}
-
-		curY += trophyCardH + 16f;
+		curY += ((FishingData.TROPHY_FISH_TYPES.length + columns - 1) / columns) * (cardH + 12f);
 		return curY - startY;
 	}
 

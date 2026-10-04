@@ -36,6 +36,14 @@ public class MiningData {
 	public Map<Integer, String> foragingPresetAbilities = new LinkedHashMap<>();
 
 	public Map<String, Boolean> crystals = new LinkedHashMap<>();
+	public GlaciteData glacite = new GlaciteData();
+
+	public static class GlaciteData {
+		public int mineshaftsEntered = 0;
+		public Map<String, Integer> corpsesLooted = new LinkedHashMap<>();
+		public java.util.List<String> fossilsDonated = new java.util.ArrayList<>();
+		public int totalCorpses = 0;
+	}
 
 	public static MiningData fromJson(JsonObject member) {
 		MiningData d = new MiningData();
@@ -149,15 +157,13 @@ public class MiningData {
 				if (nodeObj != null) {
 					Map<String, Integer> pMap = new LinkedHashMap<>();
 					parseNodesRecursively(nodeObj, pMap);
-					if (!pMap.isEmpty()) {
-						d.presetNodes.put(slot, pMap);
-						if (slot == 1 && d.nodes.isEmpty()) d.nodes.putAll(pMap);
-					}
+					d.presetNodes.put(slot, pMap);
+					if (slot == 1 && d.nodes.isEmpty()) d.nodes.putAll(pMap);
 				}
 
 				String ab = findNestedString(st, "selected_ability", "mining" + suffix);
 				if (ab == null) ab = findNestedString(st, "selected_ability.mining" + suffix);
-				if (ab != null && !ab.isEmpty()) {
+				if (ab != null) {
 					d.presetAbilities.put(slot, ab);
 					if (slot == 1 && d.selectedAbility.isEmpty()) d.selectedAbility = ab;
 				}
@@ -172,15 +178,13 @@ public class MiningData {
 				if (nodeObj != null) {
 					Map<String, Integer> pMap = new LinkedHashMap<>();
 					parseNodesRecursively(nodeObj, pMap);
-					if (!pMap.isEmpty()) {
-						d.foragingPresetNodes.put(slot, pMap);
-						if (slot == 1 && d.foragingNodes.isEmpty()) d.foragingNodes.putAll(pMap);
-					}
+					d.foragingPresetNodes.put(slot, pMap);
+					if (slot == 1 && d.foragingNodes.isEmpty()) d.foragingNodes.putAll(pMap);
 				}
 
 				String ab = findNestedString(st, "selected_ability", "foraging" + suffix);
 				if (ab == null) ab = findNestedString(st, "selected_ability.foraging" + suffix);
-				if (ab != null && !ab.isEmpty()) {
+				if (ab != null) {
 					d.foragingPresetAbilities.put(slot, ab);
 					if (slot == 1 && d.selectedForagingAbility.isEmpty()) d.selectedForagingAbility = ab;
 				}
@@ -205,6 +209,37 @@ public class MiningData {
 			d.centerOfTheForest = d.foragingNodes.get("center_of_the_forest");
 		} else if (d.foragingNodes.containsKey("core_of_the_forest")) {
 			d.centerOfTheForest = d.foragingNodes.get("core_of_the_forest");
+		}
+
+		if (d.presetNodes.containsKey(d.selectedMiningPreset)) d.nodes = d.presetNodes.get(d.selectedMiningPreset);
+		if (d.foragingPresetNodes.containsKey(d.selectedForagingPreset)) d.foragingNodes = d.foragingPresetNodes.get(d.selectedForagingPreset);
+		d.selectedAbility = d.presetAbilities.getOrDefault(d.selectedMiningPreset, d.selectedAbility);
+		d.selectedForagingAbility = d.foragingPresetAbilities.getOrDefault(d.selectedForagingPreset, d.selectedForagingAbility);
+		d.peakOfTheMountain = d.nodes.getOrDefault("core_of_the_mountain", d.nodes.getOrDefault("peak_of_the_mountain", d.nodes.getOrDefault("special_0", 0)));
+		d.centerOfTheForest = d.foragingNodes.getOrDefault("center_of_the_forest", d.foragingNodes.getOrDefault("core_of_the_forest", 0));
+		// 4. Glacite Mineshafts Data
+		if (member.has("glacite_player_data") && member.get("glacite_player_data").isJsonObject()) {
+			JsonObject gpd = member.getAsJsonObject("glacite_player_data");
+			if (gpd.has("mineshafts_entered") && gpd.get("mineshafts_entered").isJsonPrimitive()) {
+				d.glacite.mineshaftsEntered = gpd.get("mineshafts_entered").getAsInt();
+			}
+			if (gpd.has("corpses_looted") && gpd.get("corpses_looted").isJsonObject()) {
+				JsonObject cl = gpd.getAsJsonObject("corpses_looted");
+				for (Map.Entry<String, JsonElement> e : cl.entrySet()) {
+					if (e.getValue().isJsonPrimitive()) {
+						int count = e.getValue().getAsInt();
+						d.glacite.corpsesLooted.put(e.getKey().toLowerCase(), count);
+						d.glacite.totalCorpses += count;
+					}
+				}
+			}
+			if (gpd.has("fossils_donated") && gpd.get("fossils_donated").isJsonArray()) {
+				for (JsonElement el : gpd.getAsJsonArray("fossils_donated")) {
+					if (el.isJsonPrimitive()) {
+						d.glacite.fossilsDonated.add(el.getAsString().toLowerCase());
+					}
+				}
+			}
 		}
 
 		return d;
@@ -261,7 +296,7 @@ public class MiningData {
 	}
 
 	private static final double[] HOTF_XP_TABLE = {
-		0, 2000, 7000, 20000, 50000, 100000, 200000, 350000
+		0, 3000, 12000, 37000, 97000, 197000, 347000, 547000
 	};
 
 	public static int calcHotfLevel(double xp) {

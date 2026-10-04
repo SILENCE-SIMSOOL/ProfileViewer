@@ -61,6 +61,7 @@ public class ProfileDataRegression {
 		pendingField.set(null, pending);
 		check(PvAuth.authenticateAsync() == pending && PvAuth.authenticateAsync() == pending, "Concurrent callers share pending authentication");
 		pending.complete(null);
+		FeatureRegression.run();
 		System.out.println("Profile regression checks passed: " + checks);
 	}
 }

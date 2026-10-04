@@ -4,10 +4,19 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class RiftData {
+	public static final JsonObject CATALOG = ProfileJson.catalog("rift_catalog");
+	public final List<String> foundCats = new ArrayList<>();
+	public final List<String> unlockedEyes = new ArrayList<>();
+	public int visits;
+	public int secondsSitting;
+	public int grubberStacks;
+	public String montezumaRarity = "";
+	public double montezumaExperience;
 
 	public int motes = 0;
 	public int lifetimeMotes;
@@ -19,14 +28,32 @@ public class RiftData {
 	public List<String> unlockedTimecharms = new ArrayList<>();
 	public Map<String, Integer> cruxKills = new LinkedHashMap<>();
 
-	public static final String[] TIMECHARMS = {
-		"Supreme Timecharm", "Teary Timecharm", "Twilight Timecharm",
-		"Vampiric Timecharm", "Unhinged Timecharm", "Mirrorverse Timecharm",
-		"Living Timecharm", "Wormhole Timecharm"
-	};
+	public static final Map<String, String> TROPHIES = loadTrophies();
+	public static final String[] TIMECHARMS = TROPHIES.values().toArray(String[]::new);
 
+	private static Map<String, String> loadTrophies() {
+		Map<String, String> trophies = new LinkedHashMap<>();
+		for (var entry : ProfileJson.array(CATALOG, "trophies")) {
+			JsonObject trophy = entry.getAsJsonObject();
+			trophies.put(ProfileJson.string(trophy, "id"), ProfileJson.string(trophy, "name"));
+		}
+		return trophies;
+	}
+
+	public static String timecharmId(String name) {
+		return TROPHIES.entrySet().stream().filter(e -> e.getValue().equals(name)).map(e -> "RIFT_TROPHY_" + e.getKey().toUpperCase(Locale.ROOT)).findFirst().orElse("");
+	}
 	public static RiftData fromJson(JsonObject member) {
 		RiftData d = new RiftData();
+		d.visits = (int) ProfileJson.number(member, "player_stats", "rift", "visits");
+		d.secondsSitting = (int) ProfileJson.number(member, "rift", "village_plaza", "lonely", "seconds_sitting");
+		d.grubberStacks = (int) ProfileJson.number(member, "rift", "castle", "grubber_stacks");
+		for (var cat : ProfileJson.array(member, "rift", "dead_cats", "found_cats")) {
+			if (!d.foundCats.contains(cat.getAsString())) d.foundCats.add(cat.getAsString());
+		}
+		JsonObject montezuma = ProfileJson.object(member, "rift", "dead_cats", "montezuma");
+		d.montezumaRarity = ProfileJson.string(montezuma, "tier");
+		d.montezumaExperience = montezuma.has("exp") ? montezuma.get("exp").getAsDouble() : 0;
 		if (member == null) return d;
 
 		if (member.has("currencies") && member.get("currencies").isJsonObject()) {
@@ -63,24 +90,20 @@ public class RiftData {
 					for (JsonElement el : gal.getAsJsonArray("secured_trophies")) {
 						if (el.isJsonObject() && el.getAsJsonObject().has("type")) {
 							String tName = formatTimecharmName(el.getAsJsonObject().get("type").getAsString());
-							d.unlockedTimecharms.add(tName);
+							if (!tName.isEmpty() && !d.unlockedTimecharms.contains(tName)) d.unlockedTimecharms.add(tName);
 						}
 					}
 				}
 			}
 			d.timecharms = d.unlockedTimecharms.size();
 
-			if (r.has("dead_cats") && r.get("dead_cats").isJsonObject()) {
-				JsonObject dc = r.getAsJsonObject("dead_cats");
-				if (dc.has("montezuma") && dc.get("montezuma").isJsonObject()) {
-					// Montezuma pet
-				}
-			}
-
 			if (r.has("wither_cage") && r.get("wither_cage").isJsonObject()) {
 				JsonObject wc = r.getAsJsonObject("wither_cage");
 				if (wc.has("killed_eyes") && wc.get("killed_eyes").isJsonArray()) {
-					d.porhtalProgress = wc.getAsJsonArray("killed_eyes").size();
+					for (var eye : wc.getAsJsonArray("killed_eyes")) {
+						if (!d.unlockedEyes.contains(eye.getAsString())) d.unlockedEyes.add(eye.getAsString());
+					}
+					d.porhtalProgress = d.unlockedEyes.size();
 				}
 			}
 		}
@@ -89,12 +112,6 @@ public class RiftData {
 	}
 
 	private static String formatTimecharmName(String raw) {
-		for (String tc : TIMECHARMS) {
-			String key = tc.toLowerCase().replace(" timecharm", "").replace(" ", "_");
-			if (raw.toLowerCase().contains(key)) {
-				return tc;
-			}
-		}
-		return raw.replace("_", " ");
+		return TROPHIES.getOrDefault(raw.toLowerCase(Locale.ROOT), "");
 	}
 }

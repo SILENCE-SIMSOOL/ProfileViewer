@@ -3,6 +3,9 @@ package silence.simsool.profileviewer.ui.tabs;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.ItemLore;
 import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.ui.utils.UIColors;
 import silence.simsool.lucent.ui.utils.skija.Fonts;
@@ -70,12 +73,13 @@ public class PetsTabRenderer {
 		int magicFindBonus = petScore / 10;
 
 		// Default selected pet
-		if (selectedPet == null && !allPets.isEmpty()) {
+		if (allPets.isEmpty()) selectedPet = null;
+		if ((selectedPet == null || !allPets.contains(selectedPet)) && !allPets.isEmpty()) {
 			selectedPet = data.pets.activePet != null ? data.pets.activePet : allPets.get(0);
 		}
 
 		// Top Row Header: [Icon] Pet Collection (Score Badge) & Search Box with Icon
-		SkijaRenderer.text("\uE91D", startX + 4f, curY + 2f, Fonts.MATERIAL_ICONS_ROUND, 0xFF38BDF8, 20f);
+		RenderHelper.alignedIcon("\uE91D", startX + 4f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 20f, 17f);
 		String titleStr = L10n.translate("pv.pets.collection") + " (" + allPets.size() + ")";
 		SkijaRenderer.text(titleStr, startX + 30f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
 
@@ -232,21 +236,23 @@ public class PetsTabRenderer {
 		RenderHelper.drawStatRow("Candy", candyVal, px, py, w - 32f, 13.5f, pet.candyUsed > 0 ? 0xFFF472B6 : RenderHelper.FONT_SECONDARY);
 		py += 24f;
 
-		// Held Item (Render item icon without tooltip)
+		// Held item name is shown only in the icon tooltip.
 		if (!pet.heldItem.isEmpty()) {
 			float itemSlotS = 24f;
 			float itemSlotX = px + w - 32f - itemSlotS;
 			float itemSlotY = py - 4f;
 
-			RenderHelper.drawStatRow("Held Item", pet.heldItem.replace("_", " "), px, py, w - 32f - itemSlotS - 8f, 13.5f, 0xFF60A5FA);
+			SkijaRenderer.text("Held Item", px, py, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 15f);
 
 			SkijaRenderer.rect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 0xFF1E293B, 4f);
 			SkijaRenderer.outlineRect(itemSlotX, itemSlotY, itemSlotS, itemSlotS, 1f, 0xFF334155, 4f);
 
 			ItemStack heldStack = ItemRepo.getItemStack(pet.heldItem);
 			if (!heldStack.isEmpty()) {
-				// Register as decorative slot without tooltip
-				RenderHelper.registerItemSlot(itemSlotX, itemSlotY, itemSlotS, heldStack, false);
+				String heldName = heldStack.getHoverName().getString().replaceAll("(?i)PET[ _]ITEM[ _]*", "").strip();
+				heldStack.set(DataComponents.CUSTOM_NAME, Component.literal(heldName));
+				heldStack.set(DataComponents.LORE, new ItemLore(List.of()));
+				RenderHelper.registerItemSlot(itemSlotX, itemSlotY, itemSlotS, heldStack);
 
 			}
 		} else {

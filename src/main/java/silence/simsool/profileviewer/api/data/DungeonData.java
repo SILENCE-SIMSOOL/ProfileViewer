@@ -8,14 +8,15 @@ import com.google.gson.JsonObject;
 
 public class DungeonData {
 
-	public static final long[] CATACOMBS_XP_TABLE = {
-		50, 125, 235, 395, 625, 955, 1425, 2095, 3045, 4385,
-		6275, 8940, 12700, 17960, 25340, 35640, 50040, 70040, 97640, 135640,
-		188140, 259640, 356640, 488640, 668640, 911640, 1239640, 1681640, 2276640, 3076640,
-		4146640, 5576640, 7476640, 9976640, 13276640, 17576640, 23176640, 30376640, 39576640, 51176640,
-		65776640, 83976640, 106476640, 134176640, 168076640, 209376640, 259476640, 319876640, 392076640, 477676640, 569809640
-	};
+	private static final JsonObject CATALOG = ProfileJson.catalog("catacombs");
+	public static final long[] CATACOMBS_XP_TABLE = loadExperience();
 
+	private static long[] loadExperience() {
+		var values = CATALOG.getAsJsonArray("experience");
+		long[] levels = new long[values.size()];
+		for (int i = 0; i < levels.length; i++) levels[i] = values.get(i).getAsLong();
+		return levels;
+	}
 	public static class ClassInfo {
 		public String name;
 		public long xp = 0;
@@ -89,10 +90,10 @@ public class DungeonData {
 		// Overflow past 50
 		long maxReq = CATACOMBS_XP_TABLE[CATACOMBS_XP_TABLE.length - 1];
 		long overflowXp = xp - maxReq;
-		long xpPerOverflow = 200_000_000L;
+		long xpPerOverflow = CATALOG.get("experience_per_overflow").getAsLong();
 		int overflowLvl = (int)(overflowXp / xpPerOverflow);
 		float overflowProg = (float)(overflowXp % xpPerOverflow) / (float) xpPerOverflow;
-		return new Pair<>(50 + overflowLvl, Math.max(0f, Math.min(1f, overflowProg)));
+		return new Pair<>(CATACOMBS_XP_TABLE.length + overflowLvl, Math.max(0f, Math.min(1f, overflowProg)));
 	}
 
 	public static class Pair<A, B> {
@@ -283,6 +284,7 @@ public class DungeonData {
 		if (typeObj.has("tier_completions") && typeObj.get("tier_completions").isJsonObject()) {
 			JsonObject tc = typeObj.getAsJsonObject("tier_completions");
 			for (String fKey : tc.keySet()) {
+				if (!fKey.matches("[0-7]")) continue;
 				String key = prefix.equals("F") && fKey.equals("0") ? "F0" : (prefix + fKey);
 				FloorStats fs = targetMap.computeIfAbsent(key, k -> new FloorStats());
 				try { fs.completions = tc.get(fKey).getAsInt(); } catch (Exception ignored) {}
@@ -291,6 +293,7 @@ public class DungeonData {
 		if (typeObj.has("fastest_time") && typeObj.get("fastest_time").isJsonObject()) {
 			JsonObject ft = typeObj.getAsJsonObject("fastest_time");
 			for (String fKey : ft.keySet()) {
+				if (!fKey.matches("[0-7]")) continue;
 				String key = prefix.equals("F") && fKey.equals("0") ? "F0" : (prefix + fKey);
 				FloorStats fs = targetMap.computeIfAbsent(key, k -> new FloorStats());
 				try { fs.fastestTimeMs = (long) ft.get(fKey).getAsDouble(); } catch (Exception ignored) {}
@@ -299,6 +302,7 @@ public class DungeonData {
 		if (typeObj.has("fastest_time_s_plus") && typeObj.get("fastest_time_s_plus").isJsonObject()) {
 			JsonObject fts = typeObj.getAsJsonObject("fastest_time_s_plus");
 			for (String fKey : fts.keySet()) {
+				if (!fKey.matches("[0-7]")) continue;
 				String key = prefix.equals("F") && fKey.equals("0") ? "F0" : (prefix + fKey);
 				FloorStats fs = targetMap.computeIfAbsent(key, k -> new FloorStats());
 				try { fs.fastestTimeSplusMs = (long) fts.get(fKey).getAsDouble(); } catch (Exception ignored) {}
@@ -307,6 +311,7 @@ public class DungeonData {
 		if (typeObj.has("best_score") && typeObj.get("best_score").isJsonObject()) {
 			JsonObject bs = typeObj.getAsJsonObject("best_score");
 			for (String fKey : bs.keySet()) {
+				if (!fKey.matches("[0-7]")) continue;
 				String key = prefix.equals("F") && fKey.equals("0") ? "F0" : (prefix + fKey);
 				FloorStats fs = targetMap.computeIfAbsent(key, k -> new FloorStats());
 				try { fs.bestScore = bs.get(fKey).getAsInt(); } catch (Exception ignored) {}

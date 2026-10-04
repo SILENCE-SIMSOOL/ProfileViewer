@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -24,6 +25,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -32,7 +34,7 @@ import net.minecraft.world.item.component.DyedItemColor;
 public final class ItemRepo {
 
 	private static final String ITEMS_REPO_URL = "https://skyblock-api-repo.thatgravyboat.tech/1_21_5/items.min.json";
-	private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 	private static final Gson GSON = new GsonBuilder().create();
 
 	public static class RepoItem {
@@ -45,7 +47,9 @@ public final class ItemRepo {
 		public boolean glint;
 	}
 
-	private static final Map<String, RepoItem> ITEMS = new HashMap<>();
+	private static volatile Map<String, RepoItem> ITEMS = Map.of();
+	private static volatile long revision;
+	public static long getRevision() { return revision; }
 
 	static {
 		loadInitial();
@@ -64,7 +68,7 @@ public final class ItemRepo {
 				JsonElement root = GSON.fromJson(cached, JsonElement.class);
 				if (root != null) {
 					parseRepoJson(root);
-					return;
+					if (!ITEMS.isEmpty()) return;
 				}
 			}
 		} catch (Exception ignored) {}
@@ -85,7 +89,7 @@ public final class ItemRepo {
 		CompletableFuture.runAsync(() -> {
 			try {
 				HttpRequest req = HttpRequest.newBuilder()
-						.uri(URI.create(ITEMS_REPO_URL))
+						.uri(URI.create(ITEMS_REPO_URL)).timeout(Duration.ofSeconds(20))
 						.header("User-Agent", "ProfileViewer-RepoLib")
 						.GET()
 						.build();
@@ -106,6 +110,7 @@ public final class ItemRepo {
 	}
 
 	private static synchronized void parseRepoJson(JsonElement root) {
+		Map<String, RepoItem> parsed = new HashMap<>();
 		if (root.isJsonArray()) {
 			JsonArray array = root.getAsJsonArray();
 			for (JsonElement elem : array) {
@@ -157,8 +162,12 @@ public final class ItemRepo {
 					try { item.glint = components.get("minecraft:enchantment_glint_override").getAsBoolean(); } catch (Exception ignored) {}
 				}
 
-				ITEMS.put(sbId, item);
+				parsed.put(sbId, item);
 			}
+		}
+		if (!parsed.isEmpty()) {
+			ITEMS = Map.copyOf(parsed);
+			revision++;
 		}
 	}
 
@@ -186,6 +195,7 @@ public final class ItemRepo {
 			}
 
 			ItemStack stack = new ItemStack(mcItem, 1);
+			if (repo.name != null && !repo.name.isEmpty()) stack.set(DataComponents.CUSTOM_NAME, Component.literal(repo.name));
 
 			if (repo.itemModel != null && !repo.itemModel.isEmpty()) {
 				Identifier modelId = Identifier.tryParse(repo.itemModel);

@@ -15,6 +15,7 @@ public class NetworthData {
 	public double pets = 0;
 	public double talismans = 0;
 	public double sacks = 0;
+	public double museum = 0;
 	public java.util.Map<String, Double> categories = new java.util.LinkedHashMap<>();
 
 	public static NetworthData fromJson(com.google.gson.JsonObject json, double bankBalance) {
@@ -37,6 +38,7 @@ public class NetworthData {
 		if (json.has("accessories")) nw.talismans = json.get("accessories").getAsDouble();
 		else if (json.has("talismans")) nw.talismans = json.get("talismans").getAsDouble();
 		if (json.has("sacks")) nw.sacks = json.get("sacks").getAsDouble();
+		if (json.has("museum")) nw.museum = json.get("museum").getAsDouble();
 
 		if (json.has("categories") && json.get("categories").isJsonObject()) {
 			com.google.gson.JsonObject catObj = json.getAsJsonObject("categories");
@@ -91,6 +93,18 @@ public class NetworthData {
 			for (ParsedItem item : member.inventory.accessoryBag) {
 				nw.talismans += estimateAccessoryValue(item);
 			}
+			if (member.inventory.backpacks != null) {
+				for (var bp : member.inventory.backpacks) {
+					for (ParsedItem item : bp) {
+						nw.inventory += estimateItemValue(item);
+					}
+				}
+			}
+			if (member.inventory.personalVault != null) {
+				for (ParsedItem item : member.inventory.personalVault) {
+					nw.enderchest += estimateItemValue(item);
+				}
+			}
 		}
 
 		if (member.pets != null && member.pets.pets != null) {
@@ -99,7 +113,28 @@ public class NetworthData {
 			}
 		}
 
-		nw.total = nw.purse + nw.bank + nw.armor + nw.equipment + nw.wardrobe + nw.inventory + nw.enderchest + nw.pets + nw.talismans + nw.sacks;
+		if (member.museum != null) {
+			if (member.museum.totalValue > 0) {
+				nw.museum = member.museum.totalValue;
+			} else {
+				if (member.museum.donatedItemsMap != null) {
+					for (var list : member.museum.donatedItemsMap.values()) {
+						if (list != null) {
+							for (ParsedItem item : list) {
+								nw.museum += estimateItemValue(item);
+							}
+						}
+					}
+				}
+				if (member.museum.specialItems != null) {
+					for (ParsedItem item : member.museum.specialItems) {
+						nw.museum += estimateItemValue(item);
+					}
+				}
+			}
+		}
+
+		nw.total = nw.purse + nw.bank + nw.armor + nw.equipment + nw.wardrobe + nw.inventory + nw.enderchest + nw.pets + nw.talismans + nw.sacks + nw.museum;
 
 		nw.categories.put("Armor", nw.armor);
 		nw.categories.put("Equipment", nw.equipment);
@@ -108,6 +143,7 @@ public class NetworthData {
 		nw.categories.put("Ender Chest", nw.enderchest);
 		nw.categories.put("Accessories", nw.talismans);
 		nw.categories.put("Pets", nw.pets);
+		if (nw.museum > 0) nw.categories.put("Museum", nw.museum);
 		nw.categories.put("Purse & Bank", nw.purse + nw.bank);
 
 		return nw;

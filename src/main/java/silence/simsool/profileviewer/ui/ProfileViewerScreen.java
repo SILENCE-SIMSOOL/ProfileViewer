@@ -4,6 +4,7 @@ import static silence.simsool.lucent.Lucent.mc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.lwjgl.glfw.GLFW;
@@ -289,7 +290,7 @@ public class ProfileViewerScreen extends Screen {
 				}
 				// Overview tab uses items only as icons - no tooltip
 			}
-		} else if (currentTab == PVTab.GEAR) {
+		} else if (currentTab == PVTab.GEAR || currentTab == PVTab.RIFT) {
 			for (GearTabRenderer.SlotRenderInfo slot : GearTabRenderer.visibleSlots) {
 				if (slot.y < contentY - 5f || slot.y + slot.size > contentY + contentH + 5f) continue;
 				if (slot.item != null && !slot.item.isEmpty() && slot.item.itemStack != null && !slot.item.itemStack.isEmpty()) {
@@ -541,7 +542,7 @@ public class ProfileViewerScreen extends Screen {
 			}
 
 			int textColor = active ? RenderHelper.FONT_PRIMARY : (hov ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_MUTED);
-			SkijaRenderer.text(tab.icon, sx + 12f, sy + 9f, Fonts.MATERIAL_ICONS_ROUND, textColor, 18f);
+			RenderHelper.alignedIcon(tab.icon, sx + 12f, sy + 11f, Fonts.PRETENDARD_MEDIUM, textColor, 18f, 14.5f);
 			SkijaRenderer.text(tab.getTitle(), sx + 36f, sy + 11f, Fonts.PRETENDARD_MEDIUM, textColor, 14.5f);
 
 			sy += tabH + 6f;
@@ -571,6 +572,18 @@ public class ProfileViewerScreen extends Screen {
 		}
 
 		if (currentProfile == null) return;
+		String section = switch (currentTab) {
+			case OVERVIEW -> "skills";
+			case GEAR -> "inventory";
+			case CHOCOLATE_FACTORY -> "cf";
+			default -> currentTab.name().toLowerCase(Locale.ROOT);
+		};
+		String sectionError = currentProfile.member.sectionErrors.get(section);
+		if (sectionError != null) {
+			maxScroll = 0;
+			SkijaRenderer.text(sectionError, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_MEDIUM, 0xFFFFAA55, RenderHelper.FS_BODY);
+			return;
+		}
 		String extraError = currentTab == PVTab.GARDEN ? currentProfile.gardenError : currentTab == PVTab.MUSEUM ? currentProfile.museumError : "";
 		if (!extraError.isEmpty()) {
 			SkijaRenderer.text(extraError, contentX + 20f, contentY + 40f, Fonts.PRETENDARD_MEDIUM, 0xFFFFAA55, RenderHelper.FS_BODY);

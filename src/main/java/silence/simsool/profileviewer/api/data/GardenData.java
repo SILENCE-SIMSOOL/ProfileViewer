@@ -1,166 +1,128 @@
 package silence.simsool.profileviewer.api.data;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
-import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class GardenData {
-
-	public int gardenLevel = 0;
-	public double gardenExperience = 0;
-	public float gardenProgress = 0f;
-	public int copper = 0;
-	public int goldMedals = 0;
-	public int silverMedals = 0;
-	public int bronzeMedals = 0;
-	public int unlockedPlots = 0;
-
-	public int completedVisitors = 0;
-	public int uniqueVisitors = 0;
-
-	// Composter info
-	public double composterOrganicMatter = 0;
-	public double composterFuel = 0;
-	public int composterOrganicCapUpgrade = 0;
-	public int composterCostReductionUpgrade = 0;
-	public int composterFuelCapUpgrade = 0;
-	public int composterSpeedUpgrade = 0;
-
-	// 10 crops milestone / resources collected: crop_id -> total collected
+	public static final JsonObject CATALOG = ProfileJson.catalog("garden_catalog");
+	public int gardenLevel;
+	public double gardenExperience;
+	public float gardenProgress;
+	public int copper;
+	public int goldMedals;
+	public int silverMedals;
+	public int bronzeMedals;
+	public int unlockedPlots;
+	public int completedVisitors;
+	public int uniqueVisitors;
+	public int contestsParticipated;
+	public int larvaConsumed;
+	public int farmingLevelCap;
+	public int doubleDrops;
+	public double composterOrganicMatter;
+	public double composterFuel;
+	public int composterItems;
+	public int composterOrganicCapUpgrade;
+	public int composterCostReductionUpgrade;
+	public int composterFuelCapUpgrade;
+	public int composterSpeedUpgrade;
+	public int composterMultiDropUpgrade;
 	public Map<String, Long> cropMilestones = new LinkedHashMap<>();
 	public Map<String, Long> personalBests = new LinkedHashMap<>();
+	public Map<String, Integer> chipLevels = new LinkedHashMap<>();
+	public Map<String, Integer> visitorVisits = new LinkedHashMap<>();
+	public Map<String, Integer> visitorCompletions = new LinkedHashMap<>();
 
 	public static GardenData fromJson(JsonObject json) {
 		GardenData d = new GardenData();
-		if (json == null) return d;
-
-		JsonObject gd = json.has("garden") && json.get("garden").isJsonObject() ? json.getAsJsonObject("garden") : json;
-
-		// Garden XP & Level
-		if (gd.has("garden_experience") && gd.get("garden_experience").isJsonPrimitive()) {
-			d.gardenExperience = gd.get("garden_experience").getAsDouble();
-			d.gardenLevel = calcGardenLevel(d.gardenExperience);
-		} else if (gd.has("experience") && gd.get("experience").isJsonPrimitive()) {
-			d.gardenExperience = gd.get("experience").getAsDouble();
-			d.gardenLevel = calcGardenLevel(d.gardenExperience);
-		} else if (gd.has("level") && gd.get("level").isJsonPrimitive()) {
-			d.gardenLevel = gd.get("level").getAsInt();
-		}
-
-		// Copper
-		if (gd.has("copper") && gd.get("copper").isJsonPrimitive()) {
-			d.copper = gd.get("copper").getAsInt();
-		}
-
-		// Unlocked Plots
-		if (gd.has("unlocked_plots_ids") && gd.get("unlocked_plots_ids").isJsonArray()) {
-			d.unlockedPlots = gd.getAsJsonArray("unlocked_plots_ids").size();
-		}
-
-		// Resources Collected / Crop Milestones
-		JsonObject rc = gd.has("resources_collected") && gd.get("resources_collected").isJsonObject()
-				? gd.getAsJsonObject("resources_collected")
-				: (gd.has("crop_milestones") && gd.get("crop_milestones").isJsonObject() ? gd.getAsJsonObject("crop_milestones") : null);
-
-		if (rc != null) {
-			for (Map.Entry<String, JsonElement> e : rc.entrySet()) {
-				if (e.getValue().isJsonPrimitive()) {
-					d.cropMilestones.put(e.getKey().toLowerCase(), e.getValue().getAsLong());
-				}
-			}
-		}
-
-		// Visitors
-		if (gd.has("commission_data") && gd.get("commission_data").isJsonObject()) {
-			JsonObject cd = gd.getAsJsonObject("commission_data");
-			if (cd.has("visits") && cd.get("visits").isJsonObject()) {
-				JsonObject visits = cd.getAsJsonObject("visits");
-				d.uniqueVisitors = visits.size();
-				int sum = 0;
-				for (Map.Entry<String, JsonElement> e : visits.entrySet()) {
-					if (e.getValue().isJsonPrimitive()) sum += e.getValue().getAsInt();
-				}
-				d.completedVisitors = sum;
-			} else if (cd.has("completed_orders") && cd.get("completed_orders").isJsonPrimitive()) {
-				d.completedVisitors = cd.get("completed_orders").getAsInt();
-			}
-		} else if (gd.has("completed_visitors") && gd.get("completed_visitors").isJsonObject()) {
-			JsonObject cv = gd.getAsJsonObject("completed_visitors");
-			d.uniqueVisitors = cv.size();
-			int sum = 0;
-			for (Map.Entry<String, JsonElement> e : cv.entrySet()) {
-				if (e.getValue().isJsonPrimitive()) sum += e.getValue().getAsInt();
-			}
-			d.completedVisitors = sum;
-		}
-
-		if (gd.has("commission_data") && gd.get("commission_data").isJsonObject()) {
-			JsonObject commissions = gd.getAsJsonObject("commission_data");
-			if (commissions.has("total_completed")) d.completedVisitors = commissions.get("total_completed").getAsInt();
-			if (commissions.has("unique_npcs_served")) d.uniqueVisitors = commissions.get("unique_npcs_served").getAsInt();
-		}
-
-		// Composter Data
-		if (gd.has("composter_data") && gd.get("composter_data").isJsonObject()) {
-			JsonObject comp = gd.getAsJsonObject("composter_data");
-			if (comp.has("organic_matter") && comp.get("organic_matter").isJsonPrimitive()) {
-				d.composterOrganicMatter = comp.get("organic_matter").getAsDouble();
-			}
-			if (comp.has("fuel_units") && comp.get("fuel_units").isJsonPrimitive()) {
-				d.composterFuel = comp.get("fuel_units").getAsDouble();
-			}
-			if (comp.has("upgrades") && comp.get("upgrades").isJsonObject()) {
-				JsonObject up = comp.getAsJsonObject("upgrades");
-				if (up.has("speed")) d.composterSpeedUpgrade = up.get("speed").getAsInt();
-				if (up.has("organic_matter_cap")) d.composterOrganicCapUpgrade = up.get("organic_matter_cap").getAsInt();
-				if (up.has("cost_reduction")) d.composterCostReductionUpgrade = up.get("cost_reduction").getAsInt();
-				if (up.has("fuel_cap")) d.composterFuelCapUpgrade = up.get("fuel_cap").getAsInt();
-			}
-		}
-
-		// Jacob's Contest / Medals
-		JsonObject jc = json.has("jacob2") && json.get("jacob2").isJsonObject()
-				? json.getAsJsonObject("jacob2")
-				: (json.has("jacobs_contest") && json.get("jacobs_contest").isJsonObject()
-				? json.getAsJsonObject("jacobs_contest")
-				: (gd.has("jacob2") && gd.get("jacob2").isJsonObject() ? gd.getAsJsonObject("jacob2") : null));
-
-		if (jc != null) {
-			if (jc.has("medals_inv") && jc.get("medals_inv").isJsonObject()) {
-				JsonObject mi = jc.getAsJsonObject("medals_inv");
-				if (mi.has("gold") && mi.get("gold").isJsonPrimitive()) d.goldMedals = mi.get("gold").getAsInt();
-				if (mi.has("silver") && mi.get("silver").isJsonPrimitive()) d.silverMedals = mi.get("silver").getAsInt();
-				if (mi.has("bronze") && mi.get("bronze").isJsonPrimitive()) d.bronzeMedals = mi.get("bronze").getAsInt();
-			}
-			if (jc.has("personal_bests") && jc.get("personal_bests").isJsonObject()) {
-				JsonObject pb = jc.getAsJsonObject("personal_bests");
-				for (Map.Entry<String, JsonElement> e : pb.entrySet()) {
-					if (e.getValue().isJsonPrimitive()) {
-						d.personalBests.put(e.getKey().toLowerCase(), e.getValue().getAsLong());
-					}
-				}
-			}
-		}
-
-		// Ensure 10 crop entries
-		String[] crops = {"wheat", "carrot", "potato", "pumpkin", "melon", "sugar_cane", "cactus", "cocoa_beans", "mushroom", "nether_wart"};
-		for (String c : crops) {
-			d.cropMilestones.putIfAbsent(c, 0L);
-		}
-
+		JsonObject garden = json != null && json.has("garden") ? ProfileJson.object(json, "garden") : json;
+		d.gardenExperience = ProfileJson.number(garden, "garden_experience");
+		d.gardenLevel = calcGardenLevel(d.gardenExperience);
+		d.copper = (int) ProfileJson.number(garden, "copper");
+		d.larvaConsumed = (int) ProfileJson.number(garden, "larva_consumed");
+		d.unlockedPlots = ProfileJson.array(garden, "unlocked_plots_ids").size();
+		ProfileJson.object(garden, "resources_collected").entrySet().forEach(e -> d.cropMilestones.put(cropKey(e.getKey()), e.getValue().getAsLong()));
+		JsonObject commissions = ProfileJson.object(garden, "commission_data");
+		ProfileJson.object(commissions, "visits").entrySet().forEach(e -> d.visitorVisits.put(e.getKey(), e.getValue().getAsInt()));
+		ProfileJson.object(commissions, "completed").entrySet().forEach(e -> d.visitorCompletions.put(e.getKey(), e.getValue().getAsInt()));
+		d.completedVisitors = commissions.has("total_completed") ? (int) ProfileJson.number(commissions, "total_completed") : d.visitorCompletions.values().stream().mapToInt(Integer::intValue).sum();
+		d.uniqueVisitors = commissions.has("unique_npcs_served") ? (int) ProfileJson.number(commissions, "unique_npcs_served") : (int) d.visitorCompletions.values().stream().filter(v -> v > 0).count();
+		JsonObject composter = ProfileJson.object(garden, "composter_data");
+		d.composterOrganicMatter = ProfileJson.number(composter, "organic_matter");
+		d.composterFuel = ProfileJson.number(composter, "fuel_units");
+		d.composterItems = (int) ProfileJson.number(composter, "compost_items");
+		JsonObject upgrades = ProfileJson.object(composter, "upgrades");
+		d.composterSpeedUpgrade = (int) ProfileJson.number(upgrades, "speed");
+		d.composterMultiDropUpgrade = (int) ProfileJson.number(upgrades, "multi_drop");
+		d.composterFuelCapUpgrade = (int) ProfileJson.number(upgrades, "fuel_cap");
+		d.composterOrganicCapUpgrade = (int) ProfileJson.number(upgrades, "organic_matter_cap");
+		d.composterCostReductionUpgrade = (int) ProfileJson.number(upgrades, "cost_reduction");
+		JsonObject jacob = ProfileJson.object(json, "jacob2");
+		d.goldMedals = (int) ProfileJson.number(jacob, "medals_inv", "gold");
+		d.silverMedals = (int) ProfileJson.number(jacob, "medals_inv", "silver");
+		d.bronzeMedals = (int) ProfileJson.number(jacob, "medals_inv", "bronze");
+		d.contestsParticipated = ProfileJson.object(jacob, "contests").size();
+		d.farmingLevelCap = (int) ProfileJson.number(jacob, "perks", "farming_level_cap");
+		d.doubleDrops = (int) ProfileJson.number(jacob, "perks", "double_drops");
+		ProfileJson.object(jacob, "personal_bests").entrySet().forEach(e -> d.personalBests.put(cropKey(e.getKey()), e.getValue().getAsLong()));
+		ProfileJson.object(json, "player_data", "garden_chips").entrySet().forEach(e -> d.chipLevels.put(e.getKey(), e.getValue().getAsInt()));
 		return d;
 	}
 
-	private static final double[] GARDEN_XP_TABLE = {
-		0, 70, 210, 490, 970, 1770, 3070, 5070, 8070, 12570, 19070, 28070, 40070, 56070, 76070, 100070
-	};
+	public void copyMemberData(GardenData member) {
+		copper = member.copper;
+		larvaConsumed = member.larvaConsumed;
+		goldMedals = member.goldMedals;
+		silverMedals = member.silverMedals;
+		bronzeMedals = member.bronzeMedals;
+		contestsParticipated = member.contestsParticipated;
+		farmingLevelCap = member.farmingLevelCap;
+		doubleDrops = member.doubleDrops;
+		personalBests = member.personalBests;
+		chipLevels = member.chipLevels;
+	}
+
+	public static String cropKey(String id) {
+		return switch (id.toUpperCase(Locale.ROOT)) {
+			case "CARROT_ITEM" -> "carrot";
+			case "POTATO_ITEM" -> "potato";
+			case "INK_SACK:3" -> "cocoa_beans";
+			case "MUSHROOM_COLLECTION" -> "mushroom";
+			case "NETHER_STALK" -> "nether_wart";
+			default -> id.toLowerCase(Locale.ROOT);
+		};
+	}
 
 	public static int calcGardenLevel(double xp) {
-		for (int i = 0; i < GARDEN_XP_TABLE.length; i++) {
-			if (xp < GARDEN_XP_TABLE[i]) return i;
+		long total = 0;
+		int level = 0;
+		for (var step : ProfileJson.array(CATALOG, "misc", "garden_level")) {
+			total += step.getAsLong();
+			if (xp < total) break;
+			level++;
 		}
-		return GARDEN_XP_TABLE.length;
+		return level;
+	}
+
+	public static int milestoneLevel(String cropId, long amount) {
+		long total = 0;
+		int level = 0;
+		for (var step : ProfileJson.array(CATALOG, "crop_milestones", cropId)) {
+			total += step.getAsLong();
+			if (amount < total) break;
+			level++;
+		}
+		return level;
+	}
+
+	public static long chipSowdust(int level) {
+		JsonArray costs = ProfileJson.array(CATALOG, "chips");
+		long total = 0;
+		for (int i = 0; i < Math.min(Math.max(0, level - 1), costs.size()); i++) total += costs.get(i).getAsLong();
+		return total;
 	}
 }

@@ -2,6 +2,11 @@ package silence.simsool.profileviewer.ui.tabs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import com.google.gson.JsonObject;
+import silence.simsool.profileviewer.api.data.ProfileJson;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -79,7 +84,7 @@ public class GardenTabRenderer {
 				SkijaRenderer.outlineRect(subTabX, curY, stW, subTabH, 1.2f, 0xFF34D399, 7f);
 			}
 
-			SkijaRenderer.text(st.icon, subTabX + 10f, curY + 6.5f, Fonts.MATERIAL_ICONS_ROUND, textCol, 15f);
+			RenderHelper.alignedIcon(st.icon, subTabX + 10f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 15f, 13.5f);
 			SkijaRenderer.text(st.getTitle(), subTabX + 28f, curY + 6.5f, Fonts.PRETENDARD_SEMIBOLD, textCol, 13.5f);
 
 			subTabX += stW + 8f;
@@ -100,10 +105,10 @@ public class GardenTabRenderer {
 
 		// 4 Cards Layout: Gear (220f), Contests (120f), Chips (115f), Information (Remaining)
 		float gearW = 210f;
-		float contestsW = 120f;
+		float contestsW = 152f;
 		float chipsW = 115f;
 		float infoW = totalW - gearW - contestsW - chipsW - 3 * colGap;
-		float cardH = 250f;
+		float cardH = 270f;
 
 		// ---------------------------------------------------------------------
 		// Card 1: Gear (4 Armor + 4 Equipment + 4 Pets + Vacuum/Watering Can)
@@ -112,7 +117,7 @@ public class GardenTabRenderer {
 		RenderHelper.drawModernCard(c1X, curY, gearW, cardH, 10f, false);
 		SkijaRenderer.text("Gear", c1X + (gearW - SkijaRenderer.textWidth("Gear", Fonts.PRETENDARD_SEMIBOLD, 14f)) / 2f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
-		float slotSize = 30f;
+		float slotSize = 40f;
 		float slotGap = 4f;
 		float gTopY = curY + 36f;
 		float col1X = c1X + 10f;
@@ -121,7 +126,7 @@ public class GardenTabRenderer {
 		float col4X = col3X + slotSize + slotGap + 6f;
 
 		// 1. Farming Armor (Helmet down to Boots)
-		List<ItemStack> farmingArmor = GearFinder.findArmorSet(data, GearFinder.FARMING_HELMETS, GearFinder.FARMING_CHESTPLATES, GearFinder.FARMING_LEGGINGS, GearFinder.FARMING_BOOTS);
+		List<ItemStack> farmingArmor = List.of(GearFinder.findFarmingItem(data, GearFinder.FARMING_HELMETS), GearFinder.findFarmingItem(data, GearFinder.FARMING_CHESTPLATES), GearFinder.findFarmingItem(data, GearFinder.FARMING_LEGGINGS), GearFinder.findFarmingItem(data, GearFinder.FARMING_BOOTS));
 		for (int r = 0; r < 4; r++) {
 			float sy = gTopY + r * (slotSize + slotGap);
 			boolean hov = mx >= col1X && mx <= col1X + slotSize && my >= sy && my <= sy + slotSize;
@@ -131,7 +136,7 @@ public class GardenTabRenderer {
 		}
 
 		// 2. Farming Equipment (Necklace, Cloak, Belt, Gloves)
-		List<ItemStack> farmingEq = GearFinder.findEquipmentSet(data, GearFinder.FARMING_EQUIPMENT);
+		List<ItemStack> farmingEq = GearFinder.findEquipmentSet(data, GearFinder.FARMING_EQUIPMENT, true);
 		for (int r = 0; r < 4; r++) {
 			float sy = gTopY + r * (slotSize + slotGap);
 			boolean hov = mx >= col2X && mx <= col2X + slotSize && my >= sy && my <= sy + slotSize;
@@ -154,8 +159,8 @@ public class GardenTabRenderer {
 		}
 
 		// 4. Right Tools: Vacuum & Watering Can
-		float vacY = gTopY + 12f;
-		float compY = gTopY + slotSize + slotGap + 28f;
+		float vacY = gTopY + slotSize + slotGap;
+		float compY = vacY + slotSize + slotGap;
 
 		boolean hovVac = mx >= col4X && mx <= col4X + slotSize && my >= vacY && my <= vacY + slotSize;
 		RenderHelper.drawItemSlotBg(col4X, vacY, slotSize, hovVac, 0x33FFFFFF, 0x5514151E, 4f);
@@ -197,7 +202,7 @@ public class GardenTabRenderer {
 			cSt.set(DataComponents.CUSTOM_NAME, Component.literal("§a" + formatCropName(cropIds[i])));
 			List<Component> lore = new ArrayList<>();
 			lore.add(Component.literal("§7Personal Best: §e" + RenderHelper.formatNumber(pb)));
-			lore.add(Component.literal("§7Brackets: §6● §f● §c●"));
+
 			cSt.set(DataComponents.LORE, new ItemLore(lore));
 
 			RenderHelper.registerItemSlot(sx, sy, slotSize, cSt);
@@ -215,7 +220,7 @@ public class GardenTabRenderer {
 			"CROPSHOT_CHIP", "EVERGREEN_CHIP", "HYPERCHARGE_CHIP", "MECHAMIND_CHIP", "OVERDRIVE_CHIP",
 			"QUICKDRAW_CHIP", "RAREFINDER_CHIP", "SOWLEDGE_CHIP", "SYNTHESIS_CHIP", "VERMIN_VAPORIZER_CHIP"
 		};
-		int[] chipLevels = {15, 20, 6, 17, 15, 15, 0, 2, 0, 15};
+
 
 		for (int i = 0; i < 10; i++) {
 			int chr = i / 2;
@@ -229,13 +234,13 @@ public class GardenTabRenderer {
 			ItemStack chipStack = ItemRepo.getItemStack(chipSbIds[i]);
 			if (chipStack.isEmpty()) chipStack = new ItemStack(Items.COMPARATOR);
 
-			int lvl = chipLevels[i];
+			int lvl = g.chipLevels.getOrDefault(chipSbIds[i].replace("_CHIP", "").toLowerCase(Locale.ROOT), 0);
 			int badgeCol = (lvl == 0) ? 0xFFEF4444 : (lvl <= 10 ? 0xFF38BDF8 : (lvl <= 15 ? 0xFFA855F7 : 0xFFF97316));
 
 			chipStack.set(DataComponents.CUSTOM_NAME, Component.literal("§d" + formatCropName(chipSbIds[i])));
 			List<Component> lore = new ArrayList<>();
 			lore.add(Component.literal("§7Chip Level: §e" + lvl));
-			lore.add(Component.literal("§7Sowdust: §a" + RenderHelper.formatNumber(lvl * 12500L) + " §7/ §2250k"));
+			lore.add(Component.literal("§7Sowdust: §a" + RenderHelper.formatNumber(GardenData.chipSowdust(lvl))));
 			chipStack.set(DataComponents.LORE, new ItemLore(lore));
 
 			RenderHelper.registerItemSlot(sx, sy, slotSize, chipStack, String.valueOf(lvl), badgeCol);
@@ -246,7 +251,7 @@ public class GardenTabRenderer {
 		// ---------------------------------------------------------------------
 		float c4X = c3X + chipsW + colGap;
 		RenderHelper.drawModernCard(c4X, curY, infoW, cardH, 10f, false);
-		SkijaRenderer.text("\uE88F", c4X + 14f, curY + 12f, Fonts.MATERIAL_ICONS_ROUND, 0xFFE879F9, 16f);
+		RenderHelper.alignedIcon("\uE88F", c4X + 14f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 16f, 14f);
 		SkijaRenderer.text("Information", c4X + 34f, curY + 11f, Fonts.PRETENDARD_SEMIBOLD, 0xFFE879F9, 14f);
 
 		float infoY = curY + 36f;
@@ -256,53 +261,98 @@ public class GardenTabRenderer {
 		infoY += rowH;
 		RenderHelper.drawStatRow("Garden Level", String.valueOf(g.gardenLevel), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFF10B981);
 		infoY += rowH;
-		int totalContests = g.goldMedals + g.silverMedals + g.bronzeMedals;
-		RenderHelper.drawStatRow("Contests Participated", String.valueOf(totalContests), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
+		int totalContests = g.contestsParticipated;
+		RenderHelper.drawStatRow("Contests", String.valueOf(totalContests), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
 		infoY += rowH;
-		String medalsDisplay = g.goldMedals + " Gold / " + g.silverMedals + " Silver / " + g.bronzeMedals + " Bronze";
+		String medalsDisplay = g.goldMedals + "G / " + g.silverMedals + "S / " + g.bronzeMedals + "B";
 		RenderHelper.drawStatRow("Medals", medalsDisplay, c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFFBBF24);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Larva Consumed", "5/5", c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFF10B981);
+		RenderHelper.drawStatRow("Larva Consumed", g.larvaConsumed + "/" + ProfileJson.number(GardenData.CATALOG, "misc", "max_larva_consumed"), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFF10B981);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Farming Level Cap", "4/10", c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFEF4444);
+		RenderHelper.drawStatRow("Farming Level Cap", String.valueOf(50 + g.farmingLevelCap), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFEF4444);
 		infoY += rowH;
-		RenderHelper.drawStatRow("Double Drops", "6/15", c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFEF4444);
+		RenderHelper.drawStatRow("Double Drops", String.valueOf(g.doubleDrops), c4X + 14f, infoY, infoW - 28f, 13.5f, 0xFFEF4444);
 
 		curY += cardH + 16f;
 		return curY - y0;
 	}
 
 	private static float renderCropsView(MemberData data, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		SkijaRenderer.text("Crop Milestones", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 236f;
-		return curY - y0;
+		float cardW = (width - 12f) / 2f;
+		int index = 0;
+		for (var entry : ProfileJson.object(GardenData.CATALOG, "crop_milestones").entrySet()) {
+			String id = entry.getKey();
+			long amount = data.garden.cropMilestones.getOrDefault(GardenData.cropKey(id), 0L);
+			int level = GardenData.milestoneLevel(id, amount);
+			long previous = 0;
+			long next = 0;
+			for (int i = 0; i <= level && i < entry.getValue().getAsJsonArray().size(); i++) {
+				previous = next;
+				next += entry.getValue().getAsJsonArray().get(i).getAsLong();
+			}
+			boolean maxed = level == entry.getValue().getAsJsonArray().size();
+			float x = startX + index % 2 * (cardW + 12f);
+			float y = curY + index / 2 * 100f;
+			RenderHelper.drawModernCard(x, y, cardW, 88f, 10f, false);
+			RenderHelper.drawStatRow(formatCropName(GardenData.cropKey(id)), "Milestone " + level, x + 14f, y + 12f, cardW - 28f, 14f, 0xFF34D399);
+			String progress = maxed ? "MAX · " + RenderHelper.formatNumber(amount) : RenderHelper.formatNumber(amount) + " / " + RenderHelper.formatNumber(next);
+			SkijaRenderer.text(progress, x + 14f, y + 36f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 13f);
+			RenderHelper.drawProgressBar(x + 14f, y + 65f, cardW - 28f, 5f, maxed ? 1f : (float) (amount - previous) / Math.max(1, next - previous), 0xFF10B981);
+			index++;
+		}
+		return ((index + 1) / 2) * 100f;
 	}
 
 	private static float renderComposterView(MemberData data, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		SkijaRenderer.text("Composter Upgrades", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 236f;
-		return curY - y0;
+		GardenData g = data.garden;
+		RenderHelper.drawModernCard(startX, curY, width, 122f, 10f, false);
+		RenderHelper.drawStatRow("Organic Matter", RenderHelper.formatNumber((long) g.composterOrganicMatter), startX + 16f, curY + 16f, width - 32f, 14f, 0xFF34D399);
+		RenderHelper.drawStatRow("Fuel", RenderHelper.formatNumber((long) g.composterFuel), startX + 16f, curY + 48f, width - 32f, 14f, 0xFFFBBF24);
+		RenderHelper.drawStatRow("Compost Ready", RenderHelper.formatNumber(g.composterItems), startX + 16f, curY + 80f, width - 32f, 14f, 0xFF38BDF8);
+		String[] ids = {"SPEED", "MULTI_DROP", "FUEL_CAP", "ORGANIC_MATTER_CAP", "COST_REDUCTION"};
+		int[] levels = {g.composterSpeedUpgrade, g.composterMultiDropUpgrade, g.composterFuelCapUpgrade, g.composterOrganicCapUpgrade, g.composterCostReductionUpgrade};
+		for (int i = 0; i < ids.length; i++) {
+			JsonObject definition = ProfileJson.object(GardenData.CATALOG, "composter_data", ids[i]);
+			int maximum = ProfileJson.array(definition, "upgrades").size();
+			float y = curY + 138f + i * 68f;
+			RenderHelper.drawModernCard(startX, y, width, 56f, 8f, false);
+			RenderHelper.drawStatRow(ProfileJson.string(definition, "name"), levels[i] + " / " + maximum, startX + 16f, y + 12f, width - 32f, 14f, 0xFF34D399);
+			RenderHelper.drawProgressBar(startX + 16f, y + 39f, width - 32f, 4f, (float) levels[i] / Math.max(1, maximum), 0xFF10B981);
+		}
+		return 138f + ids.length * 68f;
 	}
 
 	private static float renderVisitorsView(MemberData data, float startX, float curY, float width, float mx, float my) {
-		float y0 = curY;
-		RenderHelper.drawModernCard(startX, curY, width, 220f, 12f, false);
-		SkijaRenderer.text("Garden Visitors", startX + 16f, curY + 16f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
-		curY += 236f;
-		return curY - y0;
+		GardenData g = data.garden;
+		RenderHelper.drawModernCard(startX, curY, width, 60f, 10f, false);
+		RenderHelper.drawStatRow("Visitors Served", g.uniqueVisitors + " unique / " + g.completedVisitors + " offers accepted", startX + 16f, curY + 20f, width - 32f, 14f, 0xFF34D399);
+		Map<String, String> visitors = new LinkedHashMap<>();
+		for (var element : ProfileJson.array(GardenData.CATALOG, "visitors")) {
+			JsonObject visitor = element.getAsJsonObject();
+			visitors.put(ProfileJson.string(visitor, "id"), ProfileJson.string(visitor, "name"));
+		}
+		for (String id : g.visitorVisits.keySet()) visitors.putIfAbsent(id, formatCropName(id));
+		for (String id : g.visitorCompletions.keySet()) visitors.putIfAbsent(id, formatCropName(id));
+		int index = 0;
+		float cardW = (width - 12f) / 2f;
+		for (var visitor : visitors.entrySet()) {
+			float x = startX + index % 2 * (cardW + 12f);
+			float y = curY + 76f + index / 2 * 64f;
+			RenderHelper.drawModernCard(x, y, cardW, 52f, 8f, false);
+			SkijaRenderer.text(visitor.getValue(), x + 12f, y + 8f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13f);
+			String counts = g.visitorCompletions.getOrDefault(visitor.getKey(), 0) + " accepted / " + g.visitorVisits.getOrDefault(visitor.getKey(), 0) + " visits";
+			SkijaRenderer.text(counts, x + 12f, y + 29f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12f);
+			index++;
+		}
+		return 76f + ((index + 1) / 2) * 64f;
 	}
-
 	private static List<PetData.PetItem> getFarmingPets(MemberData data) {
 		List<PetData.PetItem> res = new ArrayList<>();
 		if (data != null && data.pets != null && data.pets.pets != null) {
 			java.util.Set<String> seen = new java.util.HashSet<>();
 			for (PetData.PetItem pet : data.pets.pets.stream()
 				.filter(p -> GearFinder.FARMING_PETS.contains(p.type.toUpperCase()))
-				.sorted(java.util.Comparator.comparingInt((PetData.PetItem p) -> petRarity(p.rarity)).thenComparing(java.util.Comparator.comparingDouble((PetData.PetItem p) -> p.exp).reversed()))
+				.sorted(java.util.Comparator.comparingInt((PetData.PetItem p) -> petRarity(p.rarity)).reversed().thenComparing(java.util.Comparator.comparingDouble((PetData.PetItem p) -> p.exp).reversed()))
 				.toList()) {
 				if (seen.add(pet.type) && res.size() < 4) res.add(pet);
 			}
@@ -323,11 +373,11 @@ public class GardenTabRenderer {
 	}
 
 	private static ItemStack getFarmingVacuumStack(MemberData data) {
-		return GearFinder.findBestItem(data, GearFinder.FARMING_VACUUMS);
+		return GearFinder.findRarestItem(data, GearFinder.FARMING_VACUUMS);
 	}
 
 	private static ItemStack getWateringCanStack(MemberData data) {
-		return GearFinder.findBestItem(data, GearFinder.FARMING_WATERING_CANS);
+		return GearFinder.findRarestItem(data, GearFinder.FARMING_WATERING_CANS);
 	}
 
 	private static String formatCropName(String raw) {

@@ -7,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 public class ParsedItem {
 
 	public String skyblockId = "";
+	public String uuid = "";
 	public String mcId = "minecraft:air";
 	public int count = 1;
 	public String displayName = "";

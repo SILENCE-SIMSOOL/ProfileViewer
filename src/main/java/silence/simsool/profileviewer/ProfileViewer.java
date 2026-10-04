@@ -63,6 +63,20 @@ public class ProfileViewer implements ClientModInitializer {
 				return 1;
 			})
 			.then(ClientCommands.argument("player", StringArgumentType.string())
+				.suggests((context, builder) -> {
+					String remaining = builder.getRemaining().toLowerCase();
+					if (mc.getConnection() != null) {
+						for (var info : mc.getConnection().getOnlinePlayers()) {
+							if (info.getProfile() != null && info.getProfile().name() != null) {
+								String name = info.getProfile().name();
+								if (name.toLowerCase().startsWith(remaining)) {
+									builder.suggest(name);
+								}
+							}
+						}
+					}
+					return builder.buildFuture();
+				})
 				.executes(context -> {
 					String playerName = StringArgumentType.getString(context, "player");
 					resolveAndOpen(playerName);
