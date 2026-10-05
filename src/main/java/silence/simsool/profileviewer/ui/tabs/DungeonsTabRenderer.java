@@ -12,6 +12,7 @@ import silence.simsool.lucent.ui.utils.skija.Fonts;
 import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 import silence.simsool.profileviewer.api.data.DungeonData;
 import silence.simsool.profileviewer.api.data.MemberData;
+import silence.simsool.profileviewer.api.data.ProfileJson;
 import silence.simsool.profileviewer.api.repo.ItemRepo;
 import silence.simsool.profileviewer.ui.RenderHelper;
 
@@ -204,97 +205,39 @@ public class DungeonsTabRenderer {
 
 		curY += 24f;
 
-		float tblW = width;
-		float rowH = 58f;
-		float pillW = (width - 52f) / 3f;
-		float pillH = 44f;
-		float mPillX = startX + tblW - 14f - pillW;
-		float nPillX = mPillX - 12f - pillW;
+		float floorW = width * 0.24f;
+		float modeW = (width - floorW - 24f) / 2f;
+		float normalX = startX + floorW + 12f;
+		float masterX = normalX + modeW + 12f;
+		SkijaRenderer.text("Floor", startX + 14f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 15f);
+		SkijaRenderer.text("Normal", normalX + 14f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 15f);
+		SkijaRenderer.text("Master Mode", masterX + 14f, curY, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF7777, 15f);
+		curY += 28f;
 
-		String[] floorKeys = {"F1", "F2", "F3", "F4", "F5", "F6", "F7"};
-		String[] floorBadges = {"F1", "F2", "F3", "F4", "F5", "F6", "F7"};
-		String[] floorNames = {"Bonzo", "Scarf", "Professor", "Thorn", "Livid", "Sadan", "Necron"};
-
-		// Table Column Labels
-		SkijaRenderer.text("Floor", startX + 14f, curY + 3f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_MUTED, 13f);
-		SkijaRenderer.text("Normal Runs", nPillX + 12f, curY + 3f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 13f);
-		SkijaRenderer.text("Master Mode Runs", mPillX + 12f, curY + 3f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFF7777, 13f);
-
-		curY += 18f;
-
-		for (int i = 0; i < floorKeys.length; i++) {
-			String fKey = floorKeys[i];
-			int floorNum = i + 1;
-			String mKey = "M" + floorNum;
-			DungeonData.FloorStats norm = d.normalFloors.getOrDefault(fKey, new DungeonData.FloorStats());
-			DungeonData.FloorStats mast = d.masterFloors.getOrDefault(mKey, new DungeonData.FloorStats());
-
-			RenderHelper.drawModernCard(startX, curY, tblW, rowH, 8f, false);
-
-			// --- Left: Floor Badge + Floor Name ---
-			float badgeX = startX + 14f;
-			float badgeY = curY + (rowH - 18f) / 2f;
-			RenderHelper.drawBadge(floorBadges[i], badgeX, badgeY, 0x336366F1, 0xFF818CF8);
-
-			float nameX = badgeX + 32f;
-			SkijaRenderer.text(floorNames[i], nameX, curY + (rowH - 14f) / 2f + 1f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
-
-			// --- Middle: Normal Runs Cyan Capsule ---
-			float pillY = curY + (rowH - pillH) / 2f;
-			boolean hasNorm = norm.completions > 0;
-			int nBg = hasNorm ? 0x240284C7 : 0x14161F2E;
-			int nBorder = hasNorm ? 0x5538BDF8 : 0x1AFFFFFF;
-
-			SkijaRenderer.rect(nPillX, pillY, pillW, pillH, nBg, pillH / 2f);
-			SkijaRenderer.outlineRect(nPillX, pillY, pillW, pillH, 1.2f, nBorder, pillH / 2f);
-
-			// Status Dot
-			int dotCol = hasNorm ? 0xFF38BDF8 : 0xFF6B7280;
-			SkijaRenderer.circle(nPillX + 12f, pillY + pillH / 2f, 3f, dotCol);
-
-			// Run Count
-			String normRuns = hasNorm ? RenderHelper.formatNumber(norm.completions) + " runs" : "0 runs";
-			int runCol = hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_MUTED;
-			SkijaRenderer.text(normRuns, nPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, runCol, 14.5f);
-
-			// S+ Stopwatch Time
-			String normSplus = norm.fastestTimeSplusMs > 0 ? norm.getFastestSPlusFormatted() : (norm.fastestTimeMs > 0 ? norm.getFastestTimeFormatted() : "-");
-			float nTimeW = SkijaRenderer.textWidth(normSplus, Fonts.PRETENDARD_MEDIUM, 13.5f);
-			float nTimeX = nPillX + pillW - 12f - nTimeW;
-			RenderHelper.alignedIcon("\uE425", nTimeX - 15f, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? 0xFF38BDF8 : RenderHelper.FONT_DISABLED, 14f, 13.5f);
-			SkijaRenderer.text(normSplus, nTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasNorm ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
-			SkijaRenderer.text("Best score  " + (norm.bestScore > 0 ? norm.bestScore : "-"), nPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
-
-			// --- Right: Master Mode Runs Ruby Capsule ---
-			boolean hasMast = mast.completions > 0;
-			int mBg = hasMast ? 0x24DC2626 : 0x141F161E;
-			int mBorder = hasMast ? 0x55EF4444 : 0x1AFFFFFF;
-
-			SkijaRenderer.rect(mPillX, pillY, pillW, pillH, mBg, pillH / 2f);
-			SkijaRenderer.outlineRect(mPillX, pillY, pillW, pillH, 1.2f, mBorder, pillH / 2f);
-
-			// Status Dot
-			int mDotCol = hasMast ? 0xFFEF4444 : 0xFF6B7280;
-			SkijaRenderer.circle(mPillX + 12f, pillY + pillH / 2f, 3f, mDotCol);
-
-			// Master Run Count
-			String mastRuns = hasMast ? RenderHelper.formatNumber(mast.completions) + " runs" : "0 runs";
-			int mRunCol = hasMast ? 0xFFFF5555 : RenderHelper.FONT_MUTED;
-			SkijaRenderer.text(mastRuns, mPillX + 22f, pillY + 6f, Fonts.PRETENDARD_SEMIBOLD, mRunCol, 14.5f);
-
-			// Master S+ Stopwatch Time
-			String mastSplus = mast.fastestTimeSplusMs > 0 ? mast.getFastestSPlusFormatted() : (mast.fastestTimeMs > 0 ? mast.getFastestTimeFormatted() : "-");
-			float mTimeW = SkijaRenderer.textWidth(mastSplus, Fonts.PRETENDARD_MEDIUM, 13.5f);
-			float mTimeX = mPillX + pillW - 12f - mTimeW;
-			RenderHelper.alignedIcon("\uE425", mTimeX - 15f, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 14f, 13.5f);
-			SkijaRenderer.text(mastSplus, mTimeX, pillY + 6f, Fonts.PRETENDARD_MEDIUM, hasMast ? RenderHelper.FONT_PRIMARY : RenderHelper.FONT_DISABLED, 13.5f);
-			SkijaRenderer.text("Best score  " + (mast.bestScore > 0 ? mast.bestScore : "-"), mPillX + 22f, pillY + 25f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 12.5f);
-
-			curY += rowH + 4f;
+		String[] names = {"Entrance", "Bonzo", "Scarf", "Professor", "Thorn", "Livid", "Sadan", "Necron"};
+		for (int floor = 0; floor < names.length; floor++) {
+			RenderHelper.drawModernCard(startX, curY, floorW, 94f, 10f, false);
+			SkijaRenderer.text(floor == 0 ? "Entrance" : "Floor " + floor, startX + 14f, curY + 19f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 17f);
+			if (floor > 0) SkijaRenderer.text(names[floor], startX + 14f, curY + 49f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_SECONDARY, 15f);
+			renderFloorStats(d.normalFloors.getOrDefault("F" + floor, new DungeonData.FloorStats()), normalX, curY, modeW, 0xFF38BDF8);
+			if (floor > 0) {
+				renderFloorStats(d.masterFloors.getOrDefault("M" + floor, new DungeonData.FloorStats()), masterX, curY, modeW, 0xFFFF7777);
+			} else {
+				RenderHelper.drawModernCard(masterX, curY, modeW, 94f, 10f, false);
+				SkijaRenderer.text("Not available", masterX + 14f, curY + 38f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_MUTED, 15f);
+			}
+			curY += 104f;
 		}
-
-		curY += 16f;
 		return curY - y0;
+	}
+
+	private static void renderFloorStats(DungeonData.FloorStats floor, float x, float y, float width, int color) {
+		RenderHelper.drawModernCard(x, y, width, 94f, 10f, false);
+		SkijaRenderer.text(RenderHelper.formatNumber(floor.completions) + " clears", x + 14f, y + 12f, Fonts.PRETENDARD_SEMIBOLD, color, 18f);
+		String timeLabel = floor.fastestTimeSplusMs > 0 ? "Fastest S+" : "Fastest";
+		String time = floor.fastestTimeSplusMs > 0 ? floor.getFastestSPlusFormatted() : floor.fastestTimeMs > 0 ? floor.getFastestTimeFormatted() : "—";
+		RenderHelper.drawStatRow(timeLabel, time, x + 14f, y + 43f, width - 28f, 14.5f, RenderHelper.FONT_SECONDARY);
+		RenderHelper.drawStatRow("Best score", floor.bestScore > 0 ? String.valueOf(floor.bestScore) : "—", x + 14f, y + 67f, width - 28f, 14.5f, RenderHelper.FONT_SECONDARY);
 	}
 
 	private static float renderCrimsonIsleView(DungeonData d, float startX, float curY, float width, float mx, float my) {
@@ -342,20 +285,28 @@ public class DungeonsTabRenderer {
 		SkijaRenderer.text(L10n.translate("pv.dungeons.kuudra_tiers"), startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 		curY += 24f;
 
-		float kColW = (width - 4 * 10f) / 5f;
-		float kH = 64f;
-		String[] tiers = {"basic", "hot", "burning", "fiery", "infernal"};
+		int kColumns = Math.min(5, Math.max(1, (int) ((width + 10f) / 160f)));
+		float kColW = (width - (kColumns - 1) * 10f) / kColumns;
+		float kH = 76f;
+		String[] tiers = {"none", "hot", "burning", "fiery", "infernal"};
 		String[] tierNames = {"Basic", "Hot", "Burning", "Fiery", "Infernal"};
 
 		for (int i = 0; i < tiers.length; i++) {
-			float kx = startX + i * (kColW + 10f);
+			float kx = startX + i % kColumns * (kColW + 10f);
+			if (i > 0 && i % kColumns == 0) curY += kH + 10f;
 			RenderHelper.drawModernCard(kx, curY, kColW, kH, 10f, false);
-			SkijaRenderer.text(tierNames[i], kx + 12f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 13.5f);
+			SkijaRenderer.text(tierNames[i], kx + 12f, curY + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			int comps = d.kuudraCompletions.getOrDefault(tiers[i], 0);
-			SkijaRenderer.text(comps + " clears", kx + 12f, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, comps > 0 ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 15f);
+			SkijaRenderer.text(comps + " clears", kx + 12f, curY + 34f, Fonts.PRETENDARD_SEMIBOLD, comps > 0 ? 0xFFFF7777 : RenderHelper.FONT_DISABLED, 18f);
 		}
 
-		curY += kH + 24f;
+		curY += kH + 14f;
+		long collection = 0;
+		for (int i = 0; i < tiers.length; i++) collection += (long) d.kuudraCompletions.getOrDefault(tiers[i], 0) * (i + 1);
+		int collectionTier = 0;
+		for (var threshold : ProfileJson.array(DungeonData.CRIMSON_CATALOG, "kuudra", "collection")) if (collection >= threshold.getAsLong()) collectionTier++;
+		RenderHelper.drawStatRow("Kuudra Collection", RenderHelper.formatNumber(collection) + " · Tier " + collectionTier + "/" + ProfileJson.array(DungeonData.CRIMSON_CATALOG, "kuudra", "collection").size(), startX + 12f, curY, width - 24f, 15f, RenderHelper.FONT_SECONDARY);
+		curY += 36f;
 
 		// Dojo Scores
 		if (!d.dojoScores.isEmpty()) {
@@ -363,23 +314,27 @@ public class DungeonsTabRenderer {
 			SkijaRenderer.text("DOJO SCORES", startX + 26f, curY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
 			curY += 24f;
 
-			float dColW = (width - 3 * 10f) / 4f;
-			float dH = 50f;
+			int dojoColumns = Math.min(3, Math.max(1, (int) ((width + 10f) / 220f)));
+			float dColW = (width - (dojoColumns - 1) * 10f) / dojoColumns;
+			float dH = 70f;
 			int idx = 0;
 
 			for (Map.Entry<String, Integer> entry : d.dojoScores.entrySet()) {
-				float dx = startX + (idx % 4) * (dColW + 10f);
-				float dy = curY + (idx / 4) * (dH + 8f);
+				float dx = startX + (idx % dojoColumns) * (dColW + 10f);
+				float dy = curY + (idx / dojoColumns) * (dH + 8f);
 
 				RenderHelper.drawModernCard(dx, dy, dColW, dH, 8f, false);
-				String djName = entry.getKey().replace("_", " ").toLowerCase();
-				djName = djName.substring(0, 1).toUpperCase() + djName.substring(1);
-				SkijaRenderer.text(djName, dx + 12f, dy + 9f, Fonts.PRETENDARD_MEDIUM, RenderHelper.FONT_PRIMARY, 13f);
-				SkijaRenderer.text(entry.getValue() + " pts", dx + 12f, dy + 27f, Fonts.PRETENDARD_SEMIBOLD, 0xFF38BDF8, 14f);
+				String djName = ProfileJson.string(DungeonData.CRIMSON_CATALOG, "dojo", "name_map", entry.getKey());
+				SkijaRenderer.text(djName, dx + 12f, dy + 12f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
+				SkijaRenderer.text((entry.getValue() < 0 ? "Not played" : entry.getValue() + " pts · " + DungeonData.dojoGrade(entry.getValue())), dx + 12f, dy + 39f, Fonts.PRETENDARD_MEDIUM, 0xFF38BDF8, 16f);
 
 				idx++;
 			}
-			curY += ((idx + 3) / 4) * (dH + 8f) + 12f;
+			curY += ((idx + dojoColumns - 1) / dojoColumns) * (dH + 8f) + 12f;
+			boolean played = d.dojoScores.values().stream().anyMatch(points -> points >= 0);
+			int totalPoints = d.dojoScores.values().stream().mapToInt(points -> Math.max(0, points)).sum();
+			RenderHelper.drawStatRow("Total Dojo Points", played ? RenderHelper.formatNumber(totalPoints) : "Not played", startX + 12f, curY, width - 24f, 16f, 0xFFFBBF24);
+			curY += 34f;
 		}
 
 		return curY - y0;

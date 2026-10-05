@@ -1,4 +1,7 @@
 {
+	"pv.chat.loading_profile": "Загрузка профиля %s...",
+	"pv.chat.lookup_failed": "Не удалось найти игрока. Повторите попытку.",
+	"pv.chat.player_not_found": "Игрок «%s» не найден.",
 	"pv.ui.title": "PROFILE VIEWER",
 	"pv.ui.loading": "Загрузка данных профиля...",
 	"pv.ui.not_found": "Данные профиля не найдены.",

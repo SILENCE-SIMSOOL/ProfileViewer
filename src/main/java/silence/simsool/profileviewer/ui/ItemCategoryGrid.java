@@ -8,10 +8,14 @@ import silence.simsool.lucent.ui.utils.skija.SkijaRenderer;
 
 public final class ItemCategoryGrid {
 	public record Cell(ItemStack stack, String count, int color) {}
-	public record Page(String title, ItemStack icon, List<Cell> items) {}
+	public record Page(String title, ItemStack icon, List<Cell> items, List<Page> children) {
+		public Page(String title, ItemStack icon, List<Cell> items) { this(title, icon, items, List.of()); }
+	}
 	private record Button(float x, float y, float size, int index) {}
 	private final List<Button> buttons = new ArrayList<>();
 	private int selected;
+	private Page childPage;
+	private ItemCategoryGrid childGrid;
 
 	public float render(List<Page> pages, float x, float y, float width, float mx, float my) {
 		buttons.clear();
@@ -35,6 +39,16 @@ public final class ItemCategoryGrid {
 		}
 		float bodyY = y + ((pages.size() + columns - 1) / columns) * (size + gap) + 18f;
 		Page page = pages.get(selected);
+		if (!page.children().isEmpty()) {
+			if (childPage != page) {
+				childPage = page;
+				childGrid = new ItemCategoryGrid();
+			}
+			SkijaRenderer.text(page.title(), origin, bodyY, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 18f);
+			return bodyY + 30f - y + childGrid.render(page.children(), x, bodyY + 30f, width, mx, my);
+		}
+		childPage = null;
+		childGrid = null;
 		int rows = Math.max(1, (page.items().size() + columns - 1) / columns);
 		float height = rows * (size + gap) + 48f;
 		RenderHelper.drawModernCard(origin - 14f, bodyY, gridWidth + 28f, height, 12f, false);
@@ -55,10 +69,11 @@ public final class ItemCategoryGrid {
 	public boolean mouseClicked(float x, float y) {
 		for (Button button : buttons) {
 			if (x >= button.x && x <= button.x + button.size && y >= button.y && y <= button.y + button.size) {
+				if (selected != button.index) { childPage = null; childGrid = null; }
 				selected = button.index;
 				return true;
 			}
 		}
-		return false;
+		return childGrid != null && childGrid.mouseClicked(x, y);
 	}
 }

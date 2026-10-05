@@ -226,15 +226,15 @@ public class ForagingTabRenderer {
 				float ny = gridStartY + r * (slotSize + slotGap);
 
 				boolean isSelected = node.id.equals(activeAbility) || activeAbility.endsWith(node.id);
-				int nodeLvl = activeNodes.getOrDefault(node.id, 0);
+				int nodeLvl = activeNodes.getOrDefault(node.id, -1);
 
 				boolean isMaxed = (nodeLvl >= node.maxLevel);
 				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
 				RenderHelper.drawItemSlotBg(nx, ny, slotSize, hov, isSelected ? 0xFF34D399 : 0x33FFFFFF, isSelected ? 0xFF1E382B : 0x5514151E, 6f);
 
-				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0));
+				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0), data.mining.disabledForagingNodes.contains(node.id));
 				// In screenshot 1: Level text only rendered for intermediate levels (not maxed and not ability)
-				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && !isMaxed ? String.valueOf(nodeLvl) : null);
+				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && nodeLvl >= 0 && !isMaxed ? String.valueOf(nodeLvl) : null);
 				int textColor = isSelected ? 0xFF34D399 : 0xFFFFFFFF;
 
 				RenderHelper.registerItemSlot(nx, ny, slotSize, stack, customText, textColor);

@@ -2,6 +2,8 @@ package silence.simsool.profileviewer.api.data;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,6 +26,8 @@ public class MiningData {
 	public Map<Integer, String> presetAbilities = new LinkedHashMap<>();
 
 	// HOTF (Foraging) data
+	public final Set<String> disabledMiningNodes = new LinkedHashSet<>();
+	public final Set<String> disabledForagingNodes = new LinkedHashSet<>();
 	public int hotfLevel = 0;
 	public double hotfExperience = 0;
 	public String selectedForagingAbility = "";
@@ -78,6 +82,7 @@ public class MiningData {
 
 			if (core.has("nodes") && core.get("nodes").isJsonObject()) {
 				parseNodesRecursively(core.getAsJsonObject("nodes"), d.nodes);
+				parseDisabledNodes(core.getAsJsonObject("nodes"), d.disabledMiningNodes);
 				if (d.nodes.containsKey("special_0")) d.peakOfTheMountain = d.nodes.get("special_0");
 				else if (d.nodes.containsKey("peak_of_the_mountain")) d.peakOfTheMountain = d.nodes.get("peak_of_the_mountain");
 				else if (d.nodes.containsKey("core_of_the_mountain")) d.peakOfTheMountain = d.nodes.get("core_of_the_mountain");
@@ -110,6 +115,7 @@ public class MiningData {
 			JsonObject fc = member.getAsJsonObject("foraging_core");
 			if (fc.has("nodes") && fc.get("nodes").isJsonObject()) {
 				parseNodesRecursively(fc.getAsJsonObject("nodes"), d.foragingNodes);
+				parseDisabledNodes(fc.getAsJsonObject("nodes"), d.disabledForagingNodes);
 			}
 			if (fc.has("selected_ability") && fc.get("selected_ability").isJsonPrimitive()) {
 				d.selectedForagingAbility = fc.get("selected_ability").getAsString();
@@ -158,6 +164,10 @@ public class MiningData {
 					Map<String, Integer> pMap = new LinkedHashMap<>();
 					parseNodesRecursively(nodeObj, pMap);
 					d.presetNodes.put(slot, pMap);
+					if (slot == 1) {
+						d.disabledMiningNodes.clear();
+						parseDisabledNodes(nodeObj, d.disabledMiningNodes);
+					}
 					if (slot == 1 && d.nodes.isEmpty()) d.nodes.putAll(pMap);
 				}
 
@@ -179,6 +189,10 @@ public class MiningData {
 					Map<String, Integer> pMap = new LinkedHashMap<>();
 					parseNodesRecursively(nodeObj, pMap);
 					d.foragingPresetNodes.put(slot, pMap);
+					if (slot == 1) {
+						d.disabledForagingNodes.clear();
+						parseDisabledNodes(nodeObj, d.disabledForagingNodes);
+					}
 					if (slot == 1 && d.foragingNodes.isEmpty()) d.foragingNodes.putAll(pMap);
 				}
 
@@ -269,6 +283,17 @@ public class MiningData {
 			return root.get(key).getAsString();
 		}
 		return null;
+	}
+
+	private static void parseDisabledNodes(JsonObject nodes, Set<String> disabled) {
+		for (var entry : nodes.entrySet()) {
+			if (entry.getValue().isJsonObject()) parseDisabledNodes(entry.getValue().getAsJsonObject(), disabled);
+			else if (entry.getKey().startsWith("toggle_") && entry.getValue().isJsonPrimitive()) {
+				var value = entry.getValue().getAsJsonPrimitive();
+				boolean enabled = value.isBoolean() ? value.getAsBoolean() : !value.isNumber() || value.getAsInt() != 0;
+				if (!enabled) disabled.add(entry.getKey().substring("toggle_".length()));
+			}
+		}
 	}
 
 	private static void parseNodesRecursively(JsonObject nodesObj, Map<String, Integer> target) {

@@ -249,7 +249,7 @@ public class MiningTabRenderer {
 
 			RenderHelper.drawItemSlotBg(sx, sy, slotSize, hov, isSelAb ? 0xFF34D399 : 0x33FFFFFF, isSelAb ? 0xFF1E382B : 0x5514151E, 5f);
 
-			ItemStack stack = node.createParsedItem(level, !node.matchesAbility(activeAbility) && node.type == HotmTreeData.NodeType.ABILITY, activeAbility, m.hotmLevel).toItemStack();
+			ItemStack stack = node.createParsedItem(level, node.type == HotmTreeData.NodeType.ABILITY ? !node.matchesAbility(activeAbility) : m.disabledMiningNodes.contains(node.id), activeAbility, m.hotmLevel).toItemStack();
 			boolean isMaxed = (level >= node.maxLevel);
 
 			String customText = (level > 0 && !isMaxed && node.type != HotmTreeData.NodeType.ABILITY && node.type != HotmTreeData.NodeType.UNLEVELABLE) ? String.valueOf(level) : null;

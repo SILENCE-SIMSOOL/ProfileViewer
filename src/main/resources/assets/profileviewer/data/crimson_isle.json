@@ -1,0 +1,88 @@
+{
+  "dojo": {
+    "belts": [
+      {
+        "threshold": 0,
+        "item": "skyblock:dojo_white_belt"
+      },
+      {
+        "threshold": 1000,
+        "item": "skyblock:dojo_yellow_belt"
+      },
+      {
+        "threshold": 2000,
+        "item": "skyblock:dojo_green_belt"
+      },
+      {
+        "threshold": 4000,
+        "item": "skyblock:dojo_blue_belt"
+      },
+      {
+        "threshold": 6000,
+        "item": "skyblock:dojo_brown_belt"
+      },
+      {
+        "threshold": 7000,
+        "item": "skyblock:dojo_black_belt"
+      }
+    ],
+    "grades": [
+      {
+        "threshold": 0,
+        "grade": "<red>F</red>"
+      },
+      {
+        "threshold": 200,
+        "grade": "<green>D</green>"
+      },
+      {
+        "threshold": 400,
+        "grade": "<green>C</green>"
+      },
+      {
+        "threshold": 600,
+        "grade": "<blue>B</blue>"
+      },
+      {
+        "threshold": 800,
+        "grade": "<light_purple>A</light_purple>"
+      },
+      {
+        "threshold": 1000,
+        "grade": "<gold>S</gold>"
+      }
+    ],
+    "name_map": {
+      "mob_kb": "Force",
+      "wall_jump": "Stamina",
+      "archer": "Mastery",
+      "snake": "Swiftness",
+      "sword_swap": "Discipline",
+      "fireball": "Tenacity",
+      "lock_head": "Control"
+    }
+  },
+  "kuudra": {
+    "collection": [
+      10,
+      100,
+      500,
+      2000,
+      5000
+    ],
+    "name_map": {
+      "none": "Basic",
+      "hot": "Hot",
+      "burning": "Burning",
+      "fiery": "Fiery",
+      "infernal": "Infernal"
+    },
+    "requirements": {
+      "none": 0,
+      "hot": 1000,
+      "burning": 3000,
+      "fiery": 7000,
+      "infernal": 12000
+    }
+  }
+}

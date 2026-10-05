@@ -491,7 +491,7 @@ public class GearTabRenderer {
 				level = coreLevel >= 1 ? 2 : 1;
 			}
 
-			boolean disabled = false;
+			boolean disabled = m != null && m.disabledMiningNodes.contains(node.id);
 			if (node.type == HotmTreeData.NodeType.ABILITY) {
 				disabled = !node.matchesAbility(activeAb);
 			}
@@ -535,14 +535,14 @@ public class GearTabRenderer {
 				float ny = startTreeY + r * (slotSize + slotGap);
 
 				boolean isSelected = node.id.equals(activeAbility);
-				int nodeLvl = activeNodes.getOrDefault(node.id, 0);
+				int nodeLvl = activeNodes.getOrDefault(node.id, -1);
 
 				boolean isMaxed = (nodeLvl >= node.maxLevel);
 				boolean hov = mx >= nx && mx <= nx + slotSize && my >= ny && my <= ny + slotSize;
 				RenderHelper.drawItemSlotBg(nx, ny, slotSize, hov, isSelected ? 0xFF34D399 : 0x33FFFFFF, isSelected ? 0xFF1E382B : 0x5514151E, 5f);
 
-				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0));
-				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && !isMaxed ? String.valueOf(nodeLvl) : null);
+				ItemStack stack = HotfTreeData.createNodeStack(node, nodeLvl, isSelected, hotfLevel, activeNodes.getOrDefault("center_of_the_forest", 0), mining.disabledForagingNodes.contains(node.id));
+				String customText = (nodeLvl > 0 && !isMaxed && node.type != HotfTreeData.NodeType.ABILITY) ? String.valueOf(nodeLvl) : (node.type == HotfTreeData.NodeType.CORE && nodeLvl >= 0 && !isMaxed ? String.valueOf(nodeLvl) : null);
 				int textColor = isSelected ? 0xFF34D399 : 0xFFFFFFFF;
 
 				RenderHelper.registerItemSlot(nx, ny, slotSize, stack, customText, textColor);

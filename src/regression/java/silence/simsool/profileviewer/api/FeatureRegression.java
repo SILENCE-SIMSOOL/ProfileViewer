@@ -10,6 +10,7 @@ import silence.simsool.profileviewer.api.data.CatalogFormula;
 import silence.simsool.profileviewer.api.data.ProfileJson;
 import silence.simsool.profileviewer.ui.tabs.BestiaryTabRenderer;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.component.CustomData;
 
 import com.google.gson.JsonParser;
@@ -57,11 +58,12 @@ public final class FeatureRegression {
 		checkRiftAndStorage();
 		checkHotfCatalog();
 		checkCatalogTextures();
+		checkRemainingFeatures();
 		if (!failures.isEmpty()) throw new AssertionError(String.join("\n", failures));
 		System.out.println("Feature regression checks passed: " + checks);
 	}
 
-	
+
 	private static void checkHotfCatalog() {
 		var core = HotfTreeData.getNode("center_of_the_forest");
 		check(core.row == 3 && core.col == 3 && core.maxLevel == 5, "HOTF core uses real tier and max level");
@@ -102,7 +104,7 @@ public final class FeatureRegression {
 		check(GearFinder.farmingScore(item) == 22, "Farming score uses full enchant levels and rarity");
 	}
 
-	
+
 	private static void checkCatalogTextures() throws Exception {
 		Items.PLAYER_HEAD.builtInRegistryHolder().bindComponents(DataComponentMap.EMPTY);
 		verifyBestiaryTextures(ProfileJson.catalog("bestiary"));
@@ -126,6 +128,49 @@ public final class FeatureRegression {
 			if (object.has("texture")) check(CatalogIcons.icon(object, "Bestiary").has(DataComponents.PROFILE), "Bestiary texture: " + ProfileJson.string(object, "name"));
 			for (var child : object.entrySet()) verifyBestiaryTextures(child.getValue());
 		}
+	}
+
+
+	private static void checkRemainingFeatures() {
+		MiningData trees = MiningData.fromJson(json("""
+			{"skill_tree":{"selected_slot":{"foraging":2},"nodes":{
+			"foraging":{"sweep":10,"toggle_sweep":false,"toggle_daily_wishes":true},
+			"foraging_2":{"sweep":20},
+			"mining":{"mining_speed":30,"toggle_mining_speed":false}}}}
+			"""));
+		check(trees.disabledForagingNodes.contains("sweep") && !trees.disabledForagingNodes.contains("daily_wishes"), "Foraging toggle state is separate from node levels");
+		check(!trees.foragingNodes.containsKey("toggle_sweep"), "Toggle fields never become levels");
+		check(trees.disabledMiningNodes.contains("mining_speed"), "Mining disabled state is preserved");
+		check(MiningData.fromJson(json("{}")).disabledForagingNodes.isEmpty(), "New profiles do not inherit disabled nodes");
+		Items.STRIPPED_MANGROVE_LOG.builtInRegistryHolder().bindComponents(DataComponentMap.EMPTY);
+		Items.STRIPPED_OAK_LOG.builtInRegistryHolder().bindComponents(DataComponentMap.EMPTY);
+		Items.PALE_OAK_BUTTON.builtInRegistryHolder().bindComponents(DataComponentMap.EMPTY);
+		var sweep = HotfTreeData.getNode("sweep");
+		var disabled = HotfTreeData.createNodeStack(sweep, 20, false, 8, 5, true);
+		check(disabled.is(Items.STRIPPED_MANGROVE_LOG), "Disabled HOTF node uses original disabled item");
+		check(disabled.get(DataComponents.LORE).lines().stream().anyMatch(line -> line.getString().contains("DISABLED")), "Disabled HOTF tooltip");
+		check(HotfTreeData.createNodeStack(sweep, 0, false, 8, 5).is(Items.STRIPPED_OAK_LOG), "Present level-zero HOTF node is unlocked");
+		check(HotfTreeData.createNodeStack(sweep, -1, false, 8, 5).is(Items.PALE_OAK_BUTTON), "Absent HOTF node stays locked");
+		CfData factory = CfData.fromJson(json("{\"events\":{\"easter\":{\"employees\":{\"rabbit_bro\":42,\"metadata\":3}}}}"));
+		check(factory.available && factory.employees.size() == 7 && factory.employees.getFirst().id.equals("rabbit_bro"), "Factory uses catalog order and includes all employees");
+		check(factory.employees.getFirst().level == 42 && factory.employees.get(1).level == 0, "Unhired employees have level zero");
+		check(CfData.employeeName("rabbit_father").equals("Rabbit Daddy"), "Original employee display names");
+		check(!CfData.fromJson(json("{}")).available && CfData.fromJson(json("{}")).employees.isEmpty(), "Missing factory remains no data");
+		DungeonData combat = DungeonData.fromJson(json("""
+			{"nether_island_player_data":{"dojo":{"dojo_points_mob_kb":1000,"dojo_time_mob_kb":9999},
+			"kuudra_completed_tiers":{"none":12,"hot":4}}}
+			"""));
+		check(combat.dojoScores.size() == 7 && combat.dojoScores.get("mob_kb") == 1000 && combat.dojoScores.get("archer") == -1, "Dojo parses scores only and distinguishes missing records");
+		check(DungeonData.fromJson(json("{}")).dojoScores.values().stream().allMatch(value -> value == -1), "Missing Dojo records stay unplayed");
+		check(DungeonData.dojoGrade(999).equals("A") && DungeonData.dojoGrade(1000).equals("S") && DungeonData.dojoGrade(-1).equals("Not played"), "Dojo grade thresholds");
+		check(combat.kuudraCompletions.get("none") == 12, "Basic Kuudra uses the API none key");
+		for (var item : BuiltInRegistries.ITEM) item.builtInRegistryHolder().bindComponents(DataComponentMap.EMPTY);
+		var pages = BestiaryTabRenderer.getPages(combat);
+		var fishing = pages.stream().filter(page -> page.children().size() == 6).findFirst().orElseThrow();
+		var safari = pages.stream().filter(page -> page.children().size() == 4).findFirst().orElseThrow();
+		check(fishing.items().isEmpty() && safari.items().isEmpty(), "Nested Bestiary categories are not flattened");
+		check(fishing.children().stream().allMatch(page -> !page.items().isEmpty()), "Fishing subcategories retain their own mobs");
+		check(safari.children().stream().allMatch(page -> !page.items().isEmpty()), "Safari subcategories retain their own mobs");
 	}
 
 	private static JsonObject json(String source) {

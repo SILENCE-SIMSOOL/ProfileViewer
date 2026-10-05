@@ -56,6 +56,10 @@ public final class BestiaryTabRenderer {
 	}
 
 	public static float render(DungeonData data, float x, float y, float width, float mx, float my) {
+		return GRID.render(getPages(data), x, y, width, mx, my);
+	}
+
+	public static List<ItemCategoryGrid.Page> getPages(DungeonData data) {
 		if (cached != data || revision != ItemRepo.getRevision()) {
 			revision = ItemRepo.getRevision();
 			cached = data;
@@ -66,14 +70,21 @@ public final class BestiaryTabRenderer {
 				if (!category.has("name") || !category.has("icon")) continue;
 				List<ItemCategoryGrid.Cell> cells = new ArrayList<>();
 				if (category.has("mobs")) addMobs(category, data, cells);
-				else for (var child : category.entrySet()) {
-					if (child.getValue().isJsonObject() && child.getValue().getAsJsonObject().has("mobs")) addMobs(child.getValue().getAsJsonObject(), data, cells);
+				List<ItemCategoryGrid.Page> children = new ArrayList<>();
+				if (!category.has("mobs")) for (var child : category.entrySet()) {
+					if (!child.getValue().isJsonObject()) continue;
+					JsonObject subcategory = child.getValue().getAsJsonObject();
+					if (!subcategory.has("mobs")) continue;
+					List<ItemCategoryGrid.Cell> subcells = new ArrayList<>();
+					addMobs(subcategory, data, subcells);
+					String name = subcategory.get("name").getAsString();
+					children.add(new ItemCategoryGrid.Page(name, CatalogIcons.icon(subcategory.getAsJsonObject("icon"), name), subcells));
 				}
 				String title = category.get("name").getAsString();
-				pages.add(new ItemCategoryGrid.Page(title, CatalogIcons.icon(category.getAsJsonObject("icon"), title), cells));
+				pages.add(new ItemCategoryGrid.Page(title, CatalogIcons.icon(category.getAsJsonObject("icon"), title), cells, children));
 			}
 		}
-		return GRID.render(pages, x, y, width, mx, my);
+		return List.copyOf(pages);
 	}
 
 	public static boolean mouseClicked(float x, float y) { return GRID.mouseClicked(x, y); }

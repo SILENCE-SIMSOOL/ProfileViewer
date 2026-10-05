@@ -1,4 +1,7 @@
 {
+	"pv.chat.loading_profile": "正在加载 %s 的资料...",
+	"pv.chat.lookup_failed": "玩家查询失败，请重试。",
+	"pv.chat.player_not_found": "找不到玩家“%s”。",
 	"pv.ui.title": "PROFILE VIEWER",
 	"pv.ui.loading": "正在加载玩家资料...",
 	"pv.ui.not_found": "未找到玩家资料。",

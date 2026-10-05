@@ -28,7 +28,7 @@ public class ChocolateFactoryTabRenderer {
 		float curY = startY;
 		CfData cf = data.cf;
 
-		if (cf.totalChocolate <= 0 && cf.prestigeLevel <= 0 && cf.rabbits.isEmpty()) {
+		if (!cf.available) {
 			RenderHelper.drawModernCard(startX, curY, width, 80f, 12f, false);
 			RenderHelper.alignedIcon("\uE5D2", startX + 24f, curY + 22f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, 24f, 16f);
 			SkijaRenderer.text(L10n.translate("pv.cf.no_data_title"), startX + 60f, curY + 22f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 16f);
@@ -129,9 +129,9 @@ public class ChocolateFactoryTabRenderer {
 				ItemStack empStack = createEmployeeStack(emp);
 				RenderHelper.registerItemSlot(esX, esY, esS, empStack);
 
-				String empName = formatRabbitName(emp.id);
+				String empName = CfData.employeeName(emp.id);
 				SkijaRenderer.text(empName, esX + esS + 12f, ey + 18f, Fonts.PRETENDARD_SEMIBOLD, RenderHelper.FONT_PRIMARY, 14.5f);
-				String lvlStr = "Lv. " + emp.level;
+				String lvlStr = emp.level > 0 ? "Lv. " + emp.level : "Not hired";
 				float lw = SkijaRenderer.textWidth(lvlStr, Fonts.PRETENDARD_SEMIBOLD, 14f);
 				SkijaRenderer.text(lvlStr, ex + eColW - 14f - lw, ey + 18f, Fonts.PRETENDARD_SEMIBOLD, 0xFFFFAA00, 14f);
 
@@ -217,7 +217,7 @@ public class ChocolateFactoryTabRenderer {
 
 	private static ItemStack createEmployeeStack(CfData.RabbitEmployee emp) {
 		ItemStack stack = emp.level > 0 ? NbtItemParser.createSkull(ProfileJson.string(EMPLOYEE_TEXTURES, emp.id), 1) : new ItemStack(Items.DYE.gray());
-		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§a" + formatRabbitName(emp.id) + " (Lv. " + emp.level + ")"));
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal("§a" + CfData.employeeName(emp.id) + " (Lv. " + emp.level + ")"));
 		List<Component> lore = new ArrayList<>();
 		lore.add(Component.literal("§7Employee Level: §e" + emp.level));
 		stack.set(DataComponents.LORE, new ItemLore(lore));

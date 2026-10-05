@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import silence.simsool.lucent.general.utils.LucentUtils;
+import silence.simsool.lucent.general.utils.L10n;
 import silence.simsool.lucent.general.utils.useful.UChat;
 import silence.simsool.lucent.general.utils.useful.UScreen;
 import silence.simsool.profileviewer.api.PlayerDbApi;
@@ -87,14 +88,16 @@ public class ProfileViewer implements ClientModInitializer {
 	}
 
 	public static void resolveAndOpen(String input) {
-		UChat.chat("&7[&bProfileViewer&7] &f" + input + "&7님의 프로필을 불러오는 중...");
+		L10n.load();
+		UChat.chat("&7[&bProfileViewer&7] &f" + String.format(L10n.translate("pv.chat.loading_profile"), input));
 		PlayerDbApi.resolveGameProfile(input).whenComplete((profile, error) -> mc.execute(() -> {
+			L10n.load();
 			if (error != null) {
-				UChat.chat("&c[ProfileViewer] Player lookup failed. Please retry.");
+				UChat.chat("&c[ProfileViewer] " + L10n.translate("pv.chat.lookup_failed"));
 				return;
 			}
 			if (profile == null) {
-				UChat.chat("&c[ProfileViewer] 플레이어 '" + input + "'를 찾을 수 없습니다.");
+				UChat.chat("&c[ProfileViewer] " + String.format(L10n.translate("pv.chat.player_not_found"), input));
 				return;
 			}
 			UScreen.setScreenMC(new ProfileViewerScreen(profile.name(), profile.id()));

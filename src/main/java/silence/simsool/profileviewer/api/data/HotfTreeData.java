@@ -62,6 +62,7 @@ public class HotfTreeData {
 	}
 
 	public static List<String> tooltip(HotfNode node, int level, int coreLevel) {
+		level = Math.max(0, level);
 		List<String> lines = new ArrayList<>();
 		JsonObject data = node.definition;
 		if (node.type == NodeType.CORE) {
@@ -107,18 +108,24 @@ public class HotfTreeData {
 	}
 
 	public static ItemStack createNodeStack(HotfNode node, int level, boolean selected, int hotfLevel, int coreLevel) {
-		boolean unlocked = level > 0 || selected;
+		return createNodeStack(node, level, selected, hotfLevel, coreLevel, false);
+	}
+
+	public static ItemStack createNodeStack(HotfNode node, int level, boolean selected, int hotfLevel, int coreLevel, boolean disabled) {
+		boolean unlocked = level >= 0 || selected;
 		boolean maxed = level >= node.maxLevel;
 		ItemStack stack = new ItemStack(switch (node.type) {
 			case CORE -> maxed ? Items.OAK_WOOD : unlocked ? Items.STRIPPED_OAK_WOOD
 				: hotfLevel >= node.tier ? Items.STRIPPED_BIRCH_WOOD : Items.STRIPPED_PALE_OAK_WOOD;
 			case ABILITY -> selected ? Items.OAK_SAPLING : unlocked ? Items.CHERRY_SAPLING : Items.PALE_OAK_SAPLING;
-			default -> maxed ? Items.OAK_LOG : unlocked ? Items.STRIPPED_OAK_LOG : Items.PALE_OAK_BUTTON;
+			default -> disabled ? Items.STRIPPED_MANGROVE_LOG : maxed ? Items.OAK_LOG : unlocked ? Items.STRIPPED_OAK_LOG : Items.PALE_OAK_BUTTON;
 		});
-		stack.set(DataComponents.CUSTOM_NAME, Component.literal((selected ? "§a" : maxed ? "§6" : unlocked ? "§e" : "§c") + node.name));
+		stack.set(DataComponents.CUSTOM_NAME, Component.literal((disabled ? "§c" : selected ? "§a" : maxed ? "§6" : unlocked ? "§e" : "§c") + node.name));
 		List<Component> lore = new ArrayList<>();
 		for (String line : tooltip(node, level, coreLevel)) lore.add(Component.literal("§7" + line));
-		if (selected) lore.add(Component.literal("§aSELECTED"));
+		if (disabled) lore.add(Component.literal("§cDISABLED"));
+		else if (selected) lore.add(Component.literal("§aSELECTED"));
+		if (!unlocked) lore.add(Component.literal("§cNot unlocked"));
 		if (hotfLevel < node.tier) lore.add(Component.literal("§cRequires Heart of the Forest " + node.tier));
 		stack.set(DataComponents.LORE, new ItemLore(lore));
 		return stack;

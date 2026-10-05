@@ -11,6 +11,7 @@ import com.google.gson.JsonPrimitive;
 public class CfData {
 	public static final JsonObject CATALOG = ProfileJson.catalog("chocolate_catalog");
 	private static final Map<String, String> RABBIT_RARITIES = rabbitRarities();
+	public boolean available;
 	public int timeTowerLevel;
 	public int timeTowerCharges;
 	public int hitmanSlots;
@@ -24,6 +25,14 @@ public class CfData {
 			for (var rabbit : tier.getValue().getAsJsonArray()) result.put(rabbit.getAsString(), tier.getKey());
 		}
 		return result;
+	}
+
+	public static String employeeName(String id) {
+		for (var entry : ProfileJson.array(CATALOG, "employees")) {
+			var employee = entry.getAsJsonObject();
+			if (id.equals(ProfileJson.string(employee, "id"))) return ProfileJson.string(employee, "name");
+		}
+		return id;
 	}
 
 	public static String rabbitRarity(String id) {
@@ -66,6 +75,7 @@ public class CfData {
 		}
 
 		if (cf != null) {
+			data.available = true;
 			data.timeTowerLevel = (int) ProfileJson.number(cf, "time_tower", "level");
 			data.timeTowerCharges = (int) ProfileJson.number(cf, "time_tower", "charges");
 			data.hitmanSlots = (int) ProfileJson.number(cf, "rabbit_hitmen", "rabbit_hitmen_slots");
@@ -81,13 +91,10 @@ public class CfData {
 			if (cf.has("chocolate_multiplier_upgrades")) data.chocolateMultiplierUpgrades = cf.get("chocolate_multiplier_upgrades").getAsInt();
 			if (cf.has("rabbit_rarity_upgrades")) data.rabbitRarityUpgrades = cf.get("rabbit_rarity_upgrades").getAsInt();
 
-			if (cf.has("employees") && cf.get("employees").isJsonObject()) {
-				JsonObject emp = cf.getAsJsonObject("employees");
-				for (Map.Entry<String, JsonElement> e : emp.entrySet()) {
-					if (e.getValue().isJsonPrimitive()) {
-						data.employees.add(new RabbitEmployee(e.getKey(), e.getValue().getAsInt()));
-					}
-				}
+			JsonObject employees = ProfileJson.object(cf, "employees");
+			for (JsonElement entry : ProfileJson.array(CATALOG, "employees")) {
+				String id = entry.getAsJsonObject().get("id").getAsString();
+				data.employees.add(new RabbitEmployee(id, (int) ProfileJson.number(employees, id)));
 			}
 
 			if (cf.has("rabbits") && cf.get("rabbits").isJsonObject()) {

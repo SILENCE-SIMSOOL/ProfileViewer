@@ -1,0 +1,5 @@
+{
+	"pv.chat.loading_profile": "Cargando el perfil de %s...",
+	"pv.chat.lookup_failed": "La búsqueda del jugador falló. Inténtalo de nuevo.",
+	"pv.chat.player_not_found": "No se encontró al jugador «%s»."
+}

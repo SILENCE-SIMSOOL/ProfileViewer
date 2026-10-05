@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 
 public class DungeonData {
 
+	public static final JsonObject CRIMSON_CATALOG = ProfileJson.catalog("crimson_isle");
 	private static final JsonObject CATALOG = ProfileJson.catalog("catacombs");
 	public static final long[] CATACOMBS_XP_TABLE = loadExperience();
 
@@ -75,7 +76,17 @@ public class DungeonData {
 	public int mageReputation = 0;
 	public int barbarianReputation = 0;
 	public Map<String, Integer> kuudraCompletions = new HashMap<>();
-	public Map<String, Integer> dojoScores = new HashMap<>();
+	public Map<String, Integer> dojoScores = new LinkedHashMap<>();
+
+	public static String dojoGrade(int points) {
+		if (points < 0) return "Not played";
+		String grade = "";
+		for (var entry : ProfileJson.array(CRIMSON_CATALOG, "dojo", "grades")) {
+			var row = entry.getAsJsonObject();
+			if (points >= ProfileJson.number(row, "threshold")) grade = ProfileJson.string(row, "grade").replaceAll("<[^>]+>", "");
+		}
+		return grade;
+	}
 
 	public static Pair<Integer, Float> getLevelAndProgress(long xp) {
 		if (xp <= 0) return new Pair<>(0, 0f);
@@ -107,6 +118,7 @@ public class DungeonData {
 
 	public static DungeonData fromJson(JsonObject member) {
 		DungeonData d = new DungeonData();
+		for (String id : ProfileJson.object(CRIMSON_CATALOG, "dojo", "name_map").keySet()) d.dojoScores.put(id, -1);
 		if (member == null) return d;
 
 		// Initialize 5 Classes
@@ -269,10 +281,9 @@ public class DungeonData {
 			}
 			if (nether.has("dojo") && nether.get("dojo").isJsonObject()) {
 				JsonObject dojo = nether.getAsJsonObject("dojo");
-				for (String key : dojo.keySet()) {
-					if (dojo.get(key).isJsonPrimitive()) {
-						d.dojoScores.put(key, dojo.get(key).getAsInt());
-					}
+				for (String id : ProfileJson.object(CRIMSON_CATALOG, "dojo", "name_map").keySet()) {
+					String key = "dojo_points_" + id;
+					d.dojoScores.put(id, dojo.has(key) ? dojo.get(key).getAsInt() : -1);
 				}
 			}
 		}

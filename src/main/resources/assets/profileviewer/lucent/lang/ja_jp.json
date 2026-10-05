@@ -1,4 +1,7 @@
 {
+	"pv.chat.loading_profile": "%s のプロファイルを読み込み中...",
+	"pv.chat.lookup_failed": "プレイヤーの検索に失敗しました。もう一度お試しください。",
+	"pv.chat.player_not_found": "プレイヤー「%s」が見つかりません。",
 	"pv.ui.title": "PROFILE VIEWER",
 	"pv.ui.loading": "プロファイルデータを読み込み中...",
 	"pv.ui.not_found": "プロファイルデータが見つかりません。",

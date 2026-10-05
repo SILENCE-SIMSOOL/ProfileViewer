@@ -1,4 +1,7 @@
 {
+	"pv.chat.loading_profile": "Loading %s's profile...",
+	"pv.chat.lookup_failed": "Player lookup failed. Please retry.",
+	"pv.chat.player_not_found": "Player '%s' could not be found.",
 	"pv.ui.title": "PROFILE VIEWER",
 	"pv.ui.loading": "Loading profile data...",
 	"pv.ui.not_found": "Profile data not found.",
