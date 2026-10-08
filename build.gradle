@@ -12,6 +12,7 @@ base {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
 	flatDir { dirs "libs" }
 	maven { url "https://maven.fabricmc.net/" }
@@ -58,10 +59,10 @@ dependencies {
 	implementation "io.github.humbleui:types:${project.types_version}"
 	include "io.github.humbleui:types:${project.types_version}"
 
-	def lucentVersion = "${project.lucent_version}-${project.minecraft_version}-${project.lucent_library}"
-	implementation "com.github.SILENCE-SIMSOOL:lucent:${lucentVersion}"
+	def lucentVersion = "${project.lucent_version}-mc${project.minecraft_version}"
+	implementation "silence.simsool.lucent:lucent:${lucentVersion}:library"
 
-	implementation files("libs/LucentClient-1.1.10-mc26.2-lite.jar")
+	implementation files("libs/LucentClient-1.2.8-mc26.3-lite.jar")
 	implementation files("libs/velocity-native-3.4.0.jar")
 }
 

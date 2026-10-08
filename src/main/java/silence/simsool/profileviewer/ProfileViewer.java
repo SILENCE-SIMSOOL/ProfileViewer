@@ -3,7 +3,7 @@ package silence.simsool.profileviewer;
 import static silence.simsool.lucent.Lucent.mc;
 
 import java.util.UUID;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -34,7 +34,7 @@ public class ProfileViewer implements ClientModInitializer {
 	public void onInitializeClient() {
 		OPEN_PV_KEY = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.profileviewer.open",
-				GLFW.GLFW_KEY_UNKNOWN,
+				InputConstants.UNKNOWN.getValue(),
 				KEYBINDING_CATEGORY
 		));
 

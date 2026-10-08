@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -699,7 +699,7 @@ public class ProfileViewerScreen extends Screen {
 	public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
 		float mx = UMouse.getSkijaScaledX(uiScale);
 		float my = UMouse.getSkijaScaledY(uiScale);
-		int btn = event.button();
+		int btn = UMouse.getButton(event);
 
 		if (btn == 0) {
 			float userW = SkijaRenderer.textWidth(username, Fonts.PRETENDARD_SEMIBOLD, 20.5f);
@@ -887,7 +887,7 @@ public class ProfileViewerScreen extends Screen {
 
 		if (searchFocused) {
 
-			if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+			if (event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER) {
 				String target = searchInput.trim();
 				if (!target.isEmpty()) {
 					performSearch(target);
@@ -896,18 +896,18 @@ public class ProfileViewerScreen extends Screen {
 				}
 				return true;
 			}
-			if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+			if (event.key() == InputConstants.KEY_BACKSPACE) {
 				if (!searchInput.isEmpty()) {
 					searchInput = searchInput.substring(0, searchInput.length() - 1);
 				}
 				return true;
 			}
-			if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+			if (event.key() == InputConstants.KEY_ESCAPE) {
 				searchFocused = false;
 				return true;
 			}
 			// Ctrl+V (Paste)
-			if (event.key() == GLFW.GLFW_KEY_V && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+			if (event.key() == InputConstants.KEY_V && (event.modifiers() & InputConstants.MOD_CONTROL) != 0) {
 				String clip = mc.keyboardHandler.getClipboard();
 				if (clip != null && !clip.isEmpty()) {
 					for (char ch : clip.toCharArray()) {
@@ -919,32 +919,32 @@ public class ProfileViewerScreen extends Screen {
 				return true;
 			}
 			// Ctrl+C (Copy)
-			if (event.key() == GLFW.GLFW_KEY_C && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+			if (event.key() == InputConstants.KEY_C && (event.modifiers() & InputConstants.MOD_CONTROL) != 0) {
 				if (!searchInput.isEmpty()) {
 					mc.keyboardHandler.setClipboard(searchInput);
 				}
 				return true;
 			}
 			// Ctrl+A (Clear)
-			if (event.key() == GLFW.GLFW_KEY_A && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+			if (event.key() == InputConstants.KEY_A && (event.modifiers() & InputConstants.MOD_CONTROL) != 0) {
 				searchInput = "";
 				return true;
 			}
 			return true;
 		}
 		if (!loading && errorMessage.isEmpty()) {
-			if (currentTab == PVTab.PETS && PetsTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			if (currentTab == PVTab.PETS && PetsTabRenderer.keyPressed(event.key(), event.keycode(), event.modifiers())) {
 				return true;
 			}
-			if (currentTab == PVTab.GEAR && GearTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			if (currentTab == PVTab.GEAR && GearTabRenderer.keyPressed(event.key(), event.keycode(), event.modifiers())) {
 				return true;
 			}
-			if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+			if (currentTab == PVTab.MUSEUM && MuseumTabRenderer.keyPressed(event.key(), event.keycode(), event.modifiers())) {
 				return true;
 			}
 		}
 
-		if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+		if (event.key() == InputConstants.KEY_ESCAPE) {
 			if (profileDropdownOpen) {
 				profileDropdownOpen = false;
 				return true;
